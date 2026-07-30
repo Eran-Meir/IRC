@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Eran-Meir/IRC/services/ircd/internal/logger"
+	"github.com/Eran-Meir/IRC/services/ircd/internal/parser"
 )
 
 // Client represents a single connected TCP user
@@ -40,8 +41,13 @@ func (c *Client) Handle() {
 			continue
 		}
 
-		// Phase 3 will parse this line according to RFC 1459.
-		// For now, just log the raw socket data!
-		logger.Debug("[%s] -> %s", c.conn.RemoteAddr().String(), line)
+		// Parse the line according to RFC 1459
+		msg, err := parser.ParseLine(line)
+		if err != nil {
+			logger.Warn("[%s] Failed to parse message: %v", c.conn.RemoteAddr().String(), err)
+			continue
+		}
+
+		logger.Debug("[%s] Parsed Command: %s, Params: %v", c.conn.RemoteAddr().String(), msg.Command, msg.Params)
 	}
 }
