@@ -2,8 +2,9 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net"
+
+	"github.com/Eran-Meir/IRC/services/ircd/internal/logger"
 )
 
 // Server represents the main IRC TCP Server
@@ -30,7 +31,7 @@ func (s *Server) Start() error {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Printf("Error accepting connection: %v", err)
+			logger.Error("Error accepting connection: %v", err)
 			continue
 		}
 

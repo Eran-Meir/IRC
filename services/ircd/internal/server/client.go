@@ -2,9 +2,10 @@ package server
 
 import (
 	"bufio"
-	"log"
 	"net"
 	"strings"
+
+	"github.com/Eran-Meir/IRC/services/ircd/internal/logger"
 )
 
 // Client represents a single connected TCP user
@@ -22,7 +23,7 @@ func NewClient(conn net.Conn) *Client {
 // Handle reads raw data from the TCP socket line-by-line
 func (c *Client) Handle() {
 	defer c.conn.Close()
-	log.Printf("New connection from %s", c.conn.RemoteAddr().String())
+	logger.Info("New connection from %s", c.conn.RemoteAddr().String())
 
 	reader := bufio.NewReader(c.conn)
 
@@ -30,7 +31,7 @@ func (c *Client) Handle() {
 		// IRC protocol specifies \r\n (CRLF) as the line delimiter
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			log.Printf("Connection closed by %s", c.conn.RemoteAddr().String())
+			logger.Info("Connection closed by %s", c.conn.RemoteAddr().String())
 			return
 		}
 
@@ -41,6 +42,6 @@ func (c *Client) Handle() {
 
 		// Phase 3 will parse this line according to RFC 1459.
 		// For now, just log the raw socket data!
-		log.Printf("[%s] -> %s", c.conn.RemoteAddr().String(), line)
+		logger.Debug("[%s] -> %s", c.conn.RemoteAddr().String(), line)
 	}
 }
