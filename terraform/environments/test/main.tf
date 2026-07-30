@@ -20,7 +20,7 @@ provider "oci" {
   tenancy_ocid     = var.tenancy_ocid
   user_ocid        = var.user_ocid
   fingerprint      = var.fingerprint
-  private_key_path = "api_key.pem"
+  private_key_path = "${path.module}/api_key.pem"
   region           = var.region
 }
 

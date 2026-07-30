@@ -20,6 +20,18 @@ jobs:
           ${{ secrets.OCI_PRIVATE_KEY }}
           EOF
 
+      - name: Debug OCI Key File
+        run: |
+          echo "File size and permissions:"
+          ls -l api_key.pem
+          echo "Line count:"
+          wc -l api_key.pem
+          echo "First line:"
+          head -n 1 api_key.pem
+          echo "Last line:"
+          tail -n 1 api_key.pem
+        working-directory: terraform/environments/test
+
       - name: Terraform Init
         run: |
           terraform init \
