@@ -126,7 +126,7 @@ data "oci_identity_availability_domains" "ads" {
 
 data "oci_core_images" "ubuntu_arm" {
   compartment_id           = var.compartment_ocid
-  operating_system         = "Ubuntu"
+  operating_system         = "Canonical Ubuntu"
   operating_system_version = "22.04"
   shape                    = var.instance_shape
   sort_by                  = "TIMECREATED"
