@@ -52,12 +52,12 @@ The CI/CD pipeline is designed for strict manual control over infrastructure, wh
 graph TD
     Developer((Developer)) -->|Push / PR| GitHub[GitHub Repository]
     
-    subgraph Infrastructure Lifecycle (Manual Only)
+    subgraph Infra ["Infrastructure Lifecycle (Manual Only)"]
         GitHub -->|Manual Trigger| ProvTest[Provision Test Env<br/>Terraform + ArgoCD + Monitoring]
         GitHub -->|Manual Trigger| DestTest[Destroy Test Env<br/>Wipes Cluster & Monitoring]
     end
 
-    subgraph Application Lifecycle
+    subgraph App ["Application Lifecycle"]
         GitHub -->|Manual Trigger| DepTest[Deploy Code to Test Env<br/>Build & Push Image]
         DepTest --> RunTest[Run Integration Tests]
         GitHub -->|Manual Trigger (Tag Release)| DepProd[Deploy Code to PROD Env<br/>Strictly Manual]

@@ -1,0 +1,23 @@
+name: 4. Release to PROD
+on:
+  workflow_dispatch:
+
+jobs:
+  release-prod:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Note: Since the image is already built and pushed to ghcr.io by step 3,
+      # this job will simply update the k8s manifests for the PROD cluster
+      # to use the new image tag and apply them.
+      
+      - name: Deploy to PROD Cluster
+        run: |
+          echo "Connecting to PROD k3s cluster..."
+          echo "Updating deployment image to ghcr.io/${{ github.repository }}/ircd:${{ github.sha }}"
+          # We will implement the kubectl apply steps here in Phase 2

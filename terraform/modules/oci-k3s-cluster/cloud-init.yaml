@@ -1,0 +1,26 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - curl
+  - wget
+
+runcmd:
+  # Open firewall ports on the Ubuntu OS itself (Oracle also has network-level security lists, but iptables runs on the VM)
+  - iptables -I INPUT -p tcp -m tcp --dport 6667 -j ACCEPT
+  - iptables -I INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+  - iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+  - iptables -I INPUT -p tcp -m tcp --dport 6443 -j ACCEPT
+  - iptables -I INPUT -p udp -m udp --dport 8472 -j ACCEPT
+  - netfilter-persistent save
+
+  # Install k3s
+  - curl -sfL https://get.k3s.io | sh -
+
+  # Wait for k3s to be ready
+  - sleep 15
+
+  # Export the kubeconfig to a location the ubuntu user can read
+  - cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/k3s.yaml
+  - chown ubuntu:ubuntu /home/ubuntu/k3s.yaml
