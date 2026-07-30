@@ -15,10 +15,10 @@ jobs:
           terraform_wrapper: false
 
       - name: Write OCI Key File
-        env:
-          PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
         run: |
-          echo "$PRIVATE_KEY" > terraform/environments/test/api_key.pem
+          cat << 'EOF' > terraform/environments/test/api_key.pem
+          ${{ secrets.OCI_PRIVATE_KEY }}
+          EOF
 
       - name: Terraform Init
         run: |
