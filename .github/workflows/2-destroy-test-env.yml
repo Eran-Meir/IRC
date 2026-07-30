@@ -14,6 +14,11 @@ jobs:
         with:
           terraform_wrapper: false
 
+      - name: Write OCI Key File
+        run: |
+          mkdir -p ~/.oci
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
 
       - name: Terraform Init
         run: |
@@ -26,14 +31,13 @@ jobs:
         working-directory: terraform/environments/test
 
       - name: Terraform Destroy
-        env:
-          TF_VAR_tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
-          TF_VAR_user_ocid: ${{ secrets.OCI_USER_OCID }}
-          TF_VAR_fingerprint: ${{ secrets.OCI_FINGERPRINT }}
-          TF_VAR_private_key: ${{ secrets.OCI_PRIVATE_KEY }}
-          TF_VAR_region: ${{ secrets.OCI_REGION }}
-          TF_VAR_compartment_ocid: ${{ secrets.OCI_COMPARTMENT_OCID }}
-          TF_VAR_ssh_public_key: ${{ vars.SSH_PUBLIC_KEY }}
         run: |
-          terraform destroy -auto-approve
+          terraform destroy -auto-approve \
+            -var="tenancy_ocid=${{ secrets.OCI_TENANCY_OCID }}" \
+            -var="user_ocid=${{ secrets.OCI_USER_OCID }}" \
+            -var="fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
+            -var="private_key=${{ secrets.OCI_PRIVATE_KEY }}" \
+            -var="region=${{ secrets.OCI_REGION }}" \
+            -var="compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
+            -var="ssh_public_key=${{ vars.SSH_PUBLIC_KEY }}"
         working-directory: terraform/environments/test
