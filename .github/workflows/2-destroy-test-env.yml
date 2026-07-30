@@ -21,6 +21,8 @@ jobs:
           EOF
 
       - name: Terraform Init
+        env:
+          AWS_DISABLE_CHUNKED_ENCODING: "true"
         run: |
           terraform init \
             -backend-config="bucket=${{ vars.OCI_TF_STATE_BUCKET }}" \
@@ -31,6 +33,8 @@ jobs:
         working-directory: terraform/environments/test
 
       - name: Terraform Destroy
+        env:
+          AWS_DISABLE_CHUNKED_ENCODING: "true"
         run: |
           terraform destroy -auto-approve \
             -var="tenancy_ocid=${{ secrets.OCI_TENANCY_OCID }}" \
