@@ -18,9 +18,7 @@ jobs:
         env:
           PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
         run: |
-          mkdir -p ~/.oci
-          echo "$PRIVATE_KEY" > ~/.oci/oci_api_key.pem
-          chmod 600 ~/.oci/oci_api_key.pem
+          echo "$PRIVATE_KEY" > terraform/environments/test/api_key.pem
 
       - name: Terraform Init
         run: |
