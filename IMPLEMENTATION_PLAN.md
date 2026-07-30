@@ -130,7 +130,7 @@ To support the highly scalable Kubernetes architecture, the core daemon itself m
 3. **Core Router & State Manager:** Synchronizes global state with the backend (**Valkey**) so users on different Pods can chat.
 4. **External Services (Python):** The Services (NickServ, ChanServ) will be written in Python, interfacing with the Go IRCd or Valkey to handle commands.
 5. **Web Client (React + TS):** A dedicated, mIRC-styled web client built with React and TypeScript.
-6. **Database (TBD):** We will select a lightweight database later for persistent user registration and settings.
+6. **Database (Valkey Persistence):** To adhere strictly to Rule 8 (Bare Minimum) and Rule 9 (5GB Max Storage), we will use Valkey's built-in disk persistence (AOF/RDB) to permanently store user registrations and passwords, completely eliminating the need for a separate database container like Postgres or SQLite.
 
 ### The Valkey Data Model (Distributed State Sync)
 Valkey acts as the central nervous system:
