@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo.png" alt="IRC Chat Logo" width="200"/>
+  <img src="assets/logo.png" alt="IRC Chat Logo" width="200"/>
   <h1>Modern Enterprise IRC Network</h1>
   <p>A highly-scalable, 100% free, Kubernetes-native IRC daemon and web client built for the modern cloud.</p>
 </div>
