@@ -26,6 +26,9 @@ func (c *Client) Handle() {
 	defer c.conn.Close()
 	logger.Info("New connection from %s", c.conn.RemoteAddr().String())
 
+	// Verification Test for CI/CD
+	c.conn.Write([]byte("Welcome to the Go IRC Server! [Build Version X]\r\n"))
+
 	reader := bufio.NewReader(c.conn)
 
 	for {

@@ -34,5 +34,24 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository }}/ircd:${{ github.sha }}
 
-      # Note: In the next phase, we will add the ArgoCD / Kubectl steps 
-      # here to deploy this image to the Test cluster and run the cross-pod test.
+      - name: Write SSH Key
+        run: |
+          cat << 'EOF' > private_key.pem
+          ${{ secrets.OCI_PRIVATE_KEY }}
+          EOF
+          chmod 600 private_key.pem
+
+      - name: Deploy to K3s Cluster via SSH
+        env:
+          SERVER_IP: ${{ vars.TEST_SERVER_IP }} # We need to get this from somewhere, or output it
+        run: |
+          # Copy manifests to the server
+          scp -o StrictHostKeyChecking=no -i private_key.pem -r services/ircd/deploy ubuntu@${SERVER_IP}:~/deploy
+          
+          # Replace the image tag in deployment.yaml and apply
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${SERVER_IP} " \
+            sed -i 's|ghcr.io/Eran-Meir/IRC/ircd:latest|ghcr.io/Eran-Meir/IRC/ircd:${{ github.sha }}|g' ~/deploy/deployment.yaml && \
+            kubectl apply -f ~/deploy/valkey.yaml && \
+            kubectl apply -f ~/deploy/deployment.yaml && \
+            kubectl apply -f ~/deploy/service.yaml \
+          "

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ircd
+  labels:
+    app: ircd
+spec:
+  replicas: 1 # Will increase in prod
+  selector:
+    matchLabels:
+      app: ircd
+  template:
+    metadata:
+      labels:
+        app: ircd
+    spec:
+      containers:
+      - name: ircd
+        # The tag will be dynamically substituted by GitHub Actions using sed before apply
+        image: ghcr.io/Eran-Meir/IRC/ircd:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 6667
+        env:
+        - name: VALKEY_URL
+          value: "valkey:6379"
+      imagePullSecrets:
+      - name: ghcr-secret
