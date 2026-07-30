@@ -5,5 +5,5 @@ output "server_public_ip" {
 
 output "web_client_url" {
   description = "Direct link to the future web client"
-  value       = "http://${module.test_cluster.instance_public_ips[0]}"
+  value       = "https://${module.test_cluster.instance_public_ips[0]}"
 }
