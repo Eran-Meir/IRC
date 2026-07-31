@@ -1,5 +1,10 @@
 # Release History
 
+## v0.1.2-alpha (GitOps Verification Test)
+* **DevOps Focus**
+* Updated IRCd connection welcome banner to `[Build Version Y (GitOps Verified)]` to strictly test and verify end-to-end continuous deployment via ArgoCD.
+
+
 ## v0.1.1-alpha (GitOps Migration)
 * **DevOps & Architecture Correction**
 * Migrated completely away from fragile `scp`/`ssh` deployment scripts.

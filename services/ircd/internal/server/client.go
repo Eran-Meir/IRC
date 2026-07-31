@@ -27,7 +27,7 @@ func (c *Client) Handle() {
 	logger.Info("New connection from %s", c.conn.RemoteAddr().String())
 
 	// Verification Test for CI/CD
-	c.conn.Write([]byte("Welcome to the Go IRC Server! [Build Version X]\r\n"))
+	c.conn.Write([]byte("Welcome to the Go IRC Server! [Build Version Y (GitOps Verified)]\r\n"))
 
 	reader := bufio.NewReader(c.conn)
 
