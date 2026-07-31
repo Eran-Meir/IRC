@@ -54,10 +54,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Write SSH Key
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -82,12 +82,12 @@ jobs:
 
       - name: Copy Manifests to Server
         run: |
-          scp -o StrictHostKeyChecking=no -i private_key.pem \
+          scp -o StrictHostKeyChecking=no \
             -r services/ircd/deploy ubuntu@${SERVER_IP}:~/deploy
 
       - name: Apply Kubernetes Manifests
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${SERVER_IP} " \
+          ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} " \
             sed -i 's|${{ env.IMAGE_NAME }}:latest|${{ env.IMAGE_NAME }}:${{ github.sha }}|g' ~/deploy/deployment.yaml && \
             kubectl apply -f ~/deploy/valkey.yaml && \
             kubectl apply -f ~/deploy/deployment.yaml && \
