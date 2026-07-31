@@ -95,9 +95,9 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
             sed -i 's|${{ env.IMAGE_NAME }}:latest|${{ env.IMAGE_NAME }}:${{ github.sha }}|g' ~/deploy/deployment.yaml && \
-            kubectl apply -f ~/deploy/valkey.yaml && \
-            kubectl apply -f ~/deploy/deployment.yaml && \
-            kubectl apply -f ~/deploy/service.yaml \
+            sudo kubectl apply -f ~/deploy/valkey.yaml && \
+            sudo kubectl apply -f ~/deploy/deployment.yaml && \
+            sudo kubectl apply -f ~/deploy/service.yaml \
           "
 
   # ─────────────────────────────────────────────────────────

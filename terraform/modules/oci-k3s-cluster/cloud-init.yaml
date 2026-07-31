@@ -15,12 +15,8 @@ runcmd:
   - iptables -I INPUT -p udp -m udp --dport 8472 -j ACCEPT
   - netfilter-persistent save
 
-  # Install k3s
-  - curl -sfL https://get.k3s.io | sh -
+  # Install k3s with world-readable kubeconfig so the ubuntu user can run kubectl without sudo
+  - curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644
 
   # Wait for k3s to be ready
   - sleep 15
-
-  # Export the kubeconfig to a location the ubuntu user can read
-  - cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/k3s.yaml
-  - chown ubuntu:ubuntu /home/ubuntu/k3s.yaml
