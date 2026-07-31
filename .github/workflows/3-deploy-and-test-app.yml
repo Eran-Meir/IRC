@@ -94,6 +94,11 @@ jobs:
       - name: Apply Kubernetes Manifests
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
+            sudo kubectl create secret docker-registry ghcr-secret \
+              --docker-server=ghcr.io \
+              --docker-username=${{ github.actor }} \
+              --docker-password=${{ secrets.GITHUB_TOKEN }} \
+              --docker-email=github-actions@github.com --dry-run=client -o yaml | sudo kubectl apply -f - && \
             sed -i 's|${{ env.IMAGE_NAME }}:latest|${{ env.IMAGE_NAME }}:${{ github.sha }}|g' ~/deploy/deployment.yaml && \
             sudo kubectl apply -f ~/deploy/valkey.yaml && \
             sudo kubectl apply -f ~/deploy/deployment.yaml && \
