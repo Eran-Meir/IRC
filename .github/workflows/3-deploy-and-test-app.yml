@@ -175,8 +175,8 @@ jobs:
         uses: vlaurin/action-ghcr-prune@v0.5.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          organization: ${{ github.repository_owner }}
+          user: ${{ github.repository_owner }}
           container: ircd
           dry-run: false
           keep-last: 4
-          untagged: true
+          prune-untagged: true
