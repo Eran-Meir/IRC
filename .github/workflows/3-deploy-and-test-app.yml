@@ -88,6 +88,7 @@ jobs:
 
       - name: Copy Manifests to Server
         run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} "rm -rf ~/deploy"
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key \
             -r services/ircd/deploy ubuntu@${SERVER_IP}:~/deploy
 
