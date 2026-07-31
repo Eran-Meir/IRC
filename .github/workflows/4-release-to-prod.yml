@@ -2,22 +2,76 @@ name: 4. Release to PROD
 on:
   workflow_dispatch:
 
+env:
+  IMAGE_NAME: ghcr.io/eran-meir/irc/ircd
+
 jobs:
-  release-prod:
+  # ─────────────────────────────────────────────────────────
+  # Job 1: Promote the tested image to production tag
+  # ─────────────────────────────────────────────────────────
+  promote:
+    name: Promote Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag Latest as Production
+        run: |
+          docker pull ${{ env.IMAGE_NAME }}:latest --platform linux/arm64
+          docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_NAME }}:prod
+          docker push ${{ env.IMAGE_NAME }}:prod
+          echo "✅ Image promoted to production tag"
+
+  # ─────────────────────────────────────────────────────────
+  # Job 2: Deploy to production cluster
+  # ─────────────────────────────────────────────────────────
+  deploy-prod:
+    name: Deploy to PROD K3s
+    needs: promote
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Note: Since the image is already built and pushed to ghcr.io by step 3,
-      # this job will simply update the k8s manifests for the PROD cluster
-      # to use the new image tag and apply them.
-      
-      - name: Deploy to PROD Cluster
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Write OCI Key File
         run: |
-          echo "Connecting to PROD k3s cluster..."
-          echo "Updating deployment image to ghcr.io/eran-meir/irc/ircd:${{ github.sha }}"
-          # We will implement the kubectl apply steps here in Phase 2
+          cat << 'EOF' > terraform/environments/prod/api_key.pem
+          ${{ secrets.OCI_PRIVATE_KEY }}
+          EOF
+
+      - name: Get PROD Server IP and SSH Key from Terraform State
+        env:
+          AWS_REQUEST_CHECKSUM_CALCULATION: "WHEN_REQUIRED"
+        run: |
+          echo "⚠️ PROD environment not yet provisioned. Skipping deployment."
+          echo "To enable: provision the prod environment first, then update this workflow."
+          # TODO: Uncomment when prod environment is ready
+          # terraform init ...
+          # SERVER_IP=$(terraform output -raw server_public_ip)
+          # terraform output -raw ssh_private_key > $HOME/.ssh/deploy_key
+
+  # ─────────────────────────────────────────────────────────
+  # Job 3: Verify production deployment
+  # ─────────────────────────────────────────────────────────
+  verify-prod:
+    name: PROD Smoke Test
+    needs: deploy-prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Production Verification
+        run: |
+          echo "⚠️ PROD verification not yet configured."
+          echo "Will be enabled after prod environment is provisioned."

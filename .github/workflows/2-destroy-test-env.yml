@@ -3,7 +3,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  destroy-test:
+  # ─────────────────────────────────────────────────────────
+  # Job 1: Plan the destruction
+  # ─────────────────────────────────────────────────────────
+  plan-destroy:
+    name: Terraform Plan Destroy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -32,14 +36,54 @@ jobs:
             -backend-config="secret_key=${{ secrets.OCI_S3_SECRET_KEY }}"
         working-directory: terraform/environments/test
 
-      - name: Terraform Destroy
+      - name: Terraform Plan Destroy
         env:
           AWS_REQUEST_CHECKSUM_CALCULATION: "WHEN_REQUIRED"
         run: |
-          terraform destroy -auto-approve \
+          terraform plan -destroy \
             -var="tenancy_ocid=${{ secrets.OCI_TENANCY_OCID }}" \
             -var="user_ocid=${{ secrets.OCI_USER_OCID }}" \
             -var="fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
             -var="region=${{ secrets.OCI_REGION }}" \
-            -var="compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}"
+            -var="compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
+            -out=tfplan-destroy
+        working-directory: terraform/environments/test
+
+      - name: Upload Destroy Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-destroy
+          path: |
+            terraform/environments/test/tfplan-destroy
+            terraform/environments/test/.terraform
+            terraform/environments/test/.terraform.lock.hcl
+            terraform/environments/test/api_key.pem
+
+  # ─────────────────────────────────────────────────────────
+  # Job 2: Execute the destruction
+  # ─────────────────────────────────────────────────────────
+  destroy:
+    name: Terraform Destroy
+    needs: plan-destroy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Download Destroy Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-destroy
+          path: terraform/environments/test
+
+      - name: Terraform Destroy
+        env:
+          AWS_REQUEST_CHECKSUM_CALCULATION: "WHEN_REQUIRED"
+        run: |
+          terraform apply tfplan-destroy
         working-directory: terraform/environments/test

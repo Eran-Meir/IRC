@@ -3,7 +3,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  provision-test:
+  # ─────────────────────────────────────────────────────────
+  # Job 1: Initialize Terraform and generate a plan
+  # ─────────────────────────────────────────────────────────
+  plan:
+    name: Terraform Plan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -32,14 +36,62 @@ jobs:
             -backend-config="secret_key=${{ secrets.OCI_S3_SECRET_KEY }}"
         working-directory: terraform/environments/test
 
-      - name: Terraform Apply
+      - name: Terraform Plan
         env:
           AWS_REQUEST_CHECKSUM_CALCULATION: "WHEN_REQUIRED"
         run: |
-          terraform apply -auto-approve \
+          terraform plan \
             -var="tenancy_ocid=${{ secrets.OCI_TENANCY_OCID }}" \
             -var="user_ocid=${{ secrets.OCI_USER_OCID }}" \
             -var="fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
             -var="region=${{ secrets.OCI_REGION }}" \
-            -var="compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}"
+            -var="compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
+            -out=tfplan
+        working-directory: terraform/environments/test
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: |
+            terraform/environments/test/tfplan
+            terraform/environments/test/.terraform
+            terraform/environments/test/.terraform.lock.hcl
+            terraform/environments/test/api_key.pem
+
+  # ─────────────────────────────────────────────────────────
+  # Job 2: Apply the approved plan
+  # ─────────────────────────────────────────────────────────
+  apply:
+    name: Terraform Apply
+    needs: plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/environments/test
+
+      - name: Terraform Apply
+        env:
+          AWS_REQUEST_CHECKSUM_CALCULATION: "WHEN_REQUIRED"
+        run: |
+          terraform apply tfplan
+        working-directory: terraform/environments/test
+
+      - name: Show Outputs
+        env:
+          AWS_REQUEST_CHECKSUM_CALCULATION: "WHEN_REQUIRED"
+        run: |
+          echo "=== Infrastructure Outputs ==="
+          terraform output
         working-directory: terraform/environments/test
