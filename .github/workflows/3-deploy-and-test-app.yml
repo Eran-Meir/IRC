@@ -92,12 +92,6 @@ jobs:
           scp -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key \
             -r services/ircd/deploy ubuntu@${SERVER_IP}:~/deploy
 
-      - name: Authorize Cloud Shell SSH Key
-        run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
-            grep -q 'eranmeir90@3718d071506f' ~/.ssh/authorized_keys || echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDSHxKNPrSxvc8enMNb7aRry7+9CB3GDc9x+tWgLlkVFc33AAj08a3ARsoGebxHjp9AHS5zL86XlYMzMPOcJxWemDJwWVU0uUrMUHnTWuGah3Lm3736TB7jqIbzAUrqVTadFPUmuEaVZFa+kz08T5XntrCH/wPFFveGYqF86ZoZi8UBQk+5uvxu+kiRNWZKUKxF//jwaplC1NqsbFq3x6uPLZlZbts9J0u4zHrH51WjCj7IicwmPutR8RKZ6UurflvLEcYiihU+kRnJl6pwZwh8DwtwG4I1xJ8da9/PfQy0kTS8jlgC8KaOQX8nZ5tN7hRstgr0HR0AVW1mpwfxURjPOmobiGA7MGnmsWIx/HtSZptFpxUfxUMOtRJtenaB40P5TjfdXezoMu6ne9SXYiQNfkA4T3c7MFfRmvbK/a2llsHKfgdLM/aGwEWsaL53wN/+DBlbjIBisqiBIVIIViefOat5O0KYOYjQDTBA6E35DzVnFs3pvLZOl6Dev7DXhzc= eranmeir90@3718d071506f' >> ~/.ssh/authorized_keys \
-          "
-
       - name: Apply Kubernetes Manifests
         run: |
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
