@@ -28,7 +28,7 @@ jobs:
       - name: Build and Push Go IRCd (ARM64)
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./services/ircd
           file: ./services/ircd/Dockerfile
           platforms: linux/arm64
           push: true
