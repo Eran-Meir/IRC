@@ -15,6 +15,12 @@ spec:
           enabled: false
         grafana:
           adminPassword: "IrcAdminPassword2026!"
+          additionalDataSources:
+            - name: Loki
+              type: loki
+              uid: loki
+              url: http://loki-stack.monitoring.svc.cluster.local:3100
+              access: proxy
           service:
             type: LoadBalancer
             port: 3000

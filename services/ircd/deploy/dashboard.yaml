@@ -17,6 +17,7 @@ data:
         {
           "type": "timeseries",
           "title": "CPU Usage (Cores)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
           "targets": [
             {
@@ -28,6 +29,7 @@ data:
         {
           "type": "timeseries",
           "title": "Memory Usage (Bytes)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
           "targets": [
             {
@@ -39,6 +41,7 @@ data:
         {
           "type": "timeseries",
           "title": "Network Traffic (Bytes/sec) - Proxy for TCP Load",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 },
           "targets": [
             {
