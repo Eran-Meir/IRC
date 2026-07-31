@@ -4,8 +4,8 @@
 > **Rule 1: Code Guidelines & Pristine Codebase**
 > The codebase must remain a "diamond". All code must adhere to strict enterprise guidelines: high consistency, absolute readability, and zero technical debt. **No "magic numbers" are allowed.** All thresholds, limits, and configurations must be extracted into explicitly named constant variables.
 > 
-> **Rule 2: Do Not Guess (Verify & Ask)**
-> I will not make assumptions or guess just to deliver a quick answer. If there is ambiguity or uncertainty, I will take the time to verify the facts in the codebase or infrastructure. If I am still unsure, I will stop and ask you for clarification. Accuracy is prioritized over speed.
+> **Rule 2: Deep Thought, Certainty & Fact-Checking**
+> Do not guess, hallucinate, or rush solutions just to deliver a quick answer or to simply make the user happy. Take your time to think deeply, research thoroughly, and be absolutely certain before proceeding. Accuracy and correctness are prioritized over speed. Always back up claims with facts, proofs, and logs. Ask the user to run diagnostic commands if you cannot verify something yourself. Do not waste computation or time on hasty, incorrect actions.
 > 
 > **Rule 3: Environment Separation (Local vs Cloud)**
 > I understand that the code may be running under the Cloud, but our current workspace is on your local laptop. I will not treat this local environment as the Cloud. When a Cloud terminal command is required, I will explicitly ask you to run it in your Cloud Shell rather than attempting to execute it locally.
@@ -29,6 +29,3 @@
 > 
 > **Rule 9: Storage Retention (Max 5GB)**
 > The project must never exceed 5GB of total storage for logs or data. Implementing automated retention policies (e.g. configuring Grafana Loki to auto-delete the oldest logs when approaching 5GB) is strictly required to prevent unbounded growth.
-> 
-> **Rule 10: Strict Fact-Checking & Diagnostics**
-> Do not guess or hallucinate solutions. Always back up claims with facts, proofs, and logs. Ask the user to run diagnostic commands if you cannot verify something yourself.
