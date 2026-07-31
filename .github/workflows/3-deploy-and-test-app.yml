@@ -116,7 +116,7 @@ jobs:
         run: |
           echo "Waiting for ArgoCD to sync and deploy image SHA: ${{ github.sha }}..."
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
-            TIMEOUT=180; \
+            TIMEOUT=300; \
             ELAPSED=0; \
             while [ \$ELAPSED -lt \$TIMEOUT ]; do \
               RUNNING_IMAGE=\$(sudo kubectl get pods -l app=ircd -o jsonpath='{.items[?(@.status.phase==\"Running\")].spec.containers[0].image}'); \
