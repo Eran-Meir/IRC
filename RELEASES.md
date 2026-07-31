@@ -5,6 +5,7 @@
 * Deployed `kube-prometheus-stack` (Grafana & Prometheus) via ArgoCD GitOps, strictly tuned for memory efficiency and exposed via Port 3000 LoadBalancer.
 * Deployed `loki-stack` (Loki & Promtail) via ArgoCD with strict 5GB storage limit and 7-day retention period.
 * Updated `cloud-init.yaml` to securely open monitoring ports and automatically bootstrap observability manifests on cluster creation.
+* Created custom GitOps `ConfigMap` for Grafana to dynamically provision a bespoke IRC daemon monitoring dashboard (CPU, Memory, Network Traffic, and Live Loki Chat Logs).
 
 
 ## v0.1.2-alpha (GitOps Verification Test)
