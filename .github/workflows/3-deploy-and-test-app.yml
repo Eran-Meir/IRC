@@ -114,9 +114,9 @@ jobs:
 
       - name: Wait for Pod Rollout
         run: |
-          echo "Waiting up to 60 seconds for pods to be ready..."
+          echo "Waiting up to 180 seconds for pods to be ready..."
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
-            sudo kubectl wait --for=condition=ready pod -l app=ircd --timeout=60s || true && \
+            sudo kubectl wait --for=condition=ready pod -l app=ircd --timeout=180s || true && \
             echo '=== POD STATUS ===' && \
             sudo kubectl get pods -o wide && \
             echo '=== POD LOGS ===' && \
