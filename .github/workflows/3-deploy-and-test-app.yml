@@ -112,15 +112,25 @@ jobs:
           chmod 600 $HOME/.ssh/deploy_key
         working-directory: terraform/environments/test
 
-      - name: Wait for Pod Rollout
+      - name: Wait for GitOps Rollout (SHA Verification)
         run: |
-          echo "Waiting up to 180 seconds for pods to be ready..."
+          echo "Waiting for ArgoCD to sync and deploy image SHA: ${{ github.sha }}..."
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
-            sudo kubectl wait --for=condition=ready pod -l app=ircd --timeout=180s || true && \
-            echo '=== POD STATUS ===' && \
-            sudo kubectl get pods -o wide && \
-            echo '=== POD LOGS ===' && \
-            sudo kubectl logs -l app=ircd --tail=50 \
+            TIMEOUT=180; \
+            ELAPSED=0; \
+            while [ \$ELAPSED -lt \$TIMEOUT ]; do \
+              RUNNING_IMAGE=\$(sudo kubectl get pods -l app=ircd -o jsonpath='{.items[?(@.status.phase==\"Running\")].spec.containers[0].image}'); \
+              if [[ \"\$RUNNING_IMAGE\" == *\"${{ github.sha }}\"* ]]; then \
+                echo '✅ GitOps sync complete! New image is running.'; \
+                exit 0; \
+              fi; \
+              echo 'Still waiting for ArgoCD sync... (Elapsed: '\$ELAPSED's)'; \
+              sleep 10; \
+              ELAPSED=\$((ELAPSED+10)); \
+            done; \
+            echo '❌ Timeout waiting for GitOps rollout.'; \
+            sudo kubectl get pods -o wide; \
+            exit 1; \
           "
 
       - name: Verify IRC Server Responds
