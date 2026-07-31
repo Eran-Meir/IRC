@@ -27,5 +27,6 @@
 > **Rule 8: Bare Minimum & $0 Cost Architecture**
 > Always keep the bare minimum of everything so we don't "waste" resources. The goal is to learn, but to keep the architecture perfectly scalable for the future. You MUST NOT OVERRIDE our 100% FREE BILLING limit (e.g. Oracle Cloud Free Tier). Keep Docker containers slim and optimize the memory footprint to the absolute minimum.
 > 
-> **Rule 9: Storage Retention (Max 5GB)**
-> The project must never exceed 5GB of total storage for logs or data. Implementing automated retention policies (e.g. configuring Grafana Loki to auto-delete the oldest logs when approaching 5GB) is strictly required to prevent unbounded growth.
+> 
+> **Rule 11: Single Source of Truth (Architecture)**
+> The complete and finalized plan for this project's architecture, deployment flows, and GitOps mechanisms is strictly documented in `docs/ARCHITECTURE.md`. You **must** read and adhere to that file before proposing or making any structural changes to the CI/CD pipelines, containerization, or Kubernetes manifests.
