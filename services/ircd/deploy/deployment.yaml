@@ -24,5 +24,3 @@ spec:
         env:
         - name: VALKEY_URL
           value: "valkey:6379"
-      imagePullSecrets:
-      - name: ghcr-secret
