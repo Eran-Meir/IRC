@@ -1,5 +1,12 @@
 # Release History
 
+## v0.2.0-alpha (Observability & Monitoring Stack)
+* **Infrastructure Focus**
+* Deployed `kube-prometheus-stack` (Grafana & Prometheus) via ArgoCD GitOps, strictly tuned for memory efficiency and exposed via Port 3000 LoadBalancer.
+* Deployed `loki-stack` (Loki & Promtail) via ArgoCD with strict 5GB storage limit and 7-day retention period.
+* Updated `cloud-init.yaml` to securely open monitoring ports and automatically bootstrap observability manifests on cluster creation.
+
+
 ## v0.1.2-alpha (GitOps Verification Test)
 * **DevOps Focus**
 * Updated IRCd connection welcome banner to `[Build Version Y (GitOps Verified)]` to strictly test and verify end-to-end continuous deployment via ArgoCD.

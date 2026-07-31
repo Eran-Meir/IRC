@@ -11,6 +11,7 @@ runcmd:
   - iptables -I INPUT -p tcp -m tcp --dport 6667 -j ACCEPT
   - iptables -I INPUT -p tcp -m tcp --dport 80 -j ACCEPT
   - iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+  - iptables -I INPUT -p tcp -m tcp --dport 3000 -j ACCEPT
   - iptables -I INPUT -p tcp -m tcp --dport 6443 -j ACCEPT
   - iptables -I INPUT -p udp -m udp --dport 8472 -j ACCEPT
   - netfilter-persistent save
@@ -51,3 +52,7 @@ runcmd:
           prune: true
           selfHeal: true
     EOF
+
+  # Bootstrap Observability & Monitoring Stack
+  - kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/kube-prometheus-stack.yaml
+  - kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/loki-stack.yaml
