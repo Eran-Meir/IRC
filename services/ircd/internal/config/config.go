@@ -22,7 +22,7 @@ type Config struct {
 
 // Load parses environment variables and returns a Config struct
 func Load() *Config {
-	port := os.Getenv("IRCD_PORT")
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = DefaultIRCPort
 	}
