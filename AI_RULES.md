@@ -30,3 +30,10 @@
 > 
 > **Rule 11: Single Source of Truth (Architecture)**
 > The complete and finalized plan for this project's architecture, deployment flows, and GitOps mechanisms is strictly documented in `docs/ARCHITECTURE.md`. You **must** read and adhere to that file before proposing or making any structural changes to the CI/CD pipelines, containerization, or Kubernetes manifests.
+> 
+> **Rule 12: Continuous Alignment Loop**
+> You must autonomously execute the following checks in a continuous loop during our workflow (decide when appropriate, but always before major commits):
+> 1. Check these Rules to ensure compliance before issuing commands.
+> 2. Ensure we are perfectly aligned with `docs/ARCHITECTURE.md`.
+> 3. Update `RELEASES.md` to explicitly log all new versions, fixes, and changelogs.
+> 4. Keep `README.md` perfectly synced with the current state of the architecture and documentation links.

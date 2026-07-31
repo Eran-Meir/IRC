@@ -18,11 +18,28 @@ This project is built to the absolute gold standard of GitOps and Cloud-Native e
 - **CI/CD:** GitHub Actions -> ArgoCD (GitOps).
 - **Observability:** Prometheus, Grafana, and Loki (Chat Moderation Logging).
 
+### CI/CD Deployment Flow
+```mermaid
+graph TD
+    Developer((Developer)) -->|Push / PR| GitHub[GitHub Repository]
+    
+    subgraph Infra ["Infrastructure Lifecycle (Manual Only)"]
+        GitHub -->|Manual Trigger| ProvTest[Provision Test Env<br/>Terraform + ArgoCD + Monitoring]
+        GitHub -->|Manual Trigger| DestTest[Destroy Test Env<br/>Wipes Cluster & Monitoring]
+    end
+
+    subgraph App ["Application Lifecycle (GitOps)"]
+        GitHub -->|Manual Trigger| DepTest[Deploy Code to Test Env<br/>Build & Update Manifest]
+        DepTest --> ArgoCD[ArgoCD Syncs Automatically]
+        GitHub -->|Manual Trigger| DepProd[Deploy Code to PROD Env<br/>Strictly Manual]
+    end
+```
+
 ## 🚀 Environments
 1. **Test Environment (1 Node):** Internal testing and load verification.
 2. **Production Environment (2 Nodes):** High-Availability active-active cluster with 100% uptime via rolling restarts.
 
 ## 📖 Documentation
-- [Implementation Plan](IMPLEMENTATION_PLAN.md) - The detailed DevOps and Architectural strategy.
+- [Architecture & DevOps Plan](docs/ARCHITECTURE.md) - The detailed GitOps and infrastructure strategy.
 - [AI Rules](AI_RULES.md) - The strict coding and operational constraints for this repository.
 - [Release History](RELEASES.md) - Changelog for all deployments and feature rollouts.
