@@ -31,8 +31,3 @@ variable "memory_in_gbs" {
   type        = number
   default     = 6
 }
-
-variable "ssh_public_key" {
-  description = "Public SSH key to access the instances"
-  type        = string
-}

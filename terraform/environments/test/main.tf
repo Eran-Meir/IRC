@@ -14,7 +14,6 @@ variable "fingerprint" {}
 
 variable "region" {}
 variable "compartment_ocid" {}
-variable "ssh_public_key" {}
 
 provider "oci" {
   tenancy_ocid     = var.tenancy_ocid
@@ -28,10 +27,14 @@ module "test_cluster" {
   source           = "../../modules/oci-k3s-cluster"
   environment      = "test"
   compartment_ocid = var.compartment_ocid
-  ssh_public_key   = var.ssh_public_key
   instance_count   = 1
 }
 
 output "test_node_ips" {
   value = module.test_cluster.instance_public_ips
+}
+
+output "ssh_private_key" {
+  value     = module.test_cluster.ssh_private_key
+  sensitive = true
 }

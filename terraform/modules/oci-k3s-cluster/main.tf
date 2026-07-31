@@ -4,7 +4,17 @@ terraform {
       source  = "oracle/oci"
       version = ">= 5.0.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = ">= 4.0.0"
+    }
   }
+}
+
+# Auto-generate SSH key pair — no manual key management needed
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
 # ------------------------------------------------------------------------------
@@ -159,7 +169,7 @@ resource "oci_core_instance" "k3s_node" {
   }
 
   metadata = {
-    ssh_authorized_keys = var.ssh_public_key
+    ssh_authorized_keys = tls_private_key.ssh.public_key_openssh
     user_data           = filebase64("${path.module}/cloud-init.yaml")
   }
 }

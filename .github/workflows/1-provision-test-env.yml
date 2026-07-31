@@ -20,18 +20,6 @@ jobs:
           ${{ secrets.OCI_PRIVATE_KEY }}
           EOF
 
-      - name: Debug OCI Key File
-        run: |
-          echo "File size and permissions:"
-          ls -l api_key.pem
-          echo "Line count:"
-          wc -l api_key.pem
-          echo "First line:"
-          head -n 1 api_key.pem
-          echo "Last line:"
-          tail -n 1 api_key.pem
-        working-directory: terraform/environments/test
-
       - name: Terraform Init
         env:
           AWS_REQUEST_CHECKSUM_CALCULATION: "WHEN_REQUIRED"
@@ -53,6 +41,5 @@ jobs:
             -var="user_ocid=${{ secrets.OCI_USER_OCID }}" \
             -var="fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
             -var="region=${{ secrets.OCI_REGION }}" \
-            -var="compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
-            -var="ssh_public_key=${{ vars.SSH_PUBLIC_KEY }}"
+            -var="compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}"
         working-directory: terraform/environments/test
