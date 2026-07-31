@@ -102,7 +102,8 @@ jobs:
             sed -i 's|${{ env.IMAGE_NAME }}:latest|${{ env.IMAGE_NAME }}:${{ github.sha }}|g' ~/deploy/deployment.yaml && \
             sudo kubectl apply -f ~/deploy/valkey.yaml && \
             sudo kubectl apply -f ~/deploy/deployment.yaml && \
-            sudo kubectl apply -f ~/deploy/service.yaml \
+            sudo kubectl apply -f ~/deploy/service.yaml && \
+            sudo kubectl rollout restart deployment ircd
           "
 
   # ─────────────────────────────────────────────────────────
