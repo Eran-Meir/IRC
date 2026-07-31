@@ -25,3 +25,4 @@ This project is built to the absolute gold standard of GitOps and Cloud-Native e
 ## 📖 Documentation
 - [Implementation Plan](IMPLEMENTATION_PLAN.md) - The detailed DevOps and Architectural strategy.
 - [AI Rules](AI_RULES.md) - The strict coding and operational constraints for this repository.
+- [Release History](RELEASES.md) - Changelog for all deployments and feature rollouts.
