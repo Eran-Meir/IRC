@@ -86,6 +86,16 @@ resource "oci_core_security_list" "public_sl" {
     }
   }
 
+  # Allow Grafana UI (3000)
+  ingress_security_rules {
+    protocol = "6" # TCP
+    source   = "0.0.0.0/0"
+    tcp_options {
+      min = 3000
+      max = 3000
+    }
+  }
+
   # Allow IRC protocol (6667)
   ingress_security_rules {
     protocol = "6" # TCP
