@@ -122,7 +122,7 @@ jobs:
           ${{ secrets.OCI_PRIVATE_KEY }}
           EOF
 
-      - name: Get Server IP from Terraform State
+      - name: Get Server IP and SSH Key from Terraform State
         env:
           AWS_REQUEST_CHECKSUM_CALCULATION: "WHEN_REQUIRED"
         run: |
@@ -135,6 +135,11 @@ jobs:
           
           SERVER_IP=$(terraform output -raw server_public_ip)
           echo "SERVER_IP=${SERVER_IP}" >> $GITHUB_ENV
+          
+          # Fetch the auto-generated SSH private key from Terraform state
+          mkdir -p $HOME/.ssh
+          terraform output -raw ssh_private_key > $HOME/.ssh/deploy_key
+          chmod 600 $HOME/.ssh/deploy_key
         working-directory: terraform/environments/test
 
       - name: Wait for Pod Rollout
