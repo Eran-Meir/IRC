@@ -138,14 +138,38 @@ jobs:
         working-directory: terraform/environments/test
 
       - name: Wait for Pod Rollout
-        run: sleep 30
+        run: |
+          echo "Waiting up to 60 seconds for pods to be ready..."
+          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
+            sudo kubectl wait --for=condition=ready pod -l app=ircd --timeout=60s || true && \
+            echo '=== POD STATUS ===' && \
+            sudo kubectl get pods -o wide && \
+            echo '=== POD LOGS ===' && \
+            sudo kubectl logs -l app=ircd --tail=50 \
+          "
 
       - name: Verify IRC Server Responds
         run: |
           echo "Connecting to IRC server at ${SERVER_IP}:6667..."
-          RESPONSE=$(echo "" | nc -w 5 ${SERVER_IP} 6667 || true)
-          echo "Server responded: $RESPONSE"
-          if echo "$RESPONSE" | grep -q "Version"; then
+          cat << 'EOF' > test.py
+          import socket, sys
+          try:
+              s = socket.socket()
+              s.settimeout(5)
+              s.connect((sys.argv[1], 6667))
+              data = s.recv(1024).decode()
+              print(data)
+              s.close()
+              if "Version" in data:
+                  sys.exit(0)
+              else:
+                  sys.exit(1)
+          except Exception as e:
+              print(f"Error: {e}")
+              sys.exit(1)
+          EOF
+          
+          if python3 test.py ${SERVER_IP}; then
             echo "✅ Smoke test PASSED — Server is alive and responding!"
           else
             echo "❌ Smoke test FAILED — No valid response from server."
