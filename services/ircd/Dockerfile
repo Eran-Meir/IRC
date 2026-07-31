@@ -5,13 +5,12 @@ FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-# Copy the go.mod first
-COPY go.mod ./
+# Copy everything first so go mod tidy can see all imports
+COPY . .
+
+# Resolve dependencies (generates go.sum from go.mod + source imports)
 RUN go mod tidy
 RUN go mod download
-
-# Copy the actual source code
-COPY . .
 
 # Build the binary specifically for Linux (statically linked)
 # CGO_ENABLED=0 guarantees there are no C-library dependencies
