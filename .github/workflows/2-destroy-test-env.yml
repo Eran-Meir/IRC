@@ -41,6 +41,5 @@ jobs:
             -var="user_ocid=${{ secrets.OCI_USER_OCID }}" \
             -var="fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
             -var="region=${{ secrets.OCI_REGION }}" \
-            -var="compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
-            -var="ssh_public_key=${{ vars.SSH_PUBLIC_KEY }}"
+            -var="compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}"
         working-directory: terraform/environments/test
