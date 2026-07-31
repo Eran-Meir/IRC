@@ -19,5 +19,5 @@ jobs:
       - name: Deploy to PROD Cluster
         run: |
           echo "Connecting to PROD k3s cluster..."
-          echo "Updating deployment image to ghcr.io/${{ github.repository }}/ircd:${{ github.sha }}"
+          echo "Updating deployment image to ghcr.io/eran-meir/irc/ircd:${{ github.sha }}"
           # We will implement the kubectl apply steps here in Phase 2
