@@ -150,3 +150,23 @@ jobs:
             echo "❌ Smoke test FAILED — No valid response from server."
             exit 1
           fi
+
+  # ─────────────────────────────────────────────────────────
+  # Job 4: Prune Old Images from GHCR (Max 4 Retained)
+  # ─────────────────────────────────────────────────────────
+  prune:
+    name: Prune Old Images
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Prune old versions of the ircd image
+        uses: vlaurin/action-ghcr-prune@v0.5.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          organization: ${{ github.repository_owner }}
+          container: ircd
+          dry-run: false
+          keep-last: 4
+          untagged: true

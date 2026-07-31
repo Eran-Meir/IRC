@@ -55,8 +55,7 @@ The CI/CD pipeline is designed for strict manual control over infrastructure, wh
 - **`2-destroy-test-env.yml`**: Manually executes `terraform destroy`. This deletes the cluster entirely, guaranteeing everything is removed and billing stops.
 
 #### Application Pipelines (Publishing & Deploying)
-- **`3-deploy-and-test-app.yml`**: Compiles the binary and pushes a new container image to GHCR. It then automatically updates `deployment.yaml` in the GitHub repository with the new image SHA. ArgoCD running on the server will automatically detect this Git commit and seamlessly sync the new manifest.
-- **`4-prune-registry.yml`**: An automated, nightly cron job that prunes old images from the GitHub Container Registry (GHCR), ensuring we strictly retain only the 4 most recent images to conserve space.
+- **`3-deploy-and-test-app.yml`**: Compiles the binary, pushes a new container image to GHCR, updates `deployment.yaml` in the GitHub repository, and verifies the GitOps rollout. Upon successful verification, it automatically executes a final job to prune old images from GHCR, strictly retaining only the 4 most recent images to conserve space.
 - **`4-release-to-prod.yml` (STRICTLY MANUAL)**: This workflow will **only** run when you manually trigger it or manually publish a GitHub Release/Tag. It promotes a tested container to the Production cluster. There are zero automated triggers to Production.
 
 ### Integration Testing Strategy (Cross-Pod Communication)
