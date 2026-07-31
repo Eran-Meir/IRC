@@ -1,0 +1,23 @@
+name: 4. Prune Old Images (GHCR)
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run daily at midnight
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  prune:
+    name: Prune Old Images
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Prune old versions of the ircd image
+        uses: vlaurin/action-ghcr-prune@v0.5.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          organization: ${{ github.repository_owner }}
+          container: ircd
+          dry-run: false
+          keep-last: 4
+          untagged: true

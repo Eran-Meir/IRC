@@ -44,68 +44,30 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
 
   # ─────────────────────────────────────────────────────────
-  # Job 2: Deploy manifests to Oracle Cloud K3s cluster
+  # Job 2: Update GitOps Manifests
   # ─────────────────────────────────────────────────────────
   deploy:
-    name: Deploy to K3s
+    name: Update GitOps Manifests
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_wrapper: false
-
-      - name: Write OCI Key File
+      - name: Update Image Tag in Manifest
         run: |
-          cat << 'EOF' > terraform/environments/test/api_key.pem
-          ${{ secrets.OCI_PRIVATE_KEY }}
-          EOF
+          # Use sed to update the image tag dynamically
+          sed -i 's|image: ghcr.io/eran-meir/irc/ircd:.*|image: ghcr.io/eran-meir/irc/ircd:${{ github.sha }}|g' services/ircd/deploy/deployment.yaml
 
-      - name: Get Server IP and SSH Key from Terraform State
-        env:
-          AWS_REQUEST_CHECKSUM_CALCULATION: "WHEN_REQUIRED"
+      - name: Commit and Push Changes
         run: |
-          terraform init \
-            -backend-config="bucket=${{ vars.OCI_TF_STATE_BUCKET }}" \
-            -backend-config="region=us-east-1" \
-            -backend-config="endpoints={ s3 = \"https://${{ vars.OCI_NAMESPACE }}.compat.objectstorage.${{ secrets.OCI_REGION }}.oraclecloud.com\" }" \
-            -backend-config="access_key=${{ secrets.OCI_S3_ACCESS_KEY }}" \
-            -backend-config="secret_key=${{ secrets.OCI_S3_SECRET_KEY }}"
-          
-          SERVER_IP=$(terraform output -raw server_public_ip)
-          echo "Dynamically fetched Server IP: $SERVER_IP"
-          echo "SERVER_IP=${SERVER_IP}" >> $GITHUB_ENV
-          
-          # Fetch the auto-generated SSH private key from Terraform state
-          mkdir -p $HOME/.ssh
-          terraform output -raw ssh_private_key > $HOME/.ssh/deploy_key
-          chmod 600 $HOME/.ssh/deploy_key
-        working-directory: terraform/environments/test
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "GitOps: Update ircd image to ${{ github.sha }}" || echo "No changes to commit"
+          git push
 
-      - name: Copy Manifests to Server
-        run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} "rm -rf ~/deploy"
-          scp -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key \
-            -r services/ircd/deploy ubuntu@${SERVER_IP}:~/deploy
-
-      - name: Apply Kubernetes Manifests
-        run: |
-          ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
-            sudo kubectl create secret docker-registry ghcr-secret \
-              --docker-server=ghcr.io \
-              --docker-username=${{ github.actor }} \
-              --docker-password=${{ secrets.GITHUB_TOKEN }} \
-              --docker-email=github-actions@github.com --dry-run=client -o yaml | sudo kubectl apply -f - && \
-            sed -i 's|${{ env.IMAGE_NAME }}:latest|${{ env.IMAGE_NAME }}:${{ github.sha }}|g' ~/deploy/deployment.yaml && \
-            sudo kubectl apply -f ~/deploy/valkey.yaml && \
-            sudo kubectl apply -f ~/deploy/deployment.yaml && \
-            sudo kubectl apply -f ~/deploy/service.yaml && \
-            sudo kubectl rollout restart deployment ircd
-          "
 
   # ─────────────────────────────────────────────────────────
   # Job 3: Verify the deployment is healthy

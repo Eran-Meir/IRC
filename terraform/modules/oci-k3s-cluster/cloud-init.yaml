@@ -20,3 +20,34 @@ runcmd:
 
   # Wait for k3s to be ready
   - sleep 15
+
+  # Install ArgoCD
+  - export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+  - kubectl create namespace argocd
+  - kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+  # Wait for ArgoCD CRDs to be established before creating the Application
+  - sleep 15
+
+  # Bootstrap the IRCd application via ArgoCD Application CRD
+  - |
+    cat <<EOF | kubectl apply -f -
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: ircd
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/Eran-Meir/IRC.git'
+        path: services/ircd/deploy
+        targetRevision: HEAD
+      destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: default
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+    EOF
