@@ -7,7 +7,11 @@ packages:
   - wget
 
 runcmd:
-  # Open firewall ports on the Ubuntu OS itself (Oracle also has network-level security lists, but iptables runs on the VM)
+  # Open firewall ports on the Ubuntu OS itself (Oracle has netfilter REJECT rules on FORWARD by default which breaks k3s ingress/LoadBalancer)
+  - iptables -P INPUT ACCEPT
+  - iptables -P FORWARD ACCEPT
+  - iptables -F INPUT
+  - iptables -F FORWARD
   - iptables -I INPUT -p tcp -m tcp --dport 6667 -j ACCEPT
   - iptables -I INPUT -p tcp -m tcp --dport 80 -j ACCEPT
   - iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT

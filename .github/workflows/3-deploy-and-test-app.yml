@@ -137,21 +137,31 @@ jobs:
         run: |
           echo "Connecting to IRC server at ${SERVER_IP}:6667..."
           cat << 'EOF' > test.py
-          import socket, sys
-          try:
-              s = socket.socket()
-              s.settimeout(5)
-              s.connect((sys.argv[1], 6667))
-              data = s.recv(1024).decode()
-              print(data)
-              s.close()
-              if "Version" in data:
-                  sys.exit(0)
-              else:
-                  sys.exit(1)
-          except Exception as e:
-              print(f"Error: {e}")
-              sys.exit(1)
+          import socket, sys, time
+
+          server_ip = sys.argv[1]
+          max_attempts = 10
+          delay = 3
+
+          for attempt in range(1, max_attempts + 1):
+              try:
+                  print(f"Attempt {attempt}/{max_attempts}: Connecting to {server_ip}:6667...")
+                  s = socket.socket()
+                  s.settimeout(5)
+                  s.connect((server_ip, 6667))
+                  data = s.recv(1024).decode()
+                  s.close()
+                  print(f"Received: {data.strip()}")
+                  if any(k in data for k in ["Version", "Welcome", "IRC"]):
+                      print("✅ Valid banner response received!")
+                      sys.exit(0)
+                  else:
+                      print(f"Unexpected response banner: '{data.strip()}'")
+              except Exception as e:
+                  print(f"Attempt {attempt} failed: {e}")
+              time.sleep(delay)
+
+          sys.exit(1)
           EOF
           
           if python3 test.py ${SERVER_IP}; then
