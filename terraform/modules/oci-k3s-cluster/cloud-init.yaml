@@ -58,5 +58,10 @@ runcmd:
     EOF
 
   # Bootstrap Observability & Monitoring Stack
+  - kubectl create namespace monitoring || true
+  - |
+    if [ -n "${grafana_admin_password}" ]; then
+      kubectl create secret generic grafana-admin-secret -n monitoring --from-literal=admin-user=admin --from-literal=admin-password="${grafana_admin_password}" --dry-run=client -o yaml | kubectl apply -f -
+    fi
   - kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/kube-prometheus-stack.yaml
   - kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/loki-stack.yaml

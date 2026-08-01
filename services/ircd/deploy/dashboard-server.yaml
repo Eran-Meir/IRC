@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-server
+  namespace: default
+  labels:
+    grafana_dashboard: "1"
+data:
+  server-overview.json: |-
+    {
+      "title": "🖥️ Server & Infrastructure Overview",
+      "tags": ["infrastructure", "server", "nodes"],
+      "timezone": "browser",
+      "refresh": "5s",
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Node CPU Usage (%)",
+          "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[2m])) * 100)",
+              "legendFormat": "CPU Usage (%)"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Node Memory Usage (Bytes)",
+          "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+              "legendFormat": "Used Memory (Bytes)"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Node Network Bandwidth (Bytes/sec)",
+          "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "rate(node_network_receive_bytes_total{device!~\"lo|veth.*\"}[2m])",
+              "legendFormat": "Inbound ({{device}})"
+            },
+            {
+              "expr": "rate(node_network_transmit_bytes_total{device!~\"lo|veth.*\"}[2m])",
+              "legendFormat": "Outbound ({{device}})"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "System Load Average (1m, 5m, 15m)",
+          "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "node_load1",
+              "legendFormat": "1m Load"
+            },
+            {
+              "expr": "node_load5",
+              "legendFormat": "5m Load"
+            },
+            {
+              "expr": "node_load15",
+              "legendFormat": "15m Load"
+            }
+          ]
+        }
+      ],
+      "schemaVersion": 30
+    }

@@ -49,6 +49,7 @@ jobs:
             -var="fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
             -var="region=${{ secrets.OCI_REGION }}" \
             -var="compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
+            -var="grafana_admin_password=${{ secrets.GRAFANA_ADMIN_PASSWORD }}" \
             -out=tfplan
         working-directory: terraform/environments/test
 

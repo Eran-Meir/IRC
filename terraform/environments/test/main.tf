@@ -14,6 +14,10 @@ variable "fingerprint" {}
 
 variable "region" {}
 variable "compartment_ocid" {}
+variable "grafana_admin_password" {
+  default   = ""
+  sensitive = true
+}
 
 provider "oci" {
   tenancy_ocid     = var.tenancy_ocid
@@ -24,10 +28,11 @@ provider "oci" {
 }
 
 module "test_cluster" {
-  source           = "../../modules/oci-k3s-cluster"
-  environment      = "test"
-  compartment_ocid = var.compartment_ocid
-  instance_count   = 1
+  source                 = "../../modules/oci-k3s-cluster"
+  environment            = "test"
+  compartment_ocid       = var.compartment_ocid
+  instance_count         = 1
+  grafana_admin_password = var.grafana_admin_password
 }
 
 output "test_node_ips" {

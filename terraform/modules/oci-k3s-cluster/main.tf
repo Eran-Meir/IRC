@@ -180,6 +180,6 @@ resource "oci_core_instance" "k3s_node" {
 
   metadata = {
     ssh_authorized_keys = tls_private_key.ssh.public_key_openssh
-    user_data           = filebase64("${path.module}/cloud-init.yaml")
+    user_data           = base64encode(templatefile("${path.module}/cloud-init.yaml", { grafana_admin_password = var.grafana_admin_password }))
   }
 }

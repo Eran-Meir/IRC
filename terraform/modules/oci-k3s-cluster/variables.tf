@@ -31,3 +31,10 @@ variable "memory_in_gbs" {
   type        = number
   default     = 6
 }
+
+variable "grafana_admin_password" {
+  description = "Custom admin password for Grafana UI"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

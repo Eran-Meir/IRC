@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-app
+  namespace: default
+  labels:
+    grafana_dashboard: "1"
+data:
+  app-overview.json: |-
+    {
+      "title": "💬 IRC Application & Services Overview",
+      "tags": ["ircd", "application", "services"],
+      "timezone": "browser",
+      "refresh": "5s",
+      "panels": [
+        {
+          "type": "stat",
+          "title": "IRCd Active TCP Connections",
+          "gridPos": { "x": 0, "y": 0, "w": 12, "h": 6 },
+          "targets": [
+            {
+              "expr": "sum(container_sockets{container=\"ircd\"}) or vector(1)",
+              "legendFormat": "Active Connections"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "IRCd Container CPU Usage (Cores)",
+          "gridPos": { "x": 12, "y": 0, "w": 12, "h": 6 },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{container=\"ircd\"}[2m]))",
+              "legendFormat": "IRCd CPU"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "IRCd & Valkey Memory Usage (MB)",
+          "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "sum(container_memory_usage_bytes{container=\"ircd\"}) / 1024 / 1024",
+              "legendFormat": "IRCd Memory (MB)"
+            },
+            {
+              "expr": "sum(container_memory_usage_bytes{container=\"valkey\"}) / 1024 / 1024",
+              "legendFormat": "Valkey Memory (MB)"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "IRC Command / Access Events Rate",
+          "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "rate(container_network_receive_bytes_total{container=\"ircd\"}[2m])",
+              "legendFormat": "IRCd Inbound Throughput"
+            }
+          ]
+        },
+        {
+          "type": "logs",
+          "title": "Loki Stream: IRC Daemon & Services Logs",
+          "gridPos": { "x": 0, "y": 14, "w": 24, "h": 12 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "targets": [
+            {
+              "expr": "{app=\"ircd\"}",
+              "refId": "A"
+            }
+          ]
+        }
+      ],
+      "schemaVersion": 30
+    }
