@@ -1,0 +1,36 @@
+# Terraform & Key files
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform/
+.terraform.lock.hcl
+*.pem
+*.key
+*.pub
+deploy_key
+api_key.pem
+tfplan
+tfplan-destroy
+
+# OS & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Go build & test artifacts
+services/ircd/ircd
+services/ircd/bin/
+*.exe
+*.test
+*.prof
+
+# Python
+__pycache__/
+*.pyc
+
+# Local / Scratch directories
+scratch/
+tmp/

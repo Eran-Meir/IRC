@@ -14,7 +14,7 @@ spec:
         alertmanager:
           enabled: false
         grafana:
-          adminPassword: "IrcAdminPassword2026!"
+          adminExistingSecret: "grafana-admin-secret"
           additionalDataSources:
             - name: Loki
               type: loki

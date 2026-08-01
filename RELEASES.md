@@ -1,5 +1,16 @@
 # Release History
 
+## v0.2.1-alpha (Security Audit & CI/CD Hardening)
+* **Security & Compliance**
+  * Performed security audit to ensure 100% compliance with Rule 5 (Strict Confidentiality).
+  * Added root `.gitignore` to prevent sensitive credentials (`*.pem`, `*.key`, `deploy_key`, `*.tfstate`) from ever being committed.
+  * Extracted hardcoded Grafana admin credentials in `kube-prometheus-stack.yaml` to Kubernetes `adminExistingSecret`.
+* **DevOps & CI/CD**
+  * Upgraded all GitHub Actions (`checkout`, `setup-terraform`, `docker/*`, `artifact/*`, `ghcr-prune`) to modern major versions targeting Node 24.
+  * Added `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` to eliminate all runtime deprecation warnings.
+  * Resolved Oracle Cloud Ubuntu `iptables FORWARD` chain REJECT rule in `cloud-init.yaml`.
+  * Added robust connection retry loop and multi-keyword banner matching in integration smoke test (`test.py`).
+
 ## v0.2.0-alpha (Observability & Monitoring Stack)
 * **Infrastructure Focus**
 * Deployed `kube-prometheus-stack` (Grafana & Prometheus) via ArgoCD GitOps, strictly tuned for memory efficiency and exposed via Port 3000 LoadBalancer.
