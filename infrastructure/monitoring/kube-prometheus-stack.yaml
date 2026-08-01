@@ -14,6 +14,7 @@ spec:
         alertmanager:
           enabled: false
         grafana:
+          adminExistingSecret: "grafana-admin-secret"
           additionalDataSources:
             - name: Loki
               type: loki
