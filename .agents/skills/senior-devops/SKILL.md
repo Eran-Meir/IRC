@@ -34,3 +34,9 @@ Maintain 3 dedicated auto-importing Grafana dashboards in `services/ircd/deploy/
 - Use modern major versions of GitHub Actions (`actions/checkout@v6`, `hashicorp/setup-terraform@v4`, `docker/login-action@v4`, `docker/build-push-action@v7`, `actions/upload-artifact@v6`).
 - Include `env: FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` to prevent Node 20 deprecation warning annotations on runners.
 - Integration smoke tests (`test.py`) MUST include retry loops (minimum 10 attempts, 3s delay) to allow network load balancer endpoints to stabilize.
+
+### 6. Marvel Cinematic Universe (MCU) Release Codenames
+All releases and container tags follow a chronological Marvel Cinematic Universe milestone progression:
+- **Phase 1 (Foundation)**: `v0.1.0-ironman-mark1`, `v0.2.0-stark-tower`, `v0.3.0-avengers-assemble`
+- **Phase 2 (Services & Web)**: `v0.4.0-age-of-ultron`, `v0.5.0-civil-war`
+- **Phase 3 (Final Production Scale)**: `v1.0.0-endgame` (Production Launch)
