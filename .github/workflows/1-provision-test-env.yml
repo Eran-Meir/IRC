@@ -2,6 +2,9 @@ name: 1. Provision Test Environment
 on:
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ─────────────────────────────────────────────────────────
   # Job 1: Initialize Terraform and generate a plan
@@ -50,7 +53,7 @@ jobs:
         working-directory: terraform/environments/test
 
       - name: Upload Plan Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: tfplan
           path: |
@@ -74,7 +77,7 @@ jobs:
           terraform_wrapper: false
 
       - name: Download Plan Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: tfplan
           path: terraform/environments/test
