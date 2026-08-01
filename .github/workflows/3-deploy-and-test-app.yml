@@ -186,13 +186,12 @@ jobs:
     permissions:
       packages: write
     steps:
-      - name: Prune old versions of the ircd image
-        uses: vlaurin/action-ghcr-prune@v0.6.0
-        continue-on-error: true
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          user: ${{ github.repository_owner }}
-          container: irc/ircd
-          dry-run: false
-          keep-last: 4
-          prune-untagged: true
+      - name: Prune old container versions from GHCR (Keep Last 4)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSIONS=$(gh api "/users/${{ github.repository_owner }}/packages/container/irc%2Fircd/versions" --jq '.[] | select(.metadata.container.tags | length == 0 or (contains(["latest"]) | not)) | .id' 2>/dev/null | tail -n +5) || true
+          for id in $VERSIONS; do
+            echo "Pruning old package version ID: $id"
+            gh api -X DELETE "/users/${{ github.repository_owner }}/packages/container/irc%2Fircd/versions/$id" || true
+          done
