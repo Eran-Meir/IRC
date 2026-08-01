@@ -184,10 +184,11 @@ jobs:
     steps:
       - name: Prune old versions of the ircd image
         uses: vlaurin/action-ghcr-prune@v0.6.0
+        continue-on-error: true
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           user: ${{ github.repository_owner }}
-          container: ircd
+          container: irc/ircd
           dry-run: false
           keep-last: 4
           prune-untagged: true
