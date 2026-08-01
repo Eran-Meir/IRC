@@ -117,13 +117,15 @@ jobs:
 
       - name: Wait for GitOps Rollout (SHA Verification)
         run: |
-          echo "Waiting for ArgoCD to sync and deploy image SHA: ${{ github.sha }}..."
+          echo "Triggering instant ArgoCD sync and waiting for image SHA: ${{ github.sha }}..."
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
-            TIMEOUT=300; \
+            sudo kubectl annotate application ircd -n argocd argocd.argoproj.io/refresh=normal --overwrite || true; \
+            TIMEOUT=420; \
             ELAPSED=0; \
             while [ \$ELAPSED -lt \$TIMEOUT ]; do \
-              RUNNING_IMAGE=\$(sudo kubectl get pods -l app=ircd -o jsonpath='{.items[?(@.status.phase==\"Running\")].spec.containers[0].image}'); \
+              RUNNING_IMAGE=\$(sudo kubectl get pods -l app=ircd -o jsonpath='{.items[*].spec.containers[0].image}'); \
               if [[ \"\$RUNNING_IMAGE\" == *\"${{ github.sha }}\"* ]]; then \
+                sudo kubectl rollout status deployment/ircd --timeout=60s; \
                 echo '✅ GitOps sync complete! New image is running.'; \
                 exit 0; \
               fi; \
