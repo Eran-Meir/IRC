@@ -22,9 +22,20 @@ spec:
               url: http://loki-stack.monitoring.svc.cluster.local:3100
               access: proxy
           service:
-            type: LoadBalancer
+            type: ClusterIP
             port: 3000
             targetPort: 3000
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            annotations:
+              ingress.kubernetes.io/ssl-redirect: "true"
+              traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+              traefik.ingress.kubernetes.io/router.tls: "true"
+            hosts:
+              - ""
+            tls:
+              - secretName: grafana-tls
           resources:
             requests:
               cpu: 50m
