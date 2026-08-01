@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: valkey
-        image: valkey/valkey:7.2.5
+        image: valkey/valkey:7.2.5-alpine
         ports:
         - containerPort: 6379
 ---
