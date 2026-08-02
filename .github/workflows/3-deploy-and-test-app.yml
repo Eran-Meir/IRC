@@ -141,7 +141,7 @@ jobs:
         run: |
           echo "Triggering instant ArgoCD sync and waiting for image SHA: ${{ github.sha }}..."
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
-            sudo kubectl annotate application ircd -n argocd argocd.argoproj.io/refresh=normal --overwrite || true; \
+            sudo kubectl annotate application ircd kube-prometheus-stack -n argocd argocd.argoproj.io/refresh=normal --overwrite || true; \
             TIMEOUT=420; \
             ELAPSED=0; \
             while [ \$ELAPSED -lt \$TIMEOUT ]; do \
