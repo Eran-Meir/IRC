@@ -31,6 +31,7 @@ graph TD
     subgraph App ["Application Lifecycle (GitOps)"]
         GitHub -->|Manual Trigger| DepTest[Deploy Code to Test Env<br/>Build & Update Manifest]
         DepTest --> ArgoCD[ArgoCD Syncs Automatically]
+        GitHub -->|Manual Trigger| StressTest[Stress Test Test Env<br/>50 Client Load Generator]
         GitHub -->|Manual Trigger| DepProd[Deploy Code to PROD Env<br/>Strictly Manual]
     end
 ```

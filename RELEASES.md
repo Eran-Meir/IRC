@@ -1,5 +1,11 @@
 # Release History
 
+## v0.3.0-alpha (Automated High-Concurrency Stress Testing Suite)
+* **DevOps & Testing**
+  * Built dedicated load generator script `scripts/stress_test.py` utilizing Python `asyncio` to manage 50+ concurrent TCP connections.
+  * Created dedicated manual workflow `.github/workflows/5-stress-test-test-env.yml` (`5. Stress Test - Test Environment`).
+  * Configured automatic GitHub Step Summary markdown table output detailing total inbound messages, message throughput rates, and outbound fan-out reads.
+
 ## v0.2.2-alpha (Observability Datasource & True GitOps Alignment)
 * **DevOps & Observability**
   * Configured explicit Prometheus datasource UID and bindings across all Grafana dashboards (`dashboard-master.yaml`, `dashboard-server.yaml`, `dashboard-app.yaml`).
