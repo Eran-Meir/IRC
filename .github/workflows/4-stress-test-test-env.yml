@@ -1,4 +1,4 @@
-name: 5. Stress Test - Test Environment
+name: 4. Stress Test - Test Environment
 on:
   workflow_dispatch:
     inputs:
