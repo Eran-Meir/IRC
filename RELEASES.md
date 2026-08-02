@@ -1,5 +1,11 @@
 # Release History
 
+## v0.3.1-alpha (Grafana Dashboard Units & Unified Master Grid)
+* **DevOps & Dashboard Polish**
+  * Added human-readable Grafana unit formatting (`decbytes`, `Bps`, `percent`, `short`) across all dashboard panels, converting raw bytes into clean MB/GB and Bps into KB/s.
+  * Replaced static pod count metrics in TCP connection panels with live established socket metric `sum(node_netstat_Tcp_CurrEstab)`.
+  * Unified the Master System Overview dashboard (`dashboard-master.yaml`) to show Server Node CPU/Memory/Load, App CPU/Memory, Valkey RAM, Network Bandwidth, and Loki chat logs in a single grid layout.
+
 ## v0.3.0-alpha (Automated High-Concurrency Stress Testing Suite)
 * **DevOps & Testing**
   * Built dedicated load generator script `scripts/stress_test.py` utilizing Python `asyncio` to manage 50+ concurrent TCP connections.
