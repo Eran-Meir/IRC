@@ -1,5 +1,11 @@
 # Release History
 
+## v0.4.1-alpha (High-Resolution 5s Metric Scraping & PodMonitor)
+* **DevOps & Metric Discovery**
+  * Created `services/ircd/deploy/podmonitor.yaml` (`PodMonitor` Custom Resource) to instruct Prometheus Operator to scrape `:9090/metrics` directly from `ircd` pods.
+  * Configured high-resolution `scrapeInterval: 5s` in `kube-prometheus-stack.yaml` to capture short-lived load spikes and sub-minute connection bursts.
+  * Set `podMonitorSelectorNilUsesHelmValues: false` so Prometheus Operator automatically discovers application monitors without label constraint blocks.
+
 ## v0.4.0-alpha (Native IRCd Prometheus Metrics & Connection Tracking)
 * **Application Metrics & Observability**
   * Added native Prometheus Exposition HTTP server (`:9090/metrics`) inside `services/ircd/internal/metrics/metrics.go` with zero external dependencies.
