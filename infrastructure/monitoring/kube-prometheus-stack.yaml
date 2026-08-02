@@ -26,7 +26,13 @@ spec:
             port: 3000
             targetPort: 3000
           ingress:
-            enabled: false
+            enabled: true
+            ingressClassName: traefik
+            annotations:
+              ingress.kubernetes.io/ssl-redirect: "false"
+            hosts:
+              - ""
+            path: "/"
           resources:
             requests:
               cpu: 50m
