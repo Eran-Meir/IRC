@@ -1,5 +1,10 @@
 # Release History
 
+## v0.4.2-alpha (PromQL Metric Aggregation Fix for Active Connections)
+* **DevOps & Dashboard Fix**
+  * Updated PromQL target query in `dashboard-master.yaml` and `dashboard-app.yaml` to `sum(ircd_connected_clients) or vector(0)`.
+  * Aggregates multi-instance Prometheus series into a single scalar value, resolving Grafana stat panel column splitting (`0 0 50`) into one clean unified count.
+
 ## v0.4.1-alpha (High-Resolution 5s Metric Scraping & PodMonitor)
 * **DevOps & Metric Discovery**
   * Created `services/ircd/deploy/podmonitor.yaml` (`PodMonitor` Custom Resource) to instruct Prometheus Operator to scrape `:9090/metrics` directly from `ircd` pods.
