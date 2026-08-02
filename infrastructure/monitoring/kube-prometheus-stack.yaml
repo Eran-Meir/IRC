@@ -13,15 +13,25 @@ spec:
       values: |
         alertmanager:
           enabled: false
+        kubeControllerManager:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+        kubeEtcd:
+          enabled: false
+        kubeProxy:
+          enabled: false
         grafana:
           adminExistingSecret: "grafana-admin-secret"
+          sidecar:
+            datasources:
+              enabled: true
+              defaultDatasourceEnabled: true
+              defaultDatasourceUid: "prometheus"
+            dashboards:
+              enabled: true
+              searchNamespace: ALL
           additionalDataSources:
-            - name: Prometheus
-              type: prometheus
-              uid: prometheus
-              url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
-              access: proxy
-              isDefault: true
             - name: Loki
               type: loki
               uid: loki
@@ -46,21 +56,24 @@ spec:
             limits:
               cpu: 200m
               memory: 256Mi
-          sidecar:
-            dashboards:
-              enabled: true
-              searchNamespace: ALL
         prometheus:
           prometheusSpec:
-            retention: 7d
-            retentionSize: 2GB
+            retention: 2d
+            retentionSize: 1GB
+            securityContext:
+              runAsUser: 0
+              runAsNonRoot: false
+              fsGroup: 0
+            storageSpec:
+              emptyDir:
+                medium: ""
             resources:
               requests:
                 cpu: 100m
-                memory: 512Mi
+                memory: 256Mi
               limits:
-                cpu: 500m
-                memory: 1024Mi
+                cpu: 300m
+                memory: 512Mi
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: monitoring

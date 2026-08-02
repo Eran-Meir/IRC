@@ -148,7 +148,9 @@ jobs:
               RUNNING_IMAGE=\$(sudo kubectl get pods -l app=ircd -o jsonpath='{.items[*].spec.containers[0].image}'); \
               if [[ \"\$RUNNING_IMAGE\" == *\"${{ github.sha }}\"* ]]; then \
                 sudo kubectl rollout status deployment/ircd --timeout=60s; \
-                echo '✅ GitOps sync complete! New image is running.'; \
+                sudo kubectl rollout status statefulset/prometheus-kube-prometheus-stack-prometheus -n monitoring --timeout=180s || true; \
+                sudo kubectl rollout status deployment/kube-prometheus-stack-grafana -n monitoring --timeout=180s || true; \
+                echo '✅ GitOps sync complete! New image and monitoring stack are running.'; \
                 exit 0; \
               fi; \
               echo 'Still waiting for ArgoCD sync... (Elapsed: '\$ELAPSED's)'; \
