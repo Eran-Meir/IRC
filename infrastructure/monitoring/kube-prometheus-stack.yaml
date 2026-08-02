@@ -59,6 +59,9 @@ spec:
         prometheus:
           enabled: true
           prometheusSpec:
+            scrapeInterval: 5s
+            podMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorSelectorNilUsesHelmValues: false
             retention: 2d
             resources:
               requests:
