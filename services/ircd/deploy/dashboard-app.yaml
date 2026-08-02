@@ -21,7 +21,7 @@ data:
           "fieldConfig": { "defaults": { "unit": "short" } },
           "targets": [
             {
-              "expr": "ircd_connected_clients or vector(0)",
+              "expr": "sum(ircd_connected_clients) or vector(0)",
               "legendFormat": "Connected IRC Clients"
             }
           ]
