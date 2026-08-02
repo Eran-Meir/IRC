@@ -5,6 +5,7 @@ import (
 
 	"github.com/Eran-Meir/IRC/services/ircd/internal/config"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/logger"
+	"github.com/Eran-Meir/IRC/services/ircd/internal/metrics"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/server"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/state"
 )
@@ -16,6 +17,9 @@ func main() {
 	// Initialize Custom Logger
 	logger.Init(cfg.LogLevel)
 	logger.Info("Starting Go IRCd...")
+
+	// Start Prometheus Metrics Endpoint
+	metrics.StartServer(metrics.DefaultMetricsPort)
 
 	// 2. Connect to Valkey (State Layer)
 	err := state.InitValkey(cfg)

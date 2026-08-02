@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Eran-Meir/IRC/services/ircd/internal/logger"
+	"github.com/Eran-Meir/IRC/services/ircd/internal/metrics"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/parser"
 )
 
@@ -16,6 +17,7 @@ type Client struct {
 
 // NewClient initializes a new client object
 func NewClient(conn net.Conn) *Client {
+	metrics.ClientConnected()
 	return &Client{
 		conn: conn,
 	}
@@ -23,6 +25,7 @@ func NewClient(conn net.Conn) *Client {
 
 // Handle reads raw data from the TCP socket line-by-line
 func (c *Client) Handle() {
+	defer metrics.ClientDisconnected()
 	defer c.conn.Close()
 	logger.Info("New connection from %s", c.conn.RemoteAddr().String())
 
@@ -43,6 +46,9 @@ func (c *Client) Handle() {
 		if line == "" {
 			continue
 		}
+
+		// Track processed message metric
+		metrics.MessageProcessed()
 
 		// Parse the line according to RFC 1459
 		msg, err := parser.ParseLine(line)

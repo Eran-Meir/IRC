@@ -54,14 +54,14 @@ data:
         },
         {
           "type": "stat",
-          "title": "Active TCP Connections",
+          "title": "Active IRC Connections",
           "gridPos": { "x": 18, "y": 0, "w": 6, "h": 5 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "fieldConfig": { "defaults": { "unit": "short" } },
           "targets": [
             {
-              "expr": "sum(node_netstat_Tcp_CurrEstab) or vector(0)",
-              "legendFormat": "Established TCP Sockets"
+              "expr": "ircd_connected_clients or vector(0)",
+              "legendFormat": "Connected IRC Clients"
             }
           ]
         },

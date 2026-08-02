@@ -13,6 +13,10 @@ spec:
     metadata:
       labels:
         app: ircd
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
       - name: ircd
@@ -21,6 +25,9 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 6667
+          name: irc
+        - containerPort: 9090
+          name: metrics
         env:
         - name: VALKEY_URL
           value: "valkey:6379"
