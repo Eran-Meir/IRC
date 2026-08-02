@@ -17,6 +17,7 @@ data:
           "type": "timeseries",
           "title": "Node CPU Usage (%)",
           "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
               "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[2m])) * 100)",
@@ -28,6 +29,7 @@ data:
           "type": "timeseries",
           "title": "Node Memory Usage (Bytes)",
           "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
               "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
@@ -39,6 +41,7 @@ data:
           "type": "timeseries",
           "title": "Node Network Bandwidth (Bytes/sec)",
           "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
               "expr": "rate(node_network_receive_bytes_total{device!~\"lo|veth.*\"}[2m])",
@@ -54,6 +57,7 @@ data:
           "type": "timeseries",
           "title": "System Load Average (1m, 5m, 15m)",
           "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
               "expr": "node_load1",
