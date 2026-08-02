@@ -128,10 +128,9 @@ jobs:
             sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj '/CN=grafana' 2>/dev/null || true; \
             sudo kubectl create secret tls grafana-tls -n monitoring --key /tmp/tls.key --cert /tmp/tls.crt --dry-run=client -o yaml | sudo kubectl apply -f -; \
             sudo kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.76.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml || true; \
-            sudo kubectl delete application kube-prometheus-stack -n argocd --cascade=orphan 2>/dev/null || true; \
             sudo kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/kube-prometheus-stack.yaml; \
             sudo kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/loki-stack.yaml; \
-            sudo kubectl annotate application kube-prometheus-stack -n argocd argocd.argoproj.io/refresh=hard --overwrite || true; \
+            sudo kubectl patch application kube-prometheus-stack -n argocd --type merge -p '{"operation":{"sync":{"prune":true,"syncOptions":["CreateNamespace=true","ServerSideApply=true"]}}}' || true; \
             if [ -n \"${GRAFANA_ADMIN_PASSWORD}\" ]; then \
               GRAFANA_POD=\$(sudo kubectl get pod -n monitoring -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); \
               if [ -n \"\$GRAFANA_POD\" ]; then \
@@ -144,6 +143,7 @@ jobs:
         run: |
           echo "Triggering instant ArgoCD sync and waiting for image SHA: ${{ github.sha }}..."
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
+            sudo kubectl patch application ircd kube-prometheus-stack -n argocd --type merge -p '{"operation":{"sync":{"prune":true}}}' || true; \
             sudo kubectl annotate application ircd kube-prometheus-stack -n argocd argocd.argoproj.io/refresh=hard --overwrite || true; \
             TIMEOUT=420; \
             ELAPSED=0; \
@@ -166,8 +166,9 @@ jobs:
                   RETRY=\$((RETRY+1)); \
                 done; \
                 if ! sudo kubectl get statefulset/prometheus-kube-prometheus-stack-prometheus -n monitoring >/dev/null 2>&1; then \
-                  echo '❌ Prometheus StatefulSet was not created by Operator! Operator logs:'; \
-                  sudo kubectl logs -n monitoring -l app.kubernetes.io/name=prometheus-operator --tail=100 || true; \
+                  echo '❌ Prometheus StatefulSet was not created by Operator! Monitoring Pods & Operator logs:'; \
+                  sudo kubectl get pods -n monitoring -o wide; \
+                  sudo kubectl logs -n monitoring -l app.kubernetes.io/name=kube-prometheus-stack-operator --tail=100 || true; \
                   exit 1; \
                 fi; \
                 sudo kubectl rollout status statefulset/prometheus-kube-prometheus-stack-prometheus -n monitoring --timeout=180s; \
