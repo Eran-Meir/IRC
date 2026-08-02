@@ -127,8 +127,10 @@ jobs:
             fi; \
             sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj '/CN=grafana' 2>/dev/null || true; \
             sudo kubectl create secret tls grafana-tls -n monitoring --key /tmp/tls.key --cert /tmp/tls.crt --dry-run=client -o yaml | sudo kubectl apply -f -; \
+            sudo kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.76.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml || true; \
             sudo kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/kube-prometheus-stack.yaml; \
             sudo kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/loki-stack.yaml; \
+            sudo kubectl annotate application kube-prometheus-stack -n argocd argocd.argoproj.io/refresh=hard --overwrite || true; \
             if [ -n \"${GRAFANA_ADMIN_PASSWORD}\" ]; then \
               GRAFANA_POD=\$(sudo kubectl get pod -n monitoring -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); \
               if [ -n \"\$GRAFANA_POD\" ]; then \
@@ -141,15 +143,15 @@ jobs:
         run: |
           echo "Triggering instant ArgoCD sync and waiting for image SHA: ${{ github.sha }}..."
           ssh -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key ubuntu@${SERVER_IP} " \
-            sudo kubectl annotate application ircd kube-prometheus-stack -n argocd argocd.argoproj.io/refresh=normal --overwrite || true; \
+            sudo kubectl annotate application ircd kube-prometheus-stack -n argocd argocd.argoproj.io/refresh=hard --overwrite || true; \
             TIMEOUT=420; \
             ELAPSED=0; \
             while [ \$ELAPSED -lt \$TIMEOUT ]; do \
               RUNNING_IMAGE=\$(sudo kubectl get pods -l app=ircd -o jsonpath='{.items[*].spec.containers[0].image}'); \
               if [[ \"\$RUNNING_IMAGE\" == *\"${{ github.sha }}\"* ]]; then \
                 sudo kubectl rollout status deployment/ircd --timeout=60s; \
-                sudo kubectl rollout status statefulset/prometheus-kube-prometheus-stack-prometheus -n monitoring --timeout=180s || true; \
-                sudo kubectl rollout status deployment/kube-prometheus-stack-grafana -n monitoring --timeout=180s || true; \
+                sudo kubectl rollout status statefulset/prometheus-kube-prometheus-stack-prometheus -n monitoring --timeout=180s; \
+                sudo kubectl rollout status deployment/kube-prometheus-stack-grafana -n monitoring --timeout=180s; \
                 echo '✅ GitOps sync complete! New image and monitoring stack are running.'; \
                 exit 0; \
               fi; \
@@ -158,6 +160,7 @@ jobs:
               ELAPSED=\$((ELAPSED+10)); \
             done; \
             echo '❌ Timeout waiting for GitOps rollout.'; \
+            sudo kubectl get pods -n monitoring -o wide; \
             sudo kubectl get pods -o wide; \
             exit 1; \
           "
