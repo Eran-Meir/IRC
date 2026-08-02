@@ -43,3 +43,13 @@ output "ssh_private_key" {
   value     = module.test_cluster.ssh_private_key
   sensitive = true
 }
+
+output "grafana_url_https" {
+  value       = "https://${module.test_cluster.instance_public_ips[0]}"
+  description = "Grafana Observability Dashboard URL (HTTPS Traefik Ingress)"
+}
+
+output "grafana_url_port_3000" {
+  value       = "http://${module.test_cluster.instance_public_ips[0]}:3000"
+  description = "Grafana Observability Direct Port 3000 URL"
+}

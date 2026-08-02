@@ -22,7 +22,7 @@ spec:
               url: http://loki-stack.monitoring.svc.cluster.local:3100
               access: proxy
           service:
-            type: ClusterIP
+            type: LoadBalancer
             port: 3000
             targetPort: 3000
           ingress:
