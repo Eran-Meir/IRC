@@ -1,5 +1,11 @@
 # Release History
 
+## v0.2.2-alpha (Observability Datasource & True GitOps Alignment)
+* **DevOps & Observability**
+  * Configured explicit Prometheus datasource UID and bindings across all Grafana dashboards (`dashboard-master.yaml`, `dashboard-server.yaml`, `dashboard-app.yaml`).
+  * Aligned monitoring stack with Rule 11 (True GitOps Architecture), removing brittle inline `kubectl patch` SSH string manipulations from `3-deploy-and-test-app.yml`.
+  * Configured standard `kube-prometheus-stack` Helm wiring for native Grafana-Prometheus cluster DNS service discovery (`http://kube-prometheus-stack-prometheus.monitoring:9090`).
+
 ## v0.2.1-alpha (Security Audit & CI/CD Hardening)
 * **Security & Compliance**
   * Performed security audit to ensure 100% compliance with Rule 5 (Strict Confidentiality).
