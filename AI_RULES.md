@@ -37,3 +37,6 @@
 > 2. Ensure we are perfectly aligned with `docs/ARCHITECTURE.md`.
 > 3. Update `RELEASES.md` to explicitly log all new versions, fixes, and changelogs.
 > 4. Keep `README.md` perfectly synced with the current state of the architecture and documentation links.
+> 
+> **Rule 13: Proactive Skill Creation & Skill-Driven Development**
+> Before undertaking any major task, domain milestone, or architectural feature (e.g. Protocol Parsing, External Services, Web Client, HA Scaling), you MUST research the gold standards for that domain and create or refine a dedicated Agent Skill under `.agents/skills/<skill-name>/SKILL.md`. Every major task must be driven by a specialized skill that codifies its operating standards, constraints, edge cases, and verification rules.
