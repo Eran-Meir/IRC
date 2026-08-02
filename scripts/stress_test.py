@@ -46,16 +46,23 @@ class IRCClient:
         if not self.connected:
             return
 
-        listen_task = asyncio.create_task(self._receiver())
+        listen_task = asyncio.create_task(self._receiver(start_time))
         talk_task = asyncio.create_task(self._sender(start_time))
 
-        await asyncio.gather(listen_task, talk_task, return_exceptions=True)
+        done, pending = await asyncio.wait(
+            [listen_task, talk_task],
+            return_when=asyncio.FIRST_COMPLETED
+        )
+
+        for task in pending:
+            task.cancel()
+
         await self.close()
 
-    async def _receiver(self):
-        while True:
+    async def _receiver(self, start_time):
+        while (time.time() - start_time) < (self.duration + 2.0):
             try:
-                line = await asyncio.wait_for(self.reader.readline(), timeout=2.0)
+                line = await asyncio.wait_for(self.reader.readline(), timeout=1.0)
                 if not line:
                     break
                 decoded = line.decode('utf-8', errors='ignore')
@@ -71,6 +78,8 @@ class IRCClient:
 
             except asyncio.TimeoutError:
                 pass
+            except asyncio.CancelledError:
+                break
             except Exception:
                 self.errors += 1
                 break
