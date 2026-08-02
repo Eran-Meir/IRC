@@ -150,17 +150,26 @@ jobs:
             while [ \$ELAPSED -lt \$TIMEOUT ]; do \
               RUNNING_IMAGE=\$(sudo kubectl get pods -l app=ircd -o jsonpath='{.items[*].spec.containers[0].image}'); \
               if [[ \"\$RUNNING_IMAGE\" == *\"${{ github.sha }}\"* ]]; then \
-                sudo kubectl rollout status deployment/ircd --timeout=60s; \
+                echo 'Current Monitoring Pods:'; \
+                sudo kubectl get pods -n monitoring -o wide; \
+                sudo kubectl get statefulset -n monitoring; \
                 sudo kubectl rollout status deployment/kube-prometheus-stack-operator -n monitoring --timeout=120s || true; \
                 echo 'Waiting for Prometheus StatefulSet to be created by Prometheus Operator...'; \
                 RETRY=0; \
-                while [ \$RETRY -lt 30 ]; do \
+                while [ \$RETRY -lt 36 ]; do \
                   if sudo kubectl get statefulset/prometheus-kube-prometheus-stack-prometheus -n monitoring >/dev/null 2>&1; then \
                     break; \
                   fi; \
+                  echo 'StatefulSet not found yet, checking pods...'; \
+                  sudo kubectl get pods -n monitoring; \
                   sleep 5; \
                   RETRY=\$((RETRY+1)); \
                 done; \
+                if ! sudo kubectl get statefulset/prometheus-kube-prometheus-stack-prometheus -n monitoring >/dev/null 2>&1; then \
+                  echo '❌ Prometheus StatefulSet was not created by Operator! Operator logs:'; \
+                  sudo kubectl logs -n monitoring -l app.kubernetes.io/name=prometheus-operator --tail=100 || true; \
+                  exit 1; \
+                fi; \
                 sudo kubectl rollout status statefulset/prometheus-kube-prometheus-stack-prometheus -n monitoring --timeout=180s; \
                 sudo kubectl rollout status deployment/kube-prometheus-stack-grafana -n monitoring --timeout=180s; \
                 echo '✅ GitOps sync complete! New image and monitoring stack are running.'; \

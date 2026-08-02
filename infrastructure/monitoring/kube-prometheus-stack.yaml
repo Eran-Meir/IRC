@@ -60,10 +60,6 @@ spec:
           enabled: true
           prometheusSpec:
             retention: 2d
-            retentionSize: 1GB
-            storageSpec:
-              emptyDir:
-                medium: ""
             resources:
               requests:
                 cpu: 100m
