@@ -15,53 +15,61 @@ data:
       "panels": [
         {
           "type": "stat",
-          "title": "IRCd Active TCP Connections",
+          "title": "Established TCP Sockets",
           "gridPos": { "x": 0, "y": 0, "w": 12, "h": 6 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "short" } },
           "targets": [
             {
-              "expr": "count(kube_pod_status_phase{phase=\"Running\", pod=~\"ircd-.*\"}) or vector(1)",
-              "legendFormat": "Active Pods"
+              "expr": "sum(node_netstat_Tcp_CurrEstab) or vector(0)",
+              "legendFormat": "Established TCP Connections"
             }
           ]
         },
         {
           "type": "timeseries",
-          "title": "IRCd Container CPU Usage (Cores)",
+          "title": "IRCd Container CPU Usage",
           "gridPos": { "x": 12, "y": 0, "w": 12, "h": 6 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "percent" } },
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{container=\"ircd\"}[2m]))",
-              "legendFormat": "IRCd CPU"
+              "expr": "sum(rate(container_cpu_usage_seconds_total{container=\"ircd\"}[2m])) * 100",
+              "legendFormat": "IRCd CPU (%)"
             }
           ]
         },
         {
           "type": "timeseries",
-          "title": "IRCd & Valkey Memory Usage (MB)",
+          "title": "IRCd & Valkey Memory Usage",
           "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "decbytes" } },
           "targets": [
             {
-              "expr": "sum(container_memory_usage_bytes{container=\"ircd\"}) / 1024 / 1024",
-              "legendFormat": "IRCd Memory (MB)"
+              "expr": "sum(container_memory_usage_bytes{container=\"ircd\"})",
+              "legendFormat": "IRCd Memory"
             },
             {
-              "expr": "sum(container_memory_usage_bytes{container=\"valkey\"}) / 1024 / 1024",
-              "legendFormat": "Valkey Memory (MB)"
+              "expr": "sum(container_memory_usage_bytes{container=\"valkey\"})",
+              "legendFormat": "Valkey Memory"
             }
           ]
         },
         {
           "type": "timeseries",
-          "title": "IRC Command / Access Events Rate",
+          "title": "IRC Container Network Throughput",
           "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "Bps" } },
           "targets": [
             {
               "expr": "rate(container_network_receive_bytes_total{container=\"ircd\"}[2m])",
-              "legendFormat": "IRCd Inbound Throughput"
+              "legendFormat": "Inbound Throughput"
+            },
+            {
+              "expr": "rate(container_network_transmit_bytes_total{container=\"ircd\"}[2m])",
+              "legendFormat": "Outbound Throughput"
             }
           ]
         },

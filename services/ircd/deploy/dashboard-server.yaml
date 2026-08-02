@@ -18,6 +18,7 @@ data:
           "title": "Node CPU Usage (%)",
           "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "percent" } },
           "targets": [
             {
               "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[2m])) * 100)",
@@ -27,21 +28,23 @@ data:
         },
         {
           "type": "timeseries",
-          "title": "Node Memory Usage (Bytes)",
+          "title": "Node Memory Usage",
           "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "decbytes" } },
           "targets": [
             {
               "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
-              "legendFormat": "Used Memory (Bytes)"
+              "legendFormat": "Used Memory"
             }
           ]
         },
         {
           "type": "timeseries",
-          "title": "Node Network Bandwidth (Bytes/sec)",
+          "title": "Node Network Bandwidth",
           "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "Bps" } },
           "targets": [
             {
               "expr": "rate(node_network_receive_bytes_total{device!~\"lo|veth.*\"}[2m])",
@@ -58,6 +61,7 @@ data:
           "title": "System Load Average (1m, 5m, 15m)",
           "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "short" } },
           "targets": [
             {
               "expr": "node_load1",

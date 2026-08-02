@@ -16,8 +16,9 @@ data:
         {
           "type": "stat",
           "title": "System Node Health",
-          "gridPos": { "x": 0, "y": 0, "w": 8, "h": 6 },
+          "gridPos": { "x": 0, "y": 0, "w": 6, "h": 5 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "short" } },
           "targets": [
             {
               "expr": "count(up{job=~\".*node-exporter.*\"} == 1) or vector(1)",
@@ -27,9 +28,10 @@ data:
         },
         {
           "type": "stat",
-          "title": "IRCd Container Status",
-          "gridPos": { "x": 8, "y": 0, "w": 8, "h": 6 },
+          "title": "IRCd Pod Status",
+          "gridPos": { "x": 6, "y": 0, "w": 6, "h": 5 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "short" } },
           "targets": [
             {
               "expr": "count(kube_pod_status_phase{phase=\"Running\", pod=~\"ircd-.*\"}) or vector(1)",
@@ -39,9 +41,10 @@ data:
         },
         {
           "type": "stat",
-          "title": "Valkey Backend Status",
-          "gridPos": { "x": 16, "y": 0, "w": 8, "h": 6 },
+          "title": "Valkey Pod Status",
+          "gridPos": { "x": 12, "y": 0, "w": 6, "h": 5 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "short" } },
           "targets": [
             {
               "expr": "count(kube_pod_status_phase{phase=\"Running\", pod=~\"valkey-.*\"}) or vector(1)",
@@ -50,41 +53,77 @@ data:
           ]
         },
         {
+          "type": "stat",
+          "title": "Active TCP Connections",
+          "gridPos": { "x": 18, "y": 0, "w": 6, "h": 5 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "short" } },
+          "targets": [
+            {
+              "expr": "sum(node_netstat_Tcp_CurrEstab) or vector(0)",
+              "legendFormat": "Established TCP Sockets"
+            }
+          ]
+        },
+        {
           "type": "timeseries",
           "title": "Server Node CPU & Memory Usage",
-          "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
+          "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "decbytes" } },
           "targets": [
             {
               "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[2m])) * 100)",
               "legendFormat": "Node CPU (%)"
             },
             {
-              "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / 1024 / 1024 / 1024",
-              "legendFormat": "Node Used RAM (GB)"
+              "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+              "legendFormat": "Node Used RAM"
             }
           ]
         },
         {
           "type": "timeseries",
-          "title": "IRCd App CPU & Memory Usage",
-          "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
+          "title": "IRCd & Valkey App CPU & Memory Usage",
+          "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "decbytes" } },
           "targets": [
             {
               "expr": "sum(rate(container_cpu_usage_seconds_total{container=\"ircd\"}[2m])) * 100",
               "legendFormat": "IRCd CPU (%)"
             },
             {
-              "expr": "sum(container_memory_usage_bytes{container=\"ircd\"}) / 1024 / 1024",
-              "legendFormat": "IRCd RAM (MB)"
+              "expr": "sum(container_memory_usage_bytes{container=\"ircd\"})",
+              "legendFormat": "IRCd RAM"
+            },
+            {
+              "expr": "sum(container_memory_usage_bytes{container=\"valkey\"})",
+              "legendFormat": "Valkey RAM"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Server Node Network Bandwidth",
+          "gridPos": { "x": 0, "y": 13, "w": 24, "h": 7 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "Bps" } },
+          "targets": [
+            {
+              "expr": "rate(node_network_receive_bytes_total{device!~\"lo|veth.*\"}[2m])",
+              "legendFormat": "Inbound Bandwidth ({{device}})"
+            },
+            {
+              "expr": "rate(node_network_transmit_bytes_total{device!~\"lo|veth.*\"}[2m])",
+              "legendFormat": "Outbound Bandwidth ({{device}})"
             }
           ]
         },
         {
           "type": "logs",
           "title": "Loki Stream: Unified System & App Moderation Logs",
-          "gridPos": { "x": 0, "y": 14, "w": 24, "h": 12 },
+          "gridPos": { "x": 0, "y": 20, "w": 24, "h": 10 },
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
