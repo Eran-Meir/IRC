@@ -111,11 +111,12 @@ jobs:
           echo ""
           SERVER_IP=$(terraform output -json test_node_ips | jq -r '.[0]')
           echo "===================================================="
-          echo "📊 GRAFANA OBSERVABILITY DASHBOARD ADDRESSES:"
-          echo "   🔒 HTTPS (Traefik Ingress): https://${SERVER_IP}"
-          echo "   🌐 HTTP (Direct Port 3000): http://${SERVER_IP}:3000"
+          echo "📊 GRAFANA OBSERVABILITY DASHBOARD ADDRESS:"
+          echo "   🌐 http://${SERVER_IP}:3000"
+          echo "🚀 RESERVED FOR CLIENT WEB UI (Ports 80/443):"
+          echo "   🔒 https://${SERVER_IP}"
           echo "===================================================="
-          echo "### 📊 Grafana Observability URLs" >> $GITHUB_STEP_SUMMARY
-          echo "- **HTTPS Ingress**: [https://${SERVER_IP}](https://${SERVER_IP})" >> $GITHUB_STEP_SUMMARY
-          echo "- **HTTP Direct (Port 3000)**: [http://${SERVER_IP}:3000](http://${SERVER_IP}:3000)" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Observability & Routing Endpoints" >> $GITHUB_STEP_SUMMARY
+          echo "- **Grafana Dashboard**: [http://${SERVER_IP}:3000](http://${SERVER_IP}:3000)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Web Client UI (Reserved Ports 80/443)**: [https://${SERVER_IP}](https://${SERVER_IP})" >> $GITHUB_STEP_SUMMARY
         working-directory: terraform/environments/test
