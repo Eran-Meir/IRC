@@ -1,5 +1,12 @@
 # Release History
 
+## v0.4.0-alpha (Native IRCd Prometheus Metrics & Connection Tracking)
+* **Application Metrics & Observability**
+  * Added native Prometheus Exposition HTTP server (`:9090/metrics`) inside `services/ircd/internal/metrics/metrics.go` with zero external dependencies.
+  * Implemented `ircd_connected_clients` gauge tracking active IRC client TCP sockets in real time (increments on connect, decrements on disconnect).
+  * Implemented `ircd_messages_total` counter tracking processed IRC protocol messages.
+  * Updated Grafana panels to display `ircd_connected_clients`, reading exact client counts (`0` when idle, `50` during stress test, `0` post-test).
+
 ## v0.3.1-alpha (Grafana Dashboard Units & Unified Master Grid)
 * **DevOps & Dashboard Polish**
   * Added human-readable Grafana unit formatting (`decbytes`, `Bps`, `percent`, `short`) across all dashboard panels, converting raw bytes into clean MB/GB and Bps into KB/s.
