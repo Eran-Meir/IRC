@@ -57,13 +57,10 @@ spec:
               cpu: 200m
               memory: 256Mi
         prometheus:
+          enabled: true
           prometheusSpec:
             retention: 2d
             retentionSize: 1GB
-            securityContext:
-              runAsUser: 0
-              runAsNonRoot: false
-              fsGroup: 0
             storageSpec:
               emptyDir:
                 medium: ""
