@@ -116,7 +116,7 @@ jobs:
           chmod 600 $HOME/.ssh/deploy_key
         working-directory: terraform/environments/test
 
-      - name: Ensure Monitoring Stack is Applied
+      - name: Ensure Monitoring Stack is Applied & Admin Password Synced
         env:
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
@@ -128,7 +128,13 @@ jobs:
             sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj '/CN=grafana' 2>/dev/null || true; \
             sudo kubectl create secret tls grafana-tls -n monitoring --key /tmp/tls.key --cert /tmp/tls.crt --dry-run=client -o yaml | sudo kubectl apply -f -; \
             sudo kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/kube-prometheus-stack.yaml; \
-            sudo kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/loki-stack.yaml \
+            sudo kubectl apply -f https://raw.githubusercontent.com/Eran-Meir/IRC/main/infrastructure/monitoring/loki-stack.yaml; \
+            if [ -n \"${GRAFANA_ADMIN_PASSWORD}\" ]; then \
+              GRAFANA_POD=\$(sudo kubectl get pod -n monitoring -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); \
+              if [ -n \"\$GRAFANA_POD\" ]; then \
+                sudo kubectl exec -n monitoring \$GRAFANA_POD -c grafana -- grafana-cli admin reset-admin-password \"${GRAFANA_ADMIN_PASSWORD}\" || true; \
+              fi; \
+            fi \
           "
 
       - name: Wait for GitOps Rollout (SHA Verification)
