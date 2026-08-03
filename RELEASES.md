@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.15-alpha (Nginx Alias 500 Error Resolution & Clean Traefik Routing)
+* **Bug Fix (Ingress & Web Client)**
+  * Fixed Nginx 500 Internal Server Error cycle by removing invalid `alias` / `try_files` combination from [client/nginx.conf](file:///c:/Users/Eran/IRC/client/nginx.conf#L8).
+  * Cleaned up Traefik Ingress annotations in [services/ircd/deploy/client-deployment.yaml](file:///c:/Users/Eran/IRC/services/ircd/deploy/client-deployment.yaml#L50) and [infrastructure/monitoring/kube-prometheus-stack.yaml](file:///c:/Users/Eran/IRC/infrastructure/monitoring/kube-prometheus-stack.yaml#L49), restoring clean HTTP & HTTPS routing for `/`, `/test`, and `/monitoring-test`.
+
 ## v0.5.14-alpha (HTTPS 443 Redirect, Subpath Ingress Routing & Web Client SPA Asset Fix)
 * **Architecture & UI Fix**
   * Updated [client/vite.config.ts](file:///c:/Users/Eran/IRC/client/vite.config.ts#L6) with `base: './'` to fix the **white blank screen issue** caused by absolute asset resolution failing under subpaths.

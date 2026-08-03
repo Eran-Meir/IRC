@@ -49,16 +49,10 @@ spec:
             enabled: true
             ingressClassName: traefik
             annotations:
-              ingress.kubernetes.io/ssl-redirect: "true"
               traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-              traefik.ingress.kubernetes.io/router.tls: "true"
             hosts:
               - ""
             path: "/monitoring-test"
-            paths:
-              - "/monitoring-test"
-              - "/monitoring-prod"
-              - "/monitoring"
           resources:
             requests:
               cpu: 50m
