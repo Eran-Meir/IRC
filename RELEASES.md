@@ -1,5 +1,11 @@
 # Release History
 
+## v0.4.4-alpha (Full Codebase Review & GitOps Documentation Architecture)
+* **Documentation & Architecture**
+  * Completed full codebase and infrastructure review using the `code-review` skill audit methodology.
+  * Enhanced `README.md` with an extensive Enterprise GitOps & High-Performance Deployment Architecture section.
+  * Documented multi-stage Docker build optimizations, declarative ArgoCD/Helm GitOps syncs, automated GHCR image pruning (4 tags max), and S3 state backups.
+
 ## v0.4.3-alpha (Prometheus Resource Headroom & OOM Prevention)
 * **DevOps & Stability**
   * Increased Prometheus memory limit to `768Mi` in `kube-prometheus-stack.yaml` to prevent OOMKilled pod crashes during TSDB WAL compaction.
