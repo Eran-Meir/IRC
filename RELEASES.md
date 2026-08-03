@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.13-alpha (Web Client Container Image Pull & GitOps Sync Fix)
+* **Bug Fix (DevOps)**
+  * Updated `image` path in [services/ircd/deploy/client-deployment.yaml](file:///c:/Users/Eran/IRC/services/ircd/deploy/client-deployment.yaml#L20) to `ghcr.io/eran-meir/irc/client:latest` matching the GHCR repository tag format.
+  * Resolves `ImagePullBackOff` error on the `ircd-web-client` pod caused by unmatched regex during CI/CD GitOps tag updates.
+
 ## v0.5.12-alpha (RFC 1459 Smoke Test Handshake Fix)
 * **Bug Fix (CI/CD)**
   * Updated inline Python smoke test in [3-deploy-and-test-app.yml](file:///c:/Users/Eran/IRC/.github/workflows/3-deploy-and-test-app.yml#L179) to send `NICK` + `USER` registration commands before waiting for the server `001 Welcome` reply.
