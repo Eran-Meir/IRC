@@ -53,6 +53,7 @@ jobs:
           file: ./client/Dockerfile
           platforms: linux/arm64
           push: true
+          no-cache: true
           tags: |
             ghcr.io/eran-meir/irc/client:${{ github.sha }}
             ghcr.io/eran-meir/irc/client:latest

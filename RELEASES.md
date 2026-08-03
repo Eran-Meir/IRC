@@ -1,5 +1,26 @@
 # Release History
 
+## v0.5.11-alpha (GHA Docker Layer Cache Bust for Web Client Build)
+* **Bug Fix (DevOps)**
+  * Added `no-cache: true` to the `Build and Push Web Client (ARM64)` step in [3-deploy-and-test-app.yml](file:///c:/Users/Eran/IRC/.github/workflows/3-deploy-and-test-app.yml#L56).
+  * The GHA layer cache was serving a stale `package.json` with the old `tsc && vite build` script, causing `tsc --help` exit code 1 despite code changes being pushed.
+  * Cache will be re-populated cleanly after the first successful build.
+
+## v0.5.10-alpha (Vite Native Production Bundling Fix)
+* **Build Optimization**
+  * Updated [client/package.json](file:///c:/Users/Eran/IRC/client/package.json#L8) build script to `"build": "vite build"`.
+  * Utilizes Vite's native internal `esbuild` compiler to bundle static React + TS/TSX assets directly without calling external `tsc` binary during Docker container compilation.
+
+## v0.5.9-alpha (Explicit tsconfig Path Target for TypeScript Build)
+* **Bug Fix**
+  * Updated [client/package.json](file:///c:/Users/Eran/IRC/client/package.json#L8) build script to `tsc -p ./tsconfig.json && vite build`.
+  * Explicitly passes `-p ./tsconfig.json` to `tsc` compiler so it targets the configuration file directly during Docker container build.
+
+## v0.5.8-alpha (React Web Client Missing tsconfig.json Fix)
+* **Bug Fix**
+  * Created [client/tsconfig.json](file:///c:/Users/Eran/IRC/client/tsconfig.json) with ES2020 target, DOM types, bundler module resolution, and React JSX options.
+  * Resolves TypeScript compiler (`tsc`) build failure during Docker multi-stage image build stage (`[builder 6/6] RUN npm run build`) where `tsc` printed `--help` text and exited with exit code 1.
+
 ## v0.5.7-alpha (QEMU Core Dump Elimination via Native BuildPlatform Compilation)
 * **DevOps & Build Optimization**
   * Updated [client/Dockerfile](file:///c:/Users/Eran/IRC/client/Dockerfile#L2) builder stage to use `FROM --platform=$BUILDPLATFORM node:20-alpine AS builder`.
