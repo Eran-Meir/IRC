@@ -1,5 +1,9 @@
 # Release History
 
+## v0.5.5-alpha (Go Compiler Return Signature Alignment Fix)
+* **Bug Fix**
+  * Updated [cmd/ircd/main.go](file:///c:/Users/Eran/IRC/services/ircd/cmd/ircd/main.go#L34) to check single return value `ch := GetOrCreateChannel(...)` matching Rule 10 API contract, resolving Go build error (`commit 0126545`).
+
 ## v0.5.4-alpha (Governance Cleanup & 13-Rule Code Review Engine)
 * **Governance & Cleanup**
   * Removed duplicate `.agents/AGENTS.md` file (`commit 49f4e47`), keeping `AI_RULES.md` as the single source of truth.
