@@ -31,7 +31,7 @@ func main() {
 
 	// Start Valkey Cross-Pod Pub/Sub Listener
 	state.StartPubSubListener(func(channelName string, payload string) {
-		if ch, exists := server.GetManager().GetOrCreateChannel(channelName); exists {
+		if ch := server.GetManager().GetOrCreateChannel(channelName); ch != nil {
 			ch.Broadcast(nil, payload)
 		}
 	})
