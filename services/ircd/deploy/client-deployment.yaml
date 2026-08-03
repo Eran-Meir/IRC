@@ -47,16 +47,25 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ircd-web-client-test-ingress
+  name: ircd-web-client-ingress
   namespace: default
   annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
   rules:
   - http:
       paths:
       - path: /test
+        pathType: Prefix
+        backend:
+          service:
+            name: ircd-web-client
+            port:
+              number: 80
+      - path: /
         pathType: Prefix
         backend:
           service:

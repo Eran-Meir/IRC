@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.14-alpha (HTTPS 443 Redirect, Subpath Ingress Routing & Web Client SPA Asset Fix)
+* **Architecture & UI Fix**
+  * Updated [client/vite.config.ts](file:///c:/Users/Eran/IRC/client/vite.config.ts#L6) with `base: './'` to fix the **white blank screen issue** caused by absolute asset resolution failing under subpaths.
+  * Updated [client/nginx.conf](file:///c:/Users/Eran/IRC/client/nginx.conf#L8) to handle SPA routing under `/test` subpaths natively.
+  * Configured HTTP -> HTTPS (443) automated redirect annotations in [services/ircd/deploy/client-deployment.yaml](file:///c:/Users/Eran/IRC/services/ircd/deploy/client-deployment.yaml#L50) and [infrastructure/monitoring/kube-prometheus-stack.yaml](file:///c:/Users/Eran/IRC/infrastructure/monitoring/kube-prometheus-stack.yaml#L46).
+  * Re-routed Grafana monitoring dashboards to `/monitoring-test` (and `/monitoring-prod`), freeing `/` for the main production landing page placeholder and `/test` for the test web client.
+
 ## v0.5.13-alpha (Web Client Container Image Pull & GitOps Sync Fix)
 * **Bug Fix (DevOps)**
   * Updated `image` path in [services/ircd/deploy/client-deployment.yaml](file:///c:/Users/Eran/IRC/services/ircd/deploy/client-deployment.yaml#L20) to `ghcr.io/eran-meir/irc/client:latest` matching the GHCR repository tag format.

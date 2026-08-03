@@ -37,18 +37,28 @@ spec:
               uid: loki
               url: http://loki-stack.monitoring.svc.cluster.local:3100
               access: proxy
+          grafana.ini:
+            server:
+              root_url: "%(protocol)s://%(domain)s/monitoring-test/"
+              serve_from_sub_path: true
           service:
-            type: LoadBalancer
-            port: 3001
+            type: ClusterIP
+            port: 80
             targetPort: 3000
           ingress:
             enabled: true
             ingressClassName: traefik
             annotations:
-              ingress.kubernetes.io/ssl-redirect: "false"
+              ingress.kubernetes.io/ssl-redirect: "true"
+              traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+              traefik.ingress.kubernetes.io/router.tls: "true"
             hosts:
               - ""
-            path: "/"
+            path: "/monitoring-test"
+            paths:
+              - "/monitoring-test"
+              - "/monitoring-prod"
+              - "/monitoring"
           resources:
             requests:
               cpu: 50m
