@@ -1,5 +1,14 @@
 # Release History
 
+## v0.5.16-alpha (WebSocket Auto-Reconnect, Classic Theme Polish, RTL Left-Alignment & Pod Metric Fix)
+* **Bug Fix (Backend & Observability)**
+  * Fixed WebSocket connection URL in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L101) to use `${protocol}//${window.location.host}/ws` via Nginx/Traefik Ingress. Resolves client DISCONNECTED state, connects live tabs, and restores live active client graph metrics.
+  * Updated `IRCd Pod Status` PromQL query in [services/ircd/deploy/dashboard-master.yaml](file:///c:/Users/Eran/IRC/services/ircd/deploy/dashboard-master.yaml#L37) to exclude `ircd-web-client`, accurately showing 1 running IRCd pod in the test environment.
+* **UI & Themes**
+  * Added 1-click **Dark Mode Toggle Button** in [client/src/components/TopMenuBar.tsx](file:///c:/Users/Eran/IRC/client/src/components/TopMenuBar.tsx#L35) for instant switching between Classic Light (gray panels, black nicks, green/blue events) and Dark Mode.
+  * Updated [client/src/components/ChatArea.tsx](file:///c:/Users/Eran/IRC/client/src/components/ChatArea.tsx#L65) to keep message lines strictly aligned to the left margin regardless of RTL Hebrew text.
+  * Updated branding to **Enterprise IRC**.
+
 ## v0.5.15-alpha (Nginx Alias 500 Error Resolution & Clean Traefik Routing)
 * **Bug Fix (Ingress & Web Client)**
   * Fixed Nginx 500 Internal Server Error cycle by removing invalid `alias` / `try_files` combination from [client/nginx.conf](file:///c:/Users/Eran/IRC/client/nginx.conf#L8).

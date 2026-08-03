@@ -29,7 +29,20 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
   return (
     <header className="top-bar">
       <div className="menu-left">
-        <div className="logo-badge">mIRC v7.75 Web</div>
+        <div className="logo-badge">Enterprise IRC</div>
+
+        {/* Quick Dark Mode Toggle Button */}
+        <button
+          className="theme-toggle-btn"
+          onClick={() =>
+            onUpdatePreferences({
+              theme: preferences.theme === 'classic-light' ? 'mirc-dark' : 'classic-light',
+            })
+          }
+          title="Toggle Dark / Light Mode"
+        >
+          {preferences.theme === 'classic-light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+        </button>
 
         {/* File Menu */}
         <div className="menu-item" onMouseLeave={closeDropdowns}>
@@ -81,7 +94,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                 className={preferences.fontFamily === 'fixedsys' ? 'active' : ''}
                 onClick={() => { onUpdatePreferences({ fontFamily: 'fixedsys' }); closeDropdowns(); }}
               >
-                Fixedsys (mIRC Classic)
+                Fixedsys Classic
               </button>
               <button
                 className={preferences.fontFamily === 'fira-code' ? 'active' : ''}
@@ -106,16 +119,16 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
           {activeDropdown === 'theme' && (
             <div className="dropdown-menu">
               <button onClick={() => { onUpdatePreferences({ theme: 'mirc-dark' }); closeDropdowns(); }}>
-                🟢 mIRC Dark (Default)
+                🟢 Dark Mode
+              </button>
+              <button onClick={() => { onUpdatePreferences({ theme: 'classic-light' }); closeDropdowns(); }}>
+                ☀️ Classic Light Mode (Gray Panels)
               </button>
               <button onClick={() => { onUpdatePreferences({ theme: 'matrix-emerald' }); closeDropdowns(); }}>
                 📟 Matrix Emerald
               </button>
               <button onClick={() => { onUpdatePreferences({ theme: 'cyberpunk' }); closeDropdowns(); }}>
                 🌆 Cyberpunk Neon
-              </button>
-              <button onClick={() => { onUpdatePreferences({ theme: 'classic-light' }); closeDropdowns(); }}>
-                ☀️ Classic Light
               </button>
             </div>
           )}

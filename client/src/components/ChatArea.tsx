@@ -62,14 +62,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           }
 
           return (
-            <div
-              key={msg.id}
-              className={`msg-line ${isHebrew ? 'hebrew-line' : ''}`}
-              style={{ direction: isHebrew ? 'rtl' : 'ltr' }}
-            >
+            <div key={msg.id} className="msg-line">
               <span className="timestamp">[{msg.timestamp}]</span>
               <span className="sender">&lt;{msg.sender}&gt;</span>
-              <span className="text">{msg.text}</span>
+              <span className="text" dir="auto">{msg.text}</span>
             </div>
           );
         })}

@@ -29,7 +29,7 @@ export const App: React.FC = () => {
 
   const [messages, setMessages] = useState<Record<string, Message[]>>({
     Status: [
-      { id: '1', sender: 'System', target: 'Status', text: 'Welcome to Modern Enterprise IRC Web Client (mIRC v7.75 Edition)', timestamp: new Date().toLocaleTimeString(), isSystem: true },
+      { id: '1', sender: 'System', target: 'Status', text: 'Welcome to Enterprise IRC Web Client', timestamp: new Date().toLocaleTimeString(), isSystem: true },
     ],
     '#enterprise': [
       { id: '2', sender: 'System', target: '#enterprise', text: 'Now talking on #enterprise', timestamp: new Date().toLocaleTimeString(), isSystem: true },
@@ -98,7 +98,8 @@ export const App: React.FC = () => {
   };
 
   const connectWebSocket = () => {
-    const wsUrl = `ws://${window.location.hostname}:9090/ws`;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     wsRef.current = new WebSocketService(
       wsUrl,
       handleIncomingLine,

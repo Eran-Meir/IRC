@@ -31,6 +31,25 @@
   border-right: 1px solid var(--border-color);
 }
 
+.theme-toggle-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 3px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin-right: 8px;
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
 .menu-item {
   position: relative;
 }
