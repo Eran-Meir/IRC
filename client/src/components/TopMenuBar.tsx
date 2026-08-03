@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { UserPreferences, ThemeOption, FontSizeOption, FontFamilyOption, LanguageOption } from '../types/irc';
+import React, { useState, useEffect, useRef } from 'react';
+import { UserPreferences } from '../types/irc';
 
 interface TopMenuBarProps {
   isConnected: boolean;
@@ -19,6 +19,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
   onClear,
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const barRef = useRef<HTMLDivElement>(null);
 
   const toggleDropdown = (menu: string) => {
     setActiveDropdown(activeDropdown === menu ? null : menu);
@@ -26,8 +27,18 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
 
   const closeDropdowns = () => setActiveDropdown(null);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (barRef.current && !barRef.current.contains(event.target as Node)) {
+        closeDropdowns();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <header className="top-bar">
+    <header className="top-bar" ref={barRef}>
       <div className="menu-left">
         <div className="logo-badge">Enterprise IRC</div>
 
@@ -45,7 +56,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
         </button>
 
         {/* File Menu */}
-        <div className="menu-item" onMouseLeave={closeDropdowns}>
+        <div className="menu-item">
           <button className="menu-btn" onClick={() => toggleDropdown('file')}>
             File ▾
           </button>
@@ -62,7 +73,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
         </div>
 
         {/* View & Preferences Menu */}
-        <div className="menu-item" onMouseLeave={closeDropdowns}>
+        <div className="menu-item">
           <button className="menu-btn" onClick={() => toggleDropdown('view')}>
             View & Preferences ▾
           </button>
@@ -112,7 +123,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
         </div>
 
         {/* Theme Menu */}
-        <div className="menu-item" onMouseLeave={closeDropdowns}>
+        <div className="menu-item">
           <button className="menu-btn" onClick={() => toggleDropdown('theme')}>
             Theme ▾
           </button>

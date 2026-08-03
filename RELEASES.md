@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.18-alpha (Top Menu Bar Dropdown UX Fix)
+* **Bug Fix (UI/UX)**
+  * Replaced premature `onMouseLeave` handlers in [client/src/components/TopMenuBar.tsx](file:///c:/Users/Eran/IRC/client/src/components/TopMenuBar.tsx#L27) with a global click-outside event listener (`useRef` + `mousedown`).
+  * Resolves issue where dropdown menus (Font Size, Font Family, Theme, File options) vanished rapidly when trying to hover or select options.
+
 ## v0.5.17-alpha (Kubernetes Service Port 9090 Fix, RFC 1459 Live User Sync & Light Mode Default)
 * **Bug Fix (Networking & Infrastructure)**
   * Added port 9090 to [services/ircd/deploy/service.yaml](file:///c:/Users/Eran/IRC/services/ircd/deploy/service.yaml#L11). Resolves WebSocket connection refusal between `ircd-web-client` proxy and `ircd` pod, restoring live multi-user messaging, status online indicator, and active client metric tracking.
