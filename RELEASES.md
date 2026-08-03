@@ -1,5 +1,13 @@
 # Release History
 
+## v0.5.17-alpha (Kubernetes Service Port 9090 Fix, RFC 1459 Live User Sync & Light Mode Default)
+* **Bug Fix (Networking & Infrastructure)**
+  * Added port 9090 to [services/ircd/deploy/service.yaml](file:///c:/Users/Eran/IRC/services/ircd/deploy/service.yaml#L11). Resolves WebSocket connection refusal between `ircd-web-client` proxy and `ircd` pod, restoring live multi-user messaging, status online indicator, and active client metric tracking.
+* **Frontend & RFC 1459 State**
+  * Set **Classic Light Mode** (gray panels, black nicks) as the default initial theme in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L17).
+  * Implemented full RFC 1459 event handling in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L64) for `353` (RPL_NAMREPLY), `JOIN`, `PART`, `QUIT`, and `NICK` for real-time user list synchronization and `/nick` changes.
+  * Eliminated double `#` formatting in [client/src/components/Sidebar.tsx](file:///c:/Users/Eran/IRC/client/src/components/Sidebar.tsx#L40) and [client/src/components/ChatArea.tsx](file:///c:/Users/Eran/IRC/client/src/components/ChatArea.tsx#L30).
+
 ## v0.5.16-alpha (WebSocket Auto-Reconnect, Classic Theme Polish, RTL Left-Alignment & Pod Metric Fix)
 * **Bug Fix (Backend & Observability)**
   * Fixed WebSocket connection URL in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L101) to use `${protocol}//${window.location.host}/ws` via Nginx/Traefik Ingress. Resolves client DISCONNECTED state, connects live tabs, and restores live active client graph metrics.

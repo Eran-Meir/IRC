@@ -37,8 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`tree-item ${activeTarget === ch.name ? 'active' : ''}`}
             onClick={() => onSelectTarget(ch.name)}
           >
-            <span className="icon">#</span>
-            <span className="channel-name">{ch.name}</span>
+            <span className="channel-name">{ch.name.startsWith('#') ? ch.name : '#' + ch.name}</span>
             {ch.unreadCount > 0 && (
               <span className="badge">{ch.unreadCount}</span>
             )}

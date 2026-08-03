@@ -14,7 +14,7 @@ export const App: React.FC = () => {
   const [nick, setNick] = useState<string>(`Guest${Math.floor(Math.random() * 900 + 100)}`);
   
   const [preferences, setPreferences] = useState<UserPreferences>({
-    theme: 'mirc-dark',
+    theme: 'classic-light',
     fontSize: 'medium',
     fontFamily: 'fixedsys',
     language: 'en',
@@ -23,8 +23,8 @@ export const App: React.FC = () => {
   });
 
   const [channels, setChannels] = useState<Channel[]>([
-    { name: '#enterprise', topic: 'Modern Enterprise IRC Network - Production Channel', unreadCount: 0, users: ['@Operator', 'Guest101', 'Guest102'] },
-    { name: '#devops', topic: 'Oracle Cloud & K3s GitOps Deployments', unreadCount: 0, users: ['@SeniorDevOps', 'ArgoCD_Bot'] },
+    { name: '#enterprise', topic: 'Modern Enterprise IRC Network - Production Channel', unreadCount: 0, users: ['Operator'] },
+    { name: '#devops', topic: 'Oracle Cloud & K3s GitOps Deployments', unreadCount: 0, users: ['SeniorDevOps'] },
   ]);
 
   const [messages, setMessages] = useState<Record<string, Message[]>>({
@@ -33,7 +33,6 @@ export const App: React.FC = () => {
     ],
     '#enterprise': [
       { id: '2', sender: 'System', target: '#enterprise', text: 'Now talking on #enterprise', timestamp: new Date().toLocaleTimeString(), isSystem: true },
-      { id: '3', sender: 'Operator', target: '#enterprise', text: 'Welcome to the new Go-powered IRC Network!', timestamp: new Date().toLocaleTimeString() },
     ],
   });
 
@@ -67,12 +66,106 @@ export const App: React.FC = () => {
     } else if (line.includes(' JOIN ')) {
       const match = line.match(/^:([^!]+)![^ ]+ JOIN :?([^ ]+)$/);
       if (match) {
-        const [, sender, channel] = match;
+        const [, sender, rawChannel] = match;
+        const channel = rawChannel.startsWith('#') ? rawChannel : '#' + rawChannel;
         addMessage(channel, {
           id: Math.random().toString(),
           sender: 'System',
           target: channel,
-          text: `${sender} joined ${channel}`,
+          text: `* ${sender} has joined ${channel}`,
+          timestamp: time,
+          isSystem: true,
+        });
+
+        // Add user to channel user list
+        setChannels((prev) =>
+          prev.map((ch) => {
+            if (ch.name === channel && !ch.users.includes(sender)) {
+              return { ...ch, users: [...ch.users, sender] };
+            }
+            return ch;
+          })
+        );
+      }
+    } else if (line.includes(' PART ')) {
+      const match = line.match(/^:([^!]+)![^ ]+ PART ([^ ]+)(?: :(.*))?$/);
+      if (match) {
+        const [, sender, rawChannel, reason] = match;
+        const channel = rawChannel.startsWith('#') ? rawChannel : '#' + rawChannel;
+        addMessage(channel, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: channel,
+          text: `* ${sender} has left ${channel}${reason ? ` (${reason})` : ''}`,
+          timestamp: time,
+          isAction: true,
+        });
+
+        // Remove user from channel user list
+        setChannels((prev) =>
+          prev.map((ch) => {
+            if (ch.name === channel) {
+              return { ...ch, users: ch.users.filter((u) => u !== sender && u !== '@' + sender && u !== '+' + sender) };
+            }
+            return ch;
+          })
+        );
+      }
+    } else if (line.includes(' QUIT ')) {
+      const match = line.match(/^:([^!]+)![^ ]+ QUIT(?: :(.*))?$/);
+      if (match) {
+        const [, sender, reason] = match;
+        // Remove user from all channels
+        setChannels((prev) =>
+          prev.map((ch) => ({
+            ...ch,
+            users: ch.users.filter((u) => u !== sender && u !== '@' + sender && u !== '+' + sender),
+          }))
+        );
+        addMessage(activeTarget, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: activeTarget,
+          text: `* ${sender} has quit IRC${reason ? ` (${reason})` : ''}`,
+          timestamp: time,
+          isAction: true,
+        });
+      }
+    } else if (line.includes(' 353 ')) {
+      // RPL_NAMREPLY :server 353 nick = #channel :nick1 nick2
+      const match = line.match(/ 353 [^ ]+ [=@*] ([^ ]+) :(.*)$/);
+      if (match) {
+        const [, rawChannel, userListStr] = match;
+        const channel = rawChannel.startsWith('#') ? rawChannel : '#' + rawChannel;
+        const nicks = userListStr.trim().split(/\s+/).filter(Boolean);
+
+        setChannels((prev) =>
+          prev.map((ch) => {
+            if (ch.name === channel) {
+              return { ...ch, users: nicks };
+            }
+            return ch;
+          })
+        );
+      }
+    } else if (line.includes(' NICK ')) {
+      const match = line.match(/^:([^!]+)![^ ]+ NICK :?([^ ]+)$/);
+      if (match) {
+        const [, oldNick, newNick] = match;
+        if (oldNick === nick) {
+          setNick(newNick);
+        }
+        setChannels((prev) =>
+          prev.map((ch) => ({
+            ...ch,
+            users: ch.users.map((u) => (u === oldNick ? newNick : u)),
+          }))
+        );
+        addMessage(activeTarget, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: activeTarget,
+          text: `* ${oldNick} is now known as ${newNick}`,
           timestamp: time,
           isSystem: true,
         });

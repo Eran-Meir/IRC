@@ -28,8 +28,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       {/* Channel Header Bar */}
       <div className="chat-header">
         <div className="header-title">
-          <span className="target-icon">{activeTarget.startsWith('#') ? '#' : '🖥️'}</span>
-          <span className="target-name">{activeTarget}</span>
+          <span className="target-name">{activeTarget.startsWith('#') ? activeTarget : (activeTarget === 'Status' ? '🖥️ Status' : '#' + activeTarget)}</span>
         </div>
         {activeChannel && (
           <div className="header-topic" title={activeChannel.topic}>
