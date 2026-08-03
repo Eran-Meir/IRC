@@ -59,7 +59,7 @@ spec:
         prometheus:
           enabled: true
           prometheusSpec:
-            scrapeInterval: 5s
+            scrapeInterval: 15s
             podMonitorSelectorNilUsesHelmValues: false
             serviceMonitorSelectorNilUsesHelmValues: false
             retention: 2d
@@ -69,7 +69,7 @@ spec:
                 memory: 256Mi
               limits:
                 cpu: 300m
-                memory: 512Mi
+                memory: 768Mi
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: monitoring
