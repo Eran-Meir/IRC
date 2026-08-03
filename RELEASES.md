@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.7-alpha (QEMU Core Dump Elimination via Native BuildPlatform Compilation)
+* **DevOps & Build Optimization**
+  * Updated [client/Dockerfile](file:///c:/Users/Eran/IRC/client/Dockerfile#L2) builder stage to use `FROM --platform=$BUILDPLATFORM node:20-alpine AS builder`.
+  * Eliminates QEMU ARM64 user-mode JIT emulation crash (`signal 4 core dumped`) by compiling static HTML/JS/CSS assets natively on GitHub Action's x86_64 host runner at 10x speed (`commit 8d44f57`).
+
 ## v0.5.6-alpha (Web Client Docker Builder Package Installation Fix)
 * **Bug Fix**
   * Updated [client/Dockerfile](file:///c:/Users/Eran/IRC/client/Dockerfile#L5) builder stage to use `RUN npm install` instead of `npm ci`, resolving Node build container failure (`commit 06d92a3`).
