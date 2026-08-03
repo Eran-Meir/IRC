@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.4-alpha (Governance Cleanup & 13-Rule Code Review Engine)
+* **Governance & Cleanup**
+  * Removed duplicate `.agents/AGENTS.md` file (`commit 49f4e47`), keeping `AI_RULES.md` as the single source of truth.
+  * Updated `.agents/skills/code-review/SKILL.md` to enforce evaluating all 13 rules systematically during every code review.
+
 ## v0.5.3-alpha (Rule 3 Strict Cloud Execution Policy)
 * **Governance & Rules**
   * Updated **Rule 3** in `AI_RULES.md` and added `.agents/AGENTS.md` explicitly mandating that zero application code (Go, Docker, Python, React Web Client) is built or executed locally on the user's laptop.
