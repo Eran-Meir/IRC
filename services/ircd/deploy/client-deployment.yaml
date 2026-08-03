@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ircd-web-client
+  namespace: default
+  labels:
+    app: ircd-web-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ircd-web-client
+  template:
+    metadata:
+      labels:
+        app: ircd-web-client
+    spec:
+      containers:
+      - name: web-client
+        image: ghcr.io/eran-meir/irc-web-client:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 50m
+            memory: 32Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ircd-web-client
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: ircd-web-client
+  ports:
+  - port: 80
+    targetPort: 80
+    name: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ircd-web-client-test-ingress
+  namespace: default
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: traefik
+  rules:
+  - http:
+      paths:
+      - path: /test
+        pathType: Prefix
+        backend:
+          service:
+            name: ircd-web-client
+            port:
+              number: 80

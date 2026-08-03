@@ -39,7 +39,7 @@ spec:
               access: proxy
           service:
             type: LoadBalancer
-            port: 3000
+            port: 3001
             targetPort: 3000
           ingress:
             enabled: true

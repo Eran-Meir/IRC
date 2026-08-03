@@ -42,8 +42,20 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.IMAGE_NAME }}:v0.2.0-stark-tower
             ${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and Push Web Client (ARM64)
+        uses: docker/build-push-action@v7
+        with:
+          context: ./client
+          file: ./client/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/eran-meir/irc/client:${{ github.sha }}
+            ghcr.io/eran-meir/irc/client:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -60,16 +72,16 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v6
 
-      - name: Update Image Tag in Manifest
+      - name: Update Image Tag in Manifests
         run: |
-          # Use sed to update the image tag dynamically
           sed -i 's|image: ghcr.io/eran-meir/irc/ircd:.*|image: ghcr.io/eran-meir/irc/ircd:${{ github.sha }}|g' services/ircd/deploy/deployment.yaml
+          sed -i 's|image: ghcr.io/eran-meir/irc/client:.*|image: ghcr.io/eran-meir/irc/client:${{ github.sha }}|g' services/ircd/deploy/client-deployment.yaml
 
       - name: Commit and Push Changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -am "GitOps: Update ircd image to ${{ github.sha }}" || echo "No changes to commit"
+          git commit -am "GitOps: Update ircd and client images to ${{ github.sha }}" || echo "No changes to commit"
           git pull --rebase
           git push
 
