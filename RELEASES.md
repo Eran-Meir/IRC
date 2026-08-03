@@ -1,5 +1,15 @@
 # Release History
 
+## v0.5.0-alpha (Core IRC Messaging, Valkey Pub/Sub & mIRC React Web Client)
+* **IRCd Engine Features**
+  * Implemented RFC 1459 command router (`NICK`, `USER`, `JOIN`, `PART`, `PRIVMSG`, `PING`, `PONG`, `QUIT`).
+  * Integrated Valkey Pub/Sub state backend for real-time cross-pod message broadcasting (`irc:channel:*`).
+  * Built a pure Go RFC 6455 WebSocket upgrader (`/ws`) allowing web browsers to connect to IRCd without third-party dependencies.
+* **Frontend Web Client (`client/`)**
+  * Created modern mIRC-inspired React + TypeScript Web Client with `"Fixedsys"` font and dark mode glassmorphism themes.
+  * Integrated English UI with Hebrew character reading support (auto-RTL text alignment for Hebrew messages).
+  * Added top "View & Preferences" menu bar with customizable font size, font family, theme switcher, and nick list toggles.
+
 ## v0.4.4-alpha (Full Codebase Review & GitOps Documentation Architecture)
 * **Documentation & Architecture**
   * Completed full codebase and infrastructure review using the `code-review` skill audit methodology.
