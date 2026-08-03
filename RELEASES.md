@@ -1,5 +1,10 @@
 # Release History
 
+## v0.4.3-alpha (Prometheus Resource Headroom & OOM Prevention)
+* **DevOps & Stability**
+  * Increased Prometheus memory limit to `768Mi` in `kube-prometheus-stack.yaml` to prevent OOMKilled pod crashes during TSDB WAL compaction.
+  * Optimized global cluster `scrapeInterval` to `15s` while preserving `5s` high-resolution scraping in `podmonitor.yaml` specifically for IRCd.
+
 ## v0.4.2-alpha (PromQL Metric Aggregation Fix for Active Connections)
 * **DevOps & Dashboard Fix**
   * Updated PromQL target query in `dashboard-master.yaml` and `dashboard-app.yaml` to `sum(ircd_connected_clients) or vector(0)`.
