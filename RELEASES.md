@@ -1,5 +1,9 @@
 # Release History
 
+## v0.5.6-alpha (Web Client Docker Builder Package Installation Fix)
+* **Bug Fix**
+  * Updated [client/Dockerfile](file:///c:/Users/Eran/IRC/client/Dockerfile#L5) builder stage to use `RUN npm install` instead of `npm ci`, resolving Node build container failure (`commit 06d92a3`).
+
 ## v0.5.5-alpha (Go Compiler Return Signature Alignment Fix)
 * **Bug Fix**
   * Updated [cmd/ircd/main.go](file:///c:/Users/Eran/IRC/services/ircd/cmd/ircd/main.go#L34) to check single return value `ch := GetOrCreateChannel(...)` matching Rule 10 API contract, resolving Go build error (`commit 0126545`).
