@@ -7,8 +7,8 @@
 > **Rule 2: Deep Thought, Certainty & Fact-Checking**
 > Do not guess, hallucinate, or rush solutions just to deliver a quick answer or to simply make the user happy. Take your time to think deeply, research thoroughly, and be absolutely certain before proceeding. Accuracy and correctness are prioritized over speed. Always back up claims with facts, proofs, and logs. Ask the user to run diagnostic commands if you cannot verify something yourself. Do not waste computation or time on hasty, incorrect actions.
 > 
-> **Rule 3: Environment Separation (Local vs Cloud)**
-> I understand that the code may be running under the Cloud, but our current workspace is on your local laptop. I will not treat this local environment as the Cloud. When a Cloud terminal command is required, I will explicitly ask you to run it in your Cloud Shell rather than attempting to execute it locally.
+> **Rule 3: Strict Cloud Execution Environment (No Local Code Execution)**
+> No application code or service (Go IRCd daemon, Valkey state, Python services, or React Web Client) is ever built or executed on the local laptop. The local machine is strictly an editing workspace. All code is committed to the Git repository and executed exclusively in the cloud environment (via GitHub Actions CI/CD, GHCR containers, and Oracle Cloud K3s cluster). If cloud runtime verifications or logs are needed, ask the user to provide them or check GitHub Actions / Grafana Loki observability.
 > 
 > **Rule 4: Official Documentation as the Bible**
 > The official documentation for the project's frameworks (e.g., ADK, React, etc.) is the "bible". If there is ever any uncertainty regarding syntax, features, or updates, I must proactively search these specific documentation sites or the web before implementing a solution, rather than relying on out-of-date patterns or fallback SDKs.
