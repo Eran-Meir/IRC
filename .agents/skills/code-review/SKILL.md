@@ -20,14 +20,20 @@ Before inspecting or writing code, explicitly establish:
 
 ---
 
-### Phase 2: Compliance Audit against Repository Rules
-Validate the change against `AI_RULES.md` and `docs/ARCHITECTURE.md`:
-* **Rule 1 (Pristine Codebase & Zero Magic Numbers)**: Are all timeouts, ports, limits, and magic constants extracted into named `const` variables?
+### Phase 2: Comprehensive 13-Rule Compliance Audit
+Validate the change against **ALL 13 Rules** in `AI_RULES.md` systematically:
+* **Rule 1 (Pristine Codebase & Zero Magic Numbers)**: Are all constants, limits, and timeouts named?
 * **Rule 2 (Deep Thought & Fact-Checking)**: Is the solution backed by empirical logs/facts rather than assumptions?
-* **Rule 5 (Strict Confidentiality)**: Are zero credentials, private keys, or API tokens committed?
-* **Rule 8 ($0 Cost / Bare Minimum Footprint)**: Does the change respect resource constraints (max 200m CPU / 256Mi RAM)?
-* **Rule 11 (True GitOps Architecture)**: Does the change go through Git/ArgoCD rather than fragile inline SSH hacks?
-* **Rule 12 (Continuous Alignment Loop)**: Are `RELEASES.md` and `README.md` updated to reflect the new state?
+* **Rule 3 (Strict Cloud Execution Environment)**: Zero code executed locally on the user's laptop; all builds and runs happen in the cloud via CI/CD and K3s.
+* **Rule 4 (Official Documentation as the Bible)**: Checked official framework docs before implementing?
+* **Rule 5 (Strict Confidentiality)**: Zero plain-text credentials, API keys, or secrets in git?
+* **Rule 6 (Release Notes vs. README)**: Exhaustive version log in `RELEASES.md`, visual diagrams in `README.md`?
+* **Rule 7 (Continuous Best Practices)**: Adheres to modern state-of-the-art cloud and DevOps standards?
+* **Rule 8 ($0 Cost / Bare Minimum Footprint)**: Resource limits explicit (max 200m CPU / 256Mi RAM), zero billing leak?
+* **Rule 9 & 10 (System Governance)**: Control flow scoping and API contract preservation intact?
+* **Rule 11 (Single Source of Truth - Architecture)**: Fully aligned with `docs/ARCHITECTURE.md`?
+* **Rule 12 (Continuous Alignment Loop)**: Continuous alignment loop executed before commits?
+* **Rule 13 (Proactive Skill Creation & Skill-Driven Development)**: Driven by specialized agent skills under `.agents/skills/`?
 
 ---
 
