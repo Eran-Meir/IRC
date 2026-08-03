@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.12-alpha (RFC 1459 Smoke Test Handshake Fix)
+* **Bug Fix (CI/CD)**
+  * Updated inline Python smoke test in [3-deploy-and-test-app.yml](file:///c:/Users/Eran/IRC/.github/workflows/3-deploy-and-test-app.yml#L179) to send `NICK` + `USER` registration commands before waiting for the server `001 Welcome` reply.
+  * The IRCd correctly follows RFC 1459 protocol (server waits for client registration), but the old test passively waited for a banner on raw TCP connect, causing immediate timeout and connection drop.
+
 ## v0.5.11-alpha (GHA Docker Layer Cache Bust for Web Client Build)
 * **Bug Fix (DevOps)**
   * Added `no-cache: true` to the `Build and Push Web Client (ARM64)` step in [3-deploy-and-test-app.yml](file:///c:/Users/Eran/IRC/.github/workflows/3-deploy-and-test-app.yml#L56).

@@ -190,20 +190,42 @@ jobs:
               try:
                   print(f"Attempt {attempt}/{max_attempts}: Connecting to {server_ip}:6667...")
                   s = socket.socket()
-                  s.settimeout(5)
+                  s.settimeout(10)
                   s.connect((server_ip, 6667))
-                  data = s.recv(1024).decode()
+
+                  # RFC 1459: Client must send NICK + USER before server replies
+                  s.sendall(b"NICK SmokeTest\r\n")
+                  s.sendall(b"USER smoketest 0 * :CI Smoke Test\r\n")
+
+                  # Read the server welcome response
+                  data = b""
+                  while True:
+                      try:
+                          chunk = s.recv(4096)
+                          if not chunk:
+                              break
+                          data += chunk
+                          # Stop reading once we have the welcome numerics
+                          if b"001" in data or b"Welcome" in data:
+                              break
+                      except socket.timeout:
+                          break
+
+                  s.sendall(b"QUIT :Smoke test done\r\n")
                   s.close()
-                  print(f"Received: {data.strip()}")
-                  if any(k in data for k in ["Version", "Welcome", "IRC"]):
-                      print("✅ Valid banner response received!")
+
+                  decoded = data.decode(errors="replace")
+                  print(f"Received: {decoded.strip()}")
+                  if any(k in decoded for k in ["001", "Welcome", "IRC"]):
+                      print("✅ Valid welcome response received!")
                       sys.exit(0)
                   else:
-                      print(f"Unexpected response banner: '{data.strip()}'")
+                      print(f"Unexpected response: '{decoded.strip()}'")
               except Exception as e:
                   print(f"Attempt {attempt} failed: {e}")
               time.sleep(delay)
 
+          print("❌ Smoke test FAILED — No valid response from server.")
           sys.exit(1)
           EOF
           
