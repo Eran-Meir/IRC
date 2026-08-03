@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.3-alpha (Rule 3 Strict Cloud Execution Policy)
+* **Governance & Rules**
+  * Updated **Rule 3** in `AI_RULES.md` and added `.agents/AGENTS.md` explicitly mandating that zero application code (Go, Docker, Python, React Web Client) is built or executed locally on the user's laptop.
+  * Codified that the local environment is strictly an editing workspace, and all compilation, builds, and runtime executions occur exclusively in the cloud (GitHub Actions CI/CD and Oracle Cloud K3s cluster).
+
 ## v0.5.2-alpha (Go Compiler Strict Import Compliance Fix)
 * **Bug Fix**
   * Removed unused `"fmt"` import from `services/ircd/internal/server/channel.go`, resolving Go compiler build failure in Docker multi-stage pipeline (`commit a5565d7`).
