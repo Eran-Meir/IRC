@@ -1,0 +1,104 @@
+:root {
+  /* Default Design System Tokens (mIRC Dark Theme) */
+  --bg-primary: #0f111a;
+  --bg-secondary: #181a26;
+  --bg-tertiary: #212436;
+  --accent-green: #00ff66;
+  --accent-cyan: #00e5ff;
+  --accent-gold: #ffcc00;
+  --accent-magenta: #ff007f;
+  --text-main: #e0e6ed;
+  --text-muted: #8a94a6;
+  --text-notice: #70a1ff;
+  --border-color: #2b304a;
+  --font-family: 'Fixedsys Excelsior 3.01', 'Fixedsys', 'Fira Code', monospace;
+  --font-size: 14px;
+  --dir: ltr;
+}
+
+/* Theme Options */
+[data-theme="matrix-emerald"] {
+  --bg-primary: #05100a;
+  --bg-secondary: #0a1f14;
+  --bg-tertiary: #103320;
+  --accent-green: #00ff41;
+  --accent-cyan: #00ff9f;
+  --accent-gold: #cfff00;
+  --text-main: #00ff41;
+  --text-muted: #009926;
+  --border-color: #004d13;
+}
+
+[data-theme="cyberpunk"] {
+  --bg-primary: #120024;
+  --bg-secondary: #1f0038;
+  --bg-tertiary: #2e0052;
+  --accent-green: #00ffcc;
+  --accent-cyan: #00e5ff;
+  --accent-gold: #ff007f;
+  --text-main: #ffe600;
+  --text-muted: #b800ff;
+  --border-color: #590099;
+}
+
+[data-theme="classic-light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f0f2f5;
+  --bg-tertiary: #e1e4e8;
+  --accent-green: #008000;
+  --accent-cyan: #0000ff;
+  --accent-gold: #b8860b;
+  --text-main: #000000;
+  --text-muted: #555555;
+  --border-color: #cccccc;
+}
+
+/* Font Size Tokens */
+[data-fontsize="small"] { --font-size: 12px; }
+[data-fontsize="medium"] { --font-size: 14px; }
+[data-fontsize="large"] { --font-size: 16px; }
+
+/* Font Family Tokens */
+[data-fontfamily="fixedsys"] { --font-family: 'Fixedsys Excelsior 3.01', 'Fixedsys', monospace; }
+[data-fontfamily="fira-code"] { --font-family: 'Fira Code', monospace; }
+[data-fontfamily="monospace"] { --font-family: monospace; }
+
+/* Global Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  direction: var(--dir);
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

@@ -1,0 +1,83 @@
+package server
+
+import (
+	"sync"
+)
+
+// ServerManager maintains global registry of clients and channels
+type ServerManager struct {
+	channels map[string]*Channel
+	clients  map[string]*Client // nick -> Client
+	mu       sync.RWMutex
+}
+
+var (
+	GlobalManager *ServerManager
+	once          sync.Once
+)
+
+// GetManager returns singleton server manager
+func GetManager() *ServerManager {
+	once.Do(func() {
+		GlobalManager = &ServerManager{
+			channels: make(map[string]*Channel),
+			clients:  make(map[string]*Client),
+		}
+	})
+	return GlobalManager
+}
+
+// GetOrCreateChannel returns existing channel or creates a new one
+func (m *ServerManager) GetOrCreateChannel(name string) *Channel {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	ch, exists := m.channels[name]
+	if !exists {
+		ch = NewChannel(name)
+		m.channels[name] = ch
+	}
+	return ch
+}
+
+// RemoveChannelIfEmpty removes channel if no users remain
+func (m *ServerManager) RemoveChannelIfEmpty(name string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	ch, exists := m.channels[name]
+	if exists {
+		ch.mu.RLock()
+		isEmpty := len(ch.clients) == 0
+		ch.mu.RUnlock()
+		if isEmpty {
+			delete(m.channels, name)
+		}
+	}
+}
+
+// RegisterNick associates a nickname with a client
+func (m *ServerManager) RegisterNick(nick string, c *Client) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, exists := m.clients[nick]; exists {
+		return false // Nick in use
+	}
+	m.clients[nick] = c
+	return true
+}
+
+// UnregisterNick removes a nickname
+func (m *ServerManager) UnregisterNick(nick string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.clients, nick)
+}
+
+// GetClientByNick finds a client by nickname
+func (m *ServerManager) GetClientByNick(nick string) *Client {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.clients[nick]
+}

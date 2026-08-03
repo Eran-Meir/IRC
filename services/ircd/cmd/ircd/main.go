@@ -18,8 +18,8 @@ func main() {
 	logger.Init(cfg.LogLevel)
 	logger.Info("Starting Go IRCd...")
 
-	// Start Prometheus Metrics Endpoint
-	metrics.StartServer(metrics.DefaultMetricsPort)
+	// Start Prometheus Metrics & WebSocket Endpoint
+	metrics.StartServer(metrics.DefaultMetricsPort, server.HandleWebSocket)
 
 	// 2. Connect to Valkey (State Layer)
 	err := state.InitValkey(cfg)
@@ -28,6 +28,13 @@ func main() {
 		os.Exit(1)
 	}
 	logger.Info("Successfully connected to Valkey state backend.")
+
+	// Start Valkey Cross-Pod Pub/Sub Listener
+	state.StartPubSubListener(func(channelName string, payload string) {
+		if ch, exists := server.GetManager().GetOrCreateChannel(channelName); exists {
+			ch.Broadcast(nil, payload)
+		}
+	})
 
 	// 3. Start TCP Server
 	srv := server.NewServer(cfg.Port)

@@ -47,13 +47,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "ircd_messages_total %d\n", totalMsgs.Load())
 }
 
-// StartServer starts the HTTP metrics endpoint in a background goroutine
-func StartServer(port string) {
+// StartServer starts the HTTP metrics and WebSocket endpoint in a background goroutine
+func StartServer(port string, wsHandler http.HandlerFunc) {
 	mux := http.NewServeMux()
 	mux.HandleFunc(MetricsPath, Handler)
+	if wsHandler != nil {
+		mux.HandleFunc("/ws", wsHandler)
+	}
 
 	addr := fmt.Sprintf(":%s", port)
-	logger.Info("Starting Prometheus metrics HTTP server on %s%s...", addr, MetricsPath)
+	logger.Info("Starting Prometheus metrics & WebSocket HTTP server on %s (paths: %s, /ws)...", addr, MetricsPath)
 
 	go func() {
 		if err := http.ListenAndServe(addr, mux); err != nil {
