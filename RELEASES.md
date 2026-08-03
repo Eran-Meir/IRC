@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.1-alpha (Test Environment Ingress Routing & Multi-Stage Web Client Container)
+* **DevOps & Routing Architecture**
+  * Configured Grafana test monitoring service to listen on port `3001` (`http://<SERVER_IP>:3001`).
+  * Created multi-stage `client/Dockerfile` (Node 20 Vite builder + ultra-slim Nginx runtime).
+  * Created Traefik Ingress routing `http://<SERVER_IP>/test` directly to the `ircd-web-client` container with SPA fallback.
+  * Configured Nginx WebSocket proxy forwarding `/ws` traffic to `ircd.default.svc.cluster.local:9090`.
+
 ## v0.5.0-alpha (Core IRC Messaging, Valkey Pub/Sub & mIRC React Web Client)
 * **IRCd Engine Features**
   * Implemented RFC 1459 command router (`NICK`, `USER`, `JOIN`, `PART`, `PRIVMSG`, `PING`, `PONG`, `QUIT`).
