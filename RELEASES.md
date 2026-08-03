@@ -1,5 +1,9 @@
 # Release History
 
+## v0.5.2-alpha (Go Compiler Strict Import Compliance Fix)
+* **Bug Fix**
+  * Removed unused `"fmt"` import from `services/ircd/internal/server/channel.go`, resolving Go compiler build failure in Docker multi-stage pipeline (`commit a5565d7`).
+
 ## v0.5.1-alpha (Test Environment Ingress Routing & Multi-Stage Web Client Container)
 * **DevOps & Routing Architecture**
   * Configured Grafana test monitoring service to listen on port `3001` (`http://<SERVER_IP>:3001`).
