@@ -1,5 +1,5 @@
-# Stage 1: Build React Static Assets
-FROM node:20-alpine AS builder
+# Stage 1: Build React Static Assets (Runs natively on build runner CPU)
+FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
