@@ -61,11 +61,18 @@ func (c *Client) handleNick(msg *parser.Message) {
 	mgr := GetManager()
 
 	if c.Nick != "" {
-		// Nick Change
+		if strings.EqualFold(c.Nick, newNick) {
+			return
+		}
+		// Try registering newNick first to prevent duplicate nick collision
+		if !mgr.RegisterNick(newNick, c) {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 433 %s %s :Nickname is already in use\r\n", ServerName, c.Nick, newNick)))
+			return
+		}
 		oldPrefix := c.Prefix()
-		mgr.UnregisterNick(c.Nick)
+		oldNick := c.Nick
 		c.Nick = newNick
-		mgr.RegisterNick(newNick, c)
+		mgr.UnregisterNick(oldNick)
 
 		changeLine := fmt.Sprintf(":%s NICK :%s", oldPrefix, newNick)
 		c.SendRaw([]byte(changeLine + "\r\n"))

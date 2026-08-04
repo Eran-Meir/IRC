@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.33-alpha (Duplicate Nick Registration Protection, Command History & Ctrl+C Clearing)
+* **Feature & Bug Fix (Go Daemon & React Client)**
+  * **Duplicate Nick Registration Defense**: Updated `handleNick` in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L63) to verify `RegisterNick` availability *before* unregistering existing nick, preventing multi-user nick collisions when changing nicks to short names like `k`.
+  * **20-Item Command History Stack**: Added **Up Arrow** and **Down Arrow** key navigation in [client/src/components/MessageInput.tsx](file:///c:/Users/Eran/IRC/client/src/components/MessageInput.tsx#L35). Preserves a 20-command stack allowing seamless scrolling through recent commands/messages.
+  * **`Ctrl + C` Line Clearing**: Added `Ctrl + C` keydown shortcut in `MessageInput.tsx` to instantly clear the active input line (matching terminal shell behavior).
+  * **Input Clearing & Focus Shift on `/join`**: Guaranteed input field clears on submit for `/join #k` and shifts active focus to the target channel.
+
 ## v0.5.32-alpha (Light Mode Rank Contrast, Nick Change Symbol Parsing & Channel Messaging Fix)
 * **Bug Fix (React Client UI)**
   * **Light Theme High-Contrast Rank Colors**: Added dark contrast rank colors in [client/src/index.css](file:///c:/Users/Eran/IRC/client/src/index.css#L134) (`.op`: `#00802b`, `.protected`: `#cc0044`, `.halfop`: `#008b8b`, `.voice`: `#b8860b`) for light mode, eliminating unreadable neon green/cyan text.
