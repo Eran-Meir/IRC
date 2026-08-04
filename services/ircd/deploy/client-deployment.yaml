@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: web-client
-        image: ghcr.io/eran-meir/irc/client:665459d1e99c9f6c854b5e967d3d0f33dd9b56bd
+        image: ghcr.io/eran-meir/irc/client:ac435c36f9bc6a52c8da21f9a1ed58577842516b
         imagePullPolicy: Always
         ports:
         - containerPort: 80
