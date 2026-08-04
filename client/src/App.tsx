@@ -81,13 +81,14 @@ export const App: React.FC = () => {
     const time = new Date().toLocaleTimeString();
 
     // Silently handle PING/PONG keepalives
-    if (line.startsWith('PING ')) {
-      const payload = line.slice(5);
+    if (line.startsWith('PING') || line.includes(' PING ')) {
+      const pingArg = line.replace(/^:?[^ ]* PING :?/, '').replace(/^PING :?/, '').trim();
       if (wsRef.current) {
-        wsRef.current.send(`PONG ${payload}`);
+        wsRef.current.send(`PONG :${pingArg}`);
       }
       return;
     }
+
     if (line.includes(' PONG ') || line.startsWith('PONG ')) {
       return;
     }

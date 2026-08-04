@@ -41,7 +41,7 @@ export class WebSocketService {
       };
 
       this.ws.onclose = () => {
-        console.log('[WebSocket] Disconnected');
+        console.log('[WebSocket] Disconnected from IRC Gateway');
         this.onStatusCallback(false);
         this.scheduleReconnect();
       };
@@ -49,6 +49,13 @@ export class WebSocketService {
       this.ws.onerror = (err) => {
         console.warn('[WebSocket] Connection error:', err);
         this.onStatusCallback(false);
+        if (this.ws) {
+          try {
+            this.ws.close();
+          } catch (e) {
+            // Ignore close error
+          }
+        }
       };
     } catch (e) {
       console.error('[WebSocket] Setup exception:', e);
