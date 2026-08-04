@@ -55,6 +55,48 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
           {preferences.theme === 'classic-light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
         </button>
 
+        {/* Quick Font Size Dropdown Button */}
+        <div className="menu-item">
+          <button className="menu-btn font-size-btn" onClick={() => toggleDropdown('fontsize')}>
+            Font: {preferences.fontSize || '16px'} ▾
+          </button>
+          {activeDropdown === 'fontsize' && (
+            <div className="dropdown-menu">
+              <div className="dropdown-section-title">Select Font Size</div>
+              <button
+                className={preferences.fontSize === '12px' || preferences.fontSize === 'small' ? 'active' : ''}
+                onClick={() => { onUpdatePreferences({ fontSize: '12px' }); closeDropdowns(); }}
+              >
+                12px (Small)
+              </button>
+              <button
+                className={preferences.fontSize === '14px' || preferences.fontSize === 'medium' ? 'active' : ''}
+                onClick={() => { onUpdatePreferences({ fontSize: '14px' }); closeDropdowns(); }}
+              >
+                14px (Medium)
+              </button>
+              <button
+                className={preferences.fontSize === '16px' || preferences.fontSize === 'large' ? 'active' : ''}
+                onClick={() => { onUpdatePreferences({ fontSize: '16px' }); closeDropdowns(); }}
+              >
+                16px (Default)
+              </button>
+              <button
+                className={preferences.fontSize === '18px' ? 'active' : ''}
+                onClick={() => { onUpdatePreferences({ fontSize: '18px' }); closeDropdowns(); }}
+              >
+                18px (Large)
+              </button>
+              <button
+                className={preferences.fontSize === '20px' ? 'active' : ''}
+                onClick={() => { onUpdatePreferences({ fontSize: '20px' }); closeDropdowns(); }}
+              >
+                20px (Extra Large)
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* File Menu */}
         <div className="menu-item">
           <button className="menu-btn" onClick={() => toggleDropdown('file')}>

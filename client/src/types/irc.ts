@@ -17,7 +17,7 @@ export interface Channel {
 }
 
 export type ThemeOption = 'mirc-dark' | 'matrix-emerald' | 'cyberpunk' | 'classic-light';
-export type FontSizeOption = 'small' | 'medium' | 'large';
+export type FontSizeOption = '12px' | '14px' | '16px' | '18px' | '20px' | 'small' | 'medium' | 'large';
 export type FontFamilyOption = 'fixedsys' | 'fira-code' | 'monospace';
 export type LanguageOption = 'en' | 'he';
 

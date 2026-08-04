@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.19-alpha (Duplicate Message Resolution, 16px Fira Code Defaults & Dedicated Font Size Dropdown)
+* **Bug Fix (Messaging)**
+  * Eliminated duplicate message rendering in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L255). PRIVMSG lines are now handled once when broadcast back by the server, ensuring zero duplicates and 100% nickname consistency across all open tabs.
+* **UI & Typography**
+  * Configured **16px font size** (`large`) and **Fira Code font family** as defaults in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L17).
+  * Added a dedicated `Font: 16px ▾` dropdown button directly to [client/src/components/TopMenuBar.tsx](file:///c:/Users/Eran/IRC/client/src/components/TopMenuBar.tsx#L58) with 1-click selection for `12px`, `14px`, `16px (Default)`, `18px`, and `20px`.
+
 ## v0.5.18-alpha (Top Menu Bar Dropdown UX Fix)
 * **Bug Fix (UI/UX)**
   * Replaced premature `onMouseLeave` handlers in [client/src/components/TopMenuBar.tsx](file:///c:/Users/Eran/IRC/client/src/components/TopMenuBar.tsx#L27) with a global click-outside event listener (`useRef` + `mousedown`).

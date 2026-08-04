@@ -56,9 +56,11 @@
 }
 
 /* Font Size Tokens */
-[data-fontsize="small"] { --font-size: 12px; }
-[data-fontsize="medium"] { --font-size: 14px; }
-[data-fontsize="large"] { --font-size: 16px; }
+[data-fontsize="12px"], [data-fontsize="small"] { --font-size: 12px; }
+[data-fontsize="14px"], [data-fontsize="medium"] { --font-size: 14px; }
+[data-fontsize="16px"], [data-fontsize="large"] { --font-size: 16px; }
+[data-fontsize="18px"] { --font-size: 18px; }
+[data-fontsize="20px"] { --font-size: 20px; }
 
 /* Font Family Tokens */
 [data-fontfamily="fixedsys"] { --font-family: 'Fixedsys Excelsior 3.01', 'Fixedsys', monospace; }

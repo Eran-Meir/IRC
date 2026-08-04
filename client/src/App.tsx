@@ -15,8 +15,8 @@ export const App: React.FC = () => {
   
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: 'classic-light',
-    fontSize: 'medium',
-    fontFamily: 'fixedsys',
+    fontSize: '16px',
+    fontFamily: 'fira-code',
     language: 'en',
     showUserList: true,
     showTimestamps: true,
@@ -255,13 +255,6 @@ export const App: React.FC = () => {
     // Normal PRIVMSG
     if (activeTarget.startsWith('#') && wsRef.current) {
       wsRef.current.send(`PRIVMSG ${activeTarget} :${text}`);
-      addMessage(activeTarget, {
-        id: Math.random().toString(),
-        sender: nick,
-        target: activeTarget,
-        text,
-        timestamp: time,
-      });
     }
   };
 
