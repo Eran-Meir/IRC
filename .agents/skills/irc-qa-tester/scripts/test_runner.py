@@ -115,6 +115,7 @@ class IRCTestSuite:
         self.test_ban_prevention()
         self.test_rank_hierarchy()
         self.test_rejoin_sync()
+        self.test_oper_authentication_encrypted()
         self.test_kline_disconnect()
         self.test_rehash_admin()
 
@@ -406,10 +407,61 @@ class IRCTestSuite:
         except Exception as e:
             self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
+    def test_oper_authentication_encrypted(self):
+        cmd = "OPER"
+        scenario = "Hashed Oper Accounts Authentication"
+        proto = "1. Smiley authenticates with SmileyAdminPassword123!@# (server_admin)\n2. ServerOperator authenticates with ServerOperatorPassword123!@# (irc_oper)\n3. testadmin authenticates with testadmin\n4. testoper authenticates with testoper"
+        exp = "381 RPL_YOUREOPER for all 4 encrypted operator accounts"
+        try:
+            passed_accounts = 0
+
+            # Test Smiley (server_admin)
+            c_smiley = IRCClient(self.host, self.port)
+            c_smiley.connect("Smiley_Tester")
+            c_smiley.send("OPER Smiley SmileyAdminPassword123!@#")
+            r1, _ = c_smiley.read_until(" 381 ")
+            if " 381 " in r1:
+                passed_accounts += 1
+            c_smiley.close()
+
+            # Test ServerOperator (irc_oper)
+            c_so = IRCClient(self.host, self.port)
+            c_so.connect("Oper_Tester")
+            c_so.send("OPER ServerOperator ServerOperatorPassword123!@#")
+            r2, _ = c_so.read_until(" 381 ")
+            if " 381 " in r2:
+                passed_accounts += 1
+            c_so.close()
+
+            # Test testadmin (server_admin)
+            c_ta = IRCClient(self.host, self.port)
+            c_ta.connect("TestAdmin_Tester")
+            c_ta.send("OPER testadmin testadmin")
+            r3, _ = c_ta.read_until(" 381 ")
+            if " 381 " in r3:
+                passed_accounts += 1
+            c_ta.close()
+
+            # Test testoper (irc_oper)
+            c_to = IRCClient(self.host, self.port)
+            c_to.connect("TestOper_Tester")
+            c_to.send("OPER testoper testoper")
+            r4, _ = c_to.read_until(" 381 ")
+            if " 381 " in r4:
+                passed_accounts += 1
+            c_to.close()
+
+            if passed_accounts == 4:
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"{passed_accounts}/4 accounts authenticated successfully", evaluation="PASS — All encrypted operator accounts verified.")
+            else:
+                self.log_result(cmd, scenario, "FAIL", f"Only {passed_accounts}/4 passed", protocol=proto, expected=exp, actual=f"{passed_accounts}/4 accounts authenticated", evaluation="FAIL — Encrypted oper authentication failed.")
+        except Exception as e:
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
+
     def test_kline_disconnect(self):
         cmd = "KLINE"
         scenario = "IRCop Severs Target Socket"
-        proto = "1. Admin authenticates via OPER admin_account admin_password\n2. Admin issues KLINE *@127.0.0.1\n3. Assert Target connection receives ERROR link close"
+        proto = "1. Admin authenticates via OPER testadmin testadmin\n2. Admin issues KLINE *@127.0.0.1\n3. Assert Target connection receives ERROR link close"
         exp = "381 RPL_YOUREOPER received; Target connection terminated with ERROR link close"
         try:
             admin = IRCClient(self.host, self.port)
@@ -419,7 +471,7 @@ class IRCTestSuite:
             admin.connect(admin_nick)
             target.connect(target_nick)
 
-            admin.send("OPER admin_account admin_password")
+            admin.send("OPER testadmin testadmin")
             r381, _ = admin.read_until(" 381 ")
 
             admin.send(f"KLINE *@127.0.0.1 1h :Local server ban")
@@ -438,14 +490,14 @@ class IRCTestSuite:
     def test_rehash_admin(self):
         cmd = "REHASH"
         scenario = "Admin Reloads Config (382)"
-        proto = "1. Admin authenticates via OPER admin_account admin_password\n2. Admin issues REHASH\n3. Assert 382 (RPL_REHASHING)"
+        proto = "1. Admin authenticates via OPER testadmin testadmin\n2. Admin issues REHASH\n3. Assert 382 (RPL_REHASHING)"
         exp = "382 RPL_REHASHING numeric response"
         try:
             admin = IRCClient(self.host, self.port)
             admin_nick = f"Admin_{rand_str()}"
 
             admin.connect(admin_nick)
-            admin.send("OPER admin_account admin_password")
+            admin.send("OPER testadmin testadmin")
             admin.read_until(" 381 ")
 
             admin.send("REHASH")
