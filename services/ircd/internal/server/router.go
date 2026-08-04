@@ -403,6 +403,10 @@ func (c *Client) handleMode(msg *parser.Message) {
 			if paramIdx < len(msg.Params) {
 				tNick := msg.Params[paramIdx]
 				paramIdx++
+				if !ch.IsProtected(c) {
+					c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :Only protected users (*@) can grant or revoke +q\r\n", ServerName, c.Nick, chName)))
+					continue
+				}
 				if tClient := mgr.GetClientByNick(tNick); tClient != nil {
 					ch.SetProtected(tClient, adding)
 					modeLine := fmt.Sprintf(":%s MODE %s %c%c %s", c.Prefix(), chName, flagChar(adding), char, tNick)

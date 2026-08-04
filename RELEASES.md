@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.29-alpha (+q Protected Permission Enforcement, 353 Rank Sync Fix & /rejoin Command)
+* **Feature & Bug Fix (Go Daemon & React Client)**
+  * **Strict `+q` (Protect) Permission Check**: Go IRCd `router.go` now requires `*@` (Protected) status to execute `/mode #channel +q nick` or `/mode #channel -q nick`. Non-protected Operators receive error `482` (`Only protected users (*@) can grant or revoke +q`).
+  * **Channel Operator Rank Sync Fix**: Corrected regex in `App.tsx` parsing `353` RPL_NAMREPLY (`/ 353 [^ ]+ [=@*] ([#][^ ]+) :(.*)$/`). This fixes rank badge persistence so the first user in a channel retains `@` Operator rank when subsequent users join.
+  * **`/rejoin` Slash Command**: Added `/rejoin` (or `/rejoin #channel`) command to cleanly part and re-enter the active channel target.
+  * **Window Focus Shift on `/join`**: Guaranteed active target window shifts immediately to the joined channel upon `/join #channel`.
+
 ## v0.5.28-alpha (Kicked Rejoin & Messaging, Query Windows, Nick Header & Context Menu Bounds)
 * **Bug Fix (React Client & Go Daemon)**
   * **Kicked Rejoin Fix**: Removed channel from `joinedChannelsRef` set upon `KICK` so users can immediately `/join #channel` back.

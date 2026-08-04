@@ -202,10 +202,10 @@ export const App: React.FC = () => {
       }
     } else if (line.includes(' 353 ')) {
       // RPL_NAMREPLY :server 353 nick = #channel :nick1 nick2
-      const match = line.match(/ 353 [^ ]+ [=@*] ([^ ]+) :(.*)$/);
+      const match = line.match(/ 353 [^ ]+ [=@*] ([#][^ ]+) :(.*)$/);
       if (match) {
         const [, rawChannel, userListStr] = match;
-        const channel = rawChannel.startsWith('#') ? rawChannel.toLowerCase() : '#' + rawChannel.toLowerCase();
+        const channel = rawChannel.toLowerCase();
         const nicks = userListStr.trim().split(/\s+/).filter(Boolean);
 
         setChannels((prev) =>
@@ -424,6 +424,25 @@ export const App: React.FC = () => {
           wsRef.current.send(`JOIN ${channelName}`);
         }
         setActiveTarget(channelName);
+      } else if (cmd === 'REJOIN') {
+        const channelName = (arg || activeTarget).toLowerCase();
+        if (channelName.startsWith('#')) {
+          joinedChannelsRef.current.delete(channelName);
+          if (wsRef.current) {
+            wsRef.current.send(`PART ${channelName} :Rejoining`);
+            wsRef.current.send(`JOIN ${channelName}`);
+          }
+          joinedChannelsRef.current.add(channelName);
+          setActiveTarget(channelName);
+          addMessage(channelName, {
+            id: Math.random().toString(),
+            sender: 'System',
+            target: channelName,
+            text: `* Rejoining ${channelName}...`,
+            timestamp: time,
+            isSystem: true,
+          });
+        }
       } else if (cmd === 'NICK' && arg) {
         if (wsRef.current) wsRef.current.send(`NICK ${arg}`);
         setNick(arg);
