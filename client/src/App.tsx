@@ -561,8 +561,11 @@ export const App: React.FC = () => {
       const errMsg = "* Error: OPER password incorrect";
       addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
     } else if (line.includes(' 381 ')) {
-      // RPL_YOUREOPER :server 381 nick :You are now an IRC operator
-      const msgText = "* Success: You are now an IRC operator (@)";
+      // RPL_YOUREOPER :server 381 nick :You are now ...
+      setIsOper(true);
+      const match = line.match(/ 381 [^ ]+ :(.*)$/);
+      const text = match ? match[1] : 'You are now an IRC operator';
+      const msgText = `* Success: ${text}`;
       addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: msgText, timestamp: time, isSystem: true });
     } else if (line.includes(' 382 ')) {
       // RPL_REHASHING :server 382 nick file :Rehash file
@@ -784,6 +787,26 @@ export const App: React.FC = () => {
         }
 
         if (wsRef.current && targetNick) {
+          wsRef.current.send(`KICK ${channel} ${targetNick} :${reason}`);
+        }
+      } else if ((cmd === 'KB' || cmd === 'KICKBAN') && arg) {
+        let channel = activeTarget;
+        let targetNick = '';
+        let reason = 'Banned from channel';
+
+        if (arg.startsWith('#')) {
+          const parts = arg.split(' ');
+          channel = parts[0].toLowerCase();
+          targetNick = parts[1] || '';
+          if (parts.length > 2) reason = parts.slice(2).join(' ');
+        } else {
+          const parts = arg.split(' ');
+          targetNick = parts[0];
+          if (parts.length > 1) reason = parts.slice(1).join(' ');
+        }
+
+        if (wsRef.current && targetNick) {
+          wsRef.current.send(`MODE ${channel} +b ${targetNick}!*@*`);
           wsRef.current.send(`KICK ${channel} ${targetNick} :${reason}`);
         }
       } else if (cmd === 'TOPIC') {

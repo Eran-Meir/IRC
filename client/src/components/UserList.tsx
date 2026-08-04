@@ -15,6 +15,13 @@ interface ContextMenuState {
   symbol: string;
 }
 
+interface ReasonModalState {
+  visible: boolean;
+  type: 'KICK' | 'KICKBAN';
+  nick: string;
+  reason: string;
+}
+
 export const UserList: React.FC<UserListProps> = ({
   users,
   activeChannel,
@@ -27,6 +34,13 @@ export const UserList: React.FC<UserListProps> = ({
     y: 0,
     nick: '',
     symbol: '',
+  });
+
+  const [reasonModal, setReasonModal] = useState<ReasonModalState>({
+    visible: false,
+    type: 'KICK',
+    nick: '',
+    reason: '',
   });
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -97,7 +111,7 @@ export const UserList: React.FC<UserListProps> = ({
 
   const executeAction = (action: string) => {
     setContextMenu((prev) => ({ ...prev, visible: false }));
-    const { nick, symbol } = contextMenu;
+    const { nick } = contextMenu;
     if (!nick || !onSendCommand) return;
 
     switch (action) {
@@ -132,18 +146,44 @@ export const UserList: React.FC<UserListProps> = ({
         onSendCommand(`/mode ${activeChannel} -q ${nick}`);
         break;
       case 'KICK':
-        onSendCommand(`/kick ${activeChannel} ${nick}`);
+        setReasonModal({
+          visible: true,
+          type: 'KICK',
+          nick,
+          reason: 'Kicked by operator',
+        });
         break;
       case 'BAN':
         onSendCommand(`/mode ${activeChannel} +b ${nick}!*@*`);
         break;
       case 'KICKBAN':
-        onSendCommand(`/mode ${activeChannel} +b ${nick}!*@*`);
-        onSendCommand(`/kick ${activeChannel} ${nick} :Banned`);
+        setReasonModal({
+          visible: true,
+          type: 'KICKBAN',
+          nick,
+          reason: 'Banned from channel',
+        });
         break;
       default:
         break;
     }
+  };
+
+  const handleReasonSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onSendCommand) return;
+
+    const { type, nick, reason } = reasonModal;
+    const finalReason = reason.trim() || (type === 'KICK' ? 'Kicked by operator' : 'Banned from channel');
+
+    if (type === 'KICK') {
+      onSendCommand(`/kick ${activeChannel} ${nick} ${finalReason}`);
+    } else if (type === 'KICKBAN') {
+      onSendCommand(`/mode ${activeChannel} +b ${nick}!*@*`);
+      onSendCommand(`/kick ${activeChannel} ${nick} ${finalReason}`);
+    }
+
+    setReasonModal((prev) => ({ ...prev, visible: false }));
   };
 
   return (
@@ -222,16 +262,51 @@ export const UserList: React.FC<UserListProps> = ({
               </div>
               <div className="context-divider" />
               <div className="context-item danger" onClick={() => executeAction('KICK')}>
-                Kick User
+                Kick User (with reason)
               </div>
               <div className="context-item danger" onClick={() => executeAction('BAN')}>
                 Ban User (+b)
               </div>
               <div className="context-item danger" onClick={() => executeAction('KICKBAN')}>
-                KickBan User
+                KickBan User (with reason)
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* Kick / KickBan Reason Prompt Modal */}
+      {reasonModal.visible && (
+        <div className="modal-overlay" onClick={() => setReasonModal((prev) => ({ ...prev, visible: false }))}>
+          <div className="modal-content ban-list-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>⚡ {reasonModal.type === 'KICK' ? 'Kick' : 'KickBan'} User: {reasonModal.nick}</h3>
+              <button className="close-btn" onClick={() => setReasonModal((prev) => ({ ...prev, visible: false }))}>×</button>
+            </div>
+            <form onSubmit={handleReasonSubmit}>
+              <div className="modal-body">
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-color)', marginBottom: '8px', display: 'block' }}>
+                  Reason for {reasonModal.type === 'KICK' ? 'kick' : 'kickban'}:
+                </label>
+                <input
+                  type="text"
+                  className="ban-input"
+                  value={reasonModal.reason}
+                  onChange={(e) => setReasonModal((prev) => ({ ...prev, reason: e.target.value }))}
+                  placeholder="Enter reason..."
+                  autoFocus
+                />
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="secondary-btn" onClick={() => setReasonModal((prev) => ({ ...prev, visible: false }))}>
+                  Cancel
+                </button>
+                <button type="submit" className="add-ban-btn" style={{ background: '#d9534f' }}>
+                  {reasonModal.type === 'KICK' ? 'Kick User' : 'KickBan User'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </aside>

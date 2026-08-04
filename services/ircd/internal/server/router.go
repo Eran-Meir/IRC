@@ -602,10 +602,10 @@ func (c *Client) handleWhois(msg *parser.Message) {
 	// 312 RPL_WHOISSERVER: <nick> <server> :<server info>
 	c.SendRaw([]byte(fmt.Sprintf(":%s 312 %s %s %s :Enterprise Go-IRCd Server\r\n", ServerName, c.Nick, targetClient.Nick, ServerName)))
 
-	// 313 RPL_WHOISOPERATOR
+	// 313 RPL_WHOISOPERATOR - Only sent if user authenticated via /oper
 	if targetClient.IsServerAdmin() {
 		c.SendRaw([]byte(fmt.Sprintf(":%s 313 %s %s :is an IRC Operator - Server Administrator\r\n", ServerName, c.Nick, targetClient.Nick)))
-	} else if targetClient.IsOper() || isAnyChannelOp(targetClient) {
+	} else if targetClient.IsOper() {
 		c.SendRaw([]byte(fmt.Sprintf(":%s 313 %s %s :is an IRC Operator\r\n", ServerName, c.Nick, targetClient.Nick)))
 	}
 
