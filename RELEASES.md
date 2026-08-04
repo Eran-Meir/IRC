@@ -1,5 +1,9 @@
 # Release History
 
+## v0.5.30-alpha (User List Rank Symbol Sanitization)
+* **Bug Fix (React Client UI)**
+  * **User List Rank Symbol Deduplication**: Updated `JOIN` and `PART` handlers in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L145) to strip rank symbols (`*`, `@`, `%`, `+`) before comparing nicknames. Prevents duplicate unranked entries when users join or change modes.
+
 ## v0.5.29-alpha (+q Protected Permission Enforcement, 353 Rank Sync Fix & /rejoin Command)
 * **Feature & Bug Fix (Go Daemon & React Client)**
   * **Strict `+q` (Protect) Permission Check**: Go IRCd `router.go` now requires `*@` (Protected) status to execute `/mode #channel +q nick` or `/mode #channel -q nick`. Non-protected Operators receive error `482` (`Only protected users (*@) can grant or revoke +q`).

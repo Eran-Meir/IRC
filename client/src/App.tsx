@@ -141,17 +141,18 @@ export const App: React.FC = () => {
           isSystem: true,
         });
 
-        // Add user to channel user list
+        // Add user to channel user list cleanly
+        const cleanSender = sender.replace(/^[*@%+]*/, '');
         setChannels((prev) =>
           prev.map((ch) => {
-            if (ch.name.toLowerCase() === channel && !ch.users.includes(sender)) {
+            if (ch.name.toLowerCase() === channel && !ch.users.some((u) => u.replace(/^[*@%+]*/, '') === cleanSender)) {
               return { ...ch, users: [...ch.users, sender] };
             }
             return ch;
           })
         );
 
-        if (sender === nick) {
+        if (sender.toLowerCase() === nick.toLowerCase()) {
           joinedChannelsRef.current.add(channel);
           setActiveTarget(channel);
         }
@@ -161,6 +162,7 @@ export const App: React.FC = () => {
       if (match) {
         const [, sender, rawChannel, reason] = match;
         const channel = rawChannel.startsWith('#') ? rawChannel.toLowerCase() : '#' + rawChannel.toLowerCase();
+        const cleanSender = sender.replace(/^[*@%+]*/, '');
         addMessage(channel, {
           id: Math.random().toString(),
           sender: 'System',
@@ -174,7 +176,7 @@ export const App: React.FC = () => {
         setChannels((prev) =>
           prev.map((ch) => {
             if (ch.name.toLowerCase() === channel) {
-              return { ...ch, users: ch.users.filter((u) => u !== sender && u !== '@' + sender && u !== '+' + sender) };
+              return { ...ch, users: ch.users.filter((u) => u.replace(/^[*@%+]*/, '') !== cleanSender) };
             }
             return ch;
           })
