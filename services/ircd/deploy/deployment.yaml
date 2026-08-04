@@ -21,7 +21,7 @@ spec:
       containers:
       - name: ircd
         # The tag will be dynamically substituted by GitHub Actions using sed before apply
-        image: ghcr.io/eran-meir/irc/ircd:01e4ed8a76efb0e2fed2eca7b5d0bb970e718ec7
+        image: ghcr.io/eran-meir/irc/ircd:fbd618874417fb77b81e61de009e8c36fde2c129
         imagePullPolicy: Always
         ports:
         - containerPort: 6667
