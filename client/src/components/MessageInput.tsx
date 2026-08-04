@@ -44,8 +44,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Enter key submit handling
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Enter key submit handling (Enter = send, Shift + Enter = newline)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -63,37 +63,38 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       }
     }
 
-    // Up Arrow: Navigate backwards in command history
+    // Up Arrow: Navigate backwards in command history (when cursor is on top line or empty)
     if (e.key === 'ArrowUp') {
       if (history.length === 0) return;
-      e.preventDefault();
-
-      let nextIdx = historyIdx;
-      if (historyIdx === -1) {
-        nextIdx = history.length - 1;
-      } else if (historyIdx > 0) {
-        nextIdx = historyIdx - 1;
+      if (!text.includes('\n') || e.currentTarget.selectionStart === 0) {
+        e.preventDefault();
+        let nextIdx = historyIdx;
+        if (historyIdx === -1) {
+          nextIdx = history.length - 1;
+        } else if (historyIdx > 0) {
+          nextIdx = historyIdx - 1;
+        }
+        setHistoryIdx(nextIdx);
+        setText(history[nextIdx]);
+        return;
       }
-
-      setHistoryIdx(nextIdx);
-      setText(history[nextIdx]);
-      return;
     }
 
     // Down Arrow: Navigate forwards in command history
     if (e.key === 'ArrowDown') {
       if (historyIdx === -1) return;
-      e.preventDefault();
-
-      if (historyIdx < history.length - 1) {
-        const nextIdx = historyIdx + 1;
-        setHistoryIdx(nextIdx);
-        setText(history[nextIdx]);
-      } else {
-        setHistoryIdx(-1);
-        setText('');
+      if (!text.includes('\n') || e.currentTarget.selectionEnd === text.length) {
+        e.preventDefault();
+        if (historyIdx < history.length - 1) {
+          const nextIdx = historyIdx + 1;
+          setHistoryIdx(nextIdx);
+          setText(history[nextIdx]);
+        } else {
+          setHistoryIdx(-1);
+          setText('');
+        }
+        return;
       }
-      return;
     }
   };
 
@@ -103,11 +104,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     <footer className="message-input-bar">
       <form onSubmit={handleSubmit} className="input-form">
         <div className="target-pill">{activeTarget}</div>
-        <input
-          type="text"
+        <textarea
           className="chat-input"
           placeholder="Type a message or command (e.g. /join #channel)..."
           value={text}
+          rows={1}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           style={{ direction: isHebrewText(text) ? 'rtl' : 'ltr' }}

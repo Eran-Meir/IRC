@@ -663,7 +663,16 @@ export const App: React.FC = () => {
     return () => disconnectWebSocket();
   }, []);
 
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = (rawText: string) => {
+    const lines = rawText.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (lines.length > 1) {
+      lines.forEach((line) => sendSingleMessage(line));
+      return;
+    }
+    sendSingleMessage(rawText);
+  };
+
+  const sendSingleMessage = (text: string) => {
     const time = new Date().toLocaleTimeString();
 
     if (text.startsWith('/')) {
