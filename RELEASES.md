@@ -1,5 +1,11 @@
 # Release History
 
+## v0.5.32-alpha (Light Mode Rank Contrast, Nick Change Symbol Parsing & Channel Messaging Fix)
+* **Bug Fix (React Client UI)**
+  * **Light Theme High-Contrast Rank Colors**: Added dark contrast rank colors in [client/src/index.css](file:///c:/Users/Eran/IRC/client/src/index.css#L134) (`.op`: `#00802b`, `.protected`: `#cc0044`, `.halfop`: `#008b8b`, `.voice`: `#b8860b`) for light mode, eliminating unreadable neon green/cyan text.
+  * **Nick Change Symbol Parsing Fix**: Fixed regex in `App.tsx` `NICK` event handler. Preserves optional rank symbols (`*`, `@`, `%`, `+`) and replaces ONLY the nickname portion, preventing unranked nicks like `Guest383` from prepending first-letter artifacts (`GX`/`GK`) upon nick change.
+  * **Channel Membership Send Sync**: Automatically seeded initial default channels (`#enterprise`, `#devops`) into `joinedChannelsRef` on connection in `App.tsx`, resolving channel message sending blocks.
+
 ## v0.5.31-alpha (Infinite Auto-Reconnect Retries & Keepalive Ping)
 * **Bug Fix & Reliability (WebSocket Service)**
   * **Infinite Auto-Reconnect Retries**: Fixed `scheduleReconnect()` in [client/src/services/websocket.ts](file:///c:/Users/Eran/IRC/client/src/services/websocket.ts#L80) to reset timer references on execution, ensuring continuous automatic reconnection attempts every 3s during container rollouts.

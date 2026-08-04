@@ -316,13 +316,19 @@ export const App: React.FC = () => {
       const match = line.match(/^:([^!]+)![^ ]+ NICK :?([^ ]+)$/);
       if (match) {
         const [, oldNick, newNick] = match;
-        if (oldNick === nick) {
+        if (oldNick.toLowerCase() === nick.toLowerCase()) {
           setNick(newNick);
         }
         setChannels((prev) =>
           prev.map((ch) => ({
             ...ch,
-            users: ch.users.map((u) => (u.replace(/^[@+]/, '') === oldNick ? u.charAt(0) + newNick : u)),
+            users: ch.users.map((u) => {
+              const m = u.match(/^([*@%+]?)(.*)$/);
+              if (m && m[2].toLowerCase() === oldNick.toLowerCase()) {
+                return m[1] + newNick;
+              }
+              return u;
+            }),
           }))
         );
         addMessage(activeTarget.toLowerCase(), {
@@ -385,6 +391,8 @@ export const App: React.FC = () => {
           wsRef.current.send(`USER ${nick} 0 * :Web Client User`);
           wsRef.current.send(`JOIN #enterprise`);
           wsRef.current.send(`JOIN #devops`);
+          joinedChannelsRef.current.add('#enterprise');
+          joinedChannelsRef.current.add('#devops');
         }
       }
     );
@@ -557,7 +565,7 @@ export const App: React.FC = () => {
     // Normal PRIVMSG
     const normTarget = activeTarget.toLowerCase();
     if (normTarget.startsWith('#')) {
-      if (!joinedChannelsRef.current.has(normTarget)) {
+      if (!joinedChannelsRef.current.has(normTarget) && !channels.some((c) => c.name.toLowerCase() === normTarget)) {
         addMessage(normTarget, {
           id: Math.random().toString(),
           sender: 'System',
@@ -568,6 +576,7 @@ export const App: React.FC = () => {
         });
         return;
       }
+      joinedChannelsRef.current.add(normTarget);
       if (wsRef.current) wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);
     } else if (normTarget !== 'status' && wsRef.current) {
       wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);

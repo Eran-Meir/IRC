@@ -107,7 +107,7 @@ body {
   background: var(--text-muted);
 }
 
-/* User Badge & Nickname Rank Colors */
+/* User Badge & Nickname Rank Colors (Dark Mode Defaults) */
 .user-badge.protected, .user-nick.protected {
   color: #ff0055;
   font-weight: bold;
@@ -130,6 +130,27 @@ body {
 
 .user-badge.normal, .user-nick.normal {
   color: var(--text-main);
+}
+
+/* Light Theme High-Contrast Rank Colors */
+[data-theme='light'] .user-badge.protected,
+[data-theme='light'] .user-nick.protected {
+  color: #cc0044;
+}
+
+[data-theme='light'] .user-badge.op,
+[data-theme='light'] .user-nick.op {
+  color: #00802b;
+}
+
+[data-theme='light'] .user-badge.halfop,
+[data-theme='light'] .user-nick.halfop {
+  color: #008b8b;
+}
+
+[data-theme='light'] .user-badge.voice,
+[data-theme='light'] .user-nick.voice {
+  color: #b8860b;
 }
 
 /* Sidebar User Card */
