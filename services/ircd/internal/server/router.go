@@ -516,7 +516,7 @@ func (c *Client) handleWhois(msg *parser.Message) {
 	}
 
 	// 311 RPL_WHOISUSER: <nick> <user> <host> * :<realname>
-	c.SendRaw([]byte(fmt.Sprintf(":%s 311 %s %s %s %s * :%s\r\n", ServerName, c.Nick, targetClient.Nick, targetClient.User, targetClient.Host, targetClient.RealName)))
+	c.SendRaw([]byte(fmt.Sprintf(":%s 311 %s %s %s %s * :%s\r\n", ServerName, c.Nick, targetClient.Nick, targetClient.User, targetClient.Host(), targetClient.RealName)))
 
 	// 319 RPL_WHOISCHANNELS: <nick> :<channels>
 	targetClient.mu.RLock()

@@ -53,6 +53,17 @@ func (c *Client) Prefix() string {
 	return fmt.Sprintf("%s!%s@%s", nick, user, host)
 }
 
+// Host returns client remote IP / host string
+func (c *Client) Host() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if c.conn != nil && c.conn.RemoteAddr() != nil {
+		return c.conn.RemoteAddr().String()
+	}
+	return "127.0.0.1"
+}
+
 // SendRaw sends raw bytes to the client socket safely
 func (c *Client) SendRaw(data []byte) {
 	c.mu.Lock()

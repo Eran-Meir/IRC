@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.27-alpha (Go Compilation Build Fix)
+* **Bug Fix (Go Daemon Build)**
+  * Added missing `"strings"` package import to [services/ircd/internal/server/manager.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/manager.go#L4).
+  * Added `Host()` method receiver to `Client` struct in [services/ircd/internal/server/client.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/client.go#L57) and updated method call in `router.go`.
+
 ## v0.5.26-alpha (Alt + 0..9 Window Switching Keyboard Shortcuts)
 * **Feature (React Web Client UI)**
   * **Window Switching Shortcuts**:
