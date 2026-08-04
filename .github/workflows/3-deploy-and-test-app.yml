@@ -239,6 +239,16 @@ jobs:
             exit 1
           fi
 
+      - name: Publish QA Report to GitHub Job Summary
+        if: always()
+        run: |
+          if [ -f qa_test_report.log ]; then
+            echo "## 🧪 IRC E2E QA Test Protocol Report" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            cat qa_test_report.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Upload QA Test Report Artifact
         uses: actions/upload-artifact@v6
         if: always()
