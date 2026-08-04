@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.40-alpha (Topic Management, KICK System Notices, Single-Delivery Messaging & Solid Black Nicks)
+* **Feature & Bug Fix (Go Daemon & React Client UI)**
+  * **Operator-Only Topic Governance & 332 Sync**: Enforced Operator rank requirement (`@`, `*`, `%`) in `handleTopic` in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L292). Added `332` RPL_TOPIC and `TOPIC` listeners in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L275) to dynamically update channel topic banners across all connected clients. Topics auto-reset on empty channel deletion.
+  * **KICK System Notification & Rejoin Unlock**: Added `KICK` event listener in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L237). Kicked users receive `* You were kicked from #channel by Kicker (Reason)` and have `#channel` removed from `joinedChannelsRef` to allow immediate re-joining.
+  * **Single-Delivery Channel Messaging**: Eliminated optimistic duplicate message rendering in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L615). Server broadcast stream acts as single source of truth, guaranteeing 100% single-line chat rendering.
+  * **Classic Light Solid Black Nicknames**: Updated `[data-theme='classic-light']` selectors in [client/src/App.css](file:///c:/Users/Eran/IRC/client/src/App.css#L345) so all user nicknames render in solid black (`#000000 !important`).
+
 ## v0.5.39-alpha (Enter Key Form Submission Fix, App.css Rank Colors & Duplicate QUIT Fix)
 * **Bug Fix (React Client UI & Input Submission)**
   * **Enter Key Input Submission**: Intercepted `e.key === 'Enter'` in [client/src/components/MessageInput.tsx](file:///c:/Users/Eran/IRC/client/src/components/MessageInput.tsx#L47), cleared text input *before* triggering `onSendMessage`, and wrapped execution in `try...catch`. Resolves stuck input text and guarantees Enter key command/message execution.

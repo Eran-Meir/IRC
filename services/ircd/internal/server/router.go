@@ -289,13 +289,14 @@ func (c *Client) handleTopic(msg *parser.Message) {
 	if ch, exists := mgr.channels[chName]; exists {
 		if len(msg.Params) > 1 {
 			newTopic := msg.Params[1]
-			if ch.Modes['t'] && !ch.IsOp(c) {
+			if !ch.IsHalfOp(c) && !ch.IsOp(c) && !ch.IsProtected(c) {
 				c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
 				return
 			}
 			ch.Topic = newTopic
 			topicLine := fmt.Sprintf(":%s TOPIC %s :%s", c.Prefix(), chName, newTopic)
 			ch.Broadcast(nil, topicLine)
+			state.PublishChannelMessage(chName, topicLine)
 		} else {
 			c.SendRaw([]byte(fmt.Sprintf(":%s 332 %s %s :%s\r\n", ServerName, c.Nick, chName, ch.Topic)))
 		}

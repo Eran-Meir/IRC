@@ -343,23 +343,16 @@
 }
 
 [data-theme='classic-light'] .user-badge.protected,
-[data-theme='classic-light'] .user-nick.protected {
-  color: #cc0044 !important;
-}
-
+[data-theme='classic-light'] .user-nick.protected,
 [data-theme='classic-light'] .user-badge.op,
-[data-theme='classic-light'] .user-nick.op {
-  color: #d4af37 !important;
-}
-
+[data-theme='classic-light'] .user-nick.op,
 [data-theme='classic-light'] .user-badge.halfop,
-[data-theme='classic-light'] .user-nick.halfop {
-  color: #008b8b !important;
-}
-
+[data-theme='classic-light'] .user-nick.halfop,
 [data-theme='classic-light'] .user-badge.voice,
-[data-theme='classic-light'] .user-nick.voice {
-  color: #b8860b !important;
+[data-theme='classic-light'] .user-nick.voice,
+[data-theme='classic-light'] .user-badge.normal,
+[data-theme='classic-light'] .user-nick.normal {
+  color: #000000 !important;
 }
 
 /* Input Bar */

@@ -234,6 +234,72 @@ export const App: React.FC = () => {
           }))
         );
       }
+    } else if (line.includes(' KICK ')) {
+      const match = line.match(/^:([^!]+)![^ ]+ KICK ([^ ]+) ([^ ]+)(?: :(.*))?$/);
+      if (match) {
+        const [, kicker, rawChannel, targetNick, reason] = match;
+        const channel = rawChannel.toLowerCase();
+        const cleanTarget = targetNick.replace(/^[*@%+]*/, '');
+        const isSelfKicked = cleanTarget.toLowerCase() === nickRef.current.toLowerCase();
+
+        if (isSelfKicked) {
+          joinedChannelsRef.current.delete(channel);
+          addMessage(channel, {
+            id: Math.random().toString(),
+            sender: 'System',
+            target: channel,
+            text: `* You were kicked from ${channel} by ${kicker}${reason ? ` (${reason})` : ''}`,
+            timestamp: time,
+            isSystem: true,
+          });
+        } else {
+          addMessage(channel, {
+            id: Math.random().toString(),
+            sender: 'System',
+            target: channel,
+            text: `* ${targetNick} was kicked from ${channel} by ${kicker}${reason ? ` (${reason})` : ''}`,
+            timestamp: time,
+            isSystem: true,
+          });
+        }
+
+        // Remove kicked user from channel member list
+        setChannels((prev) =>
+          prev.map((ch) => {
+            if (ch.name.toLowerCase() === channel) {
+              return { ...ch, users: ch.users.filter((u) => u.replace(/^[*@%+]*/, '') !== cleanTarget) };
+            }
+            return ch;
+          })
+        );
+      }
+    } else if (line.includes(' TOPIC ')) {
+      const match = line.match(/^:([^!]+)![^ ]+ TOPIC ([^ ]+) :(.*)$/);
+      if (match) {
+        const [, sender, rawChannel, newTopic] = match;
+        const channel = rawChannel.toLowerCase();
+        setChannels((prev) =>
+          prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, topic: newTopic } : ch))
+        );
+        addMessage(channel, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: channel,
+          text: `* ${sender} changed topic to "${newTopic}"`,
+          timestamp: time,
+          isSystem: true,
+        });
+      }
+    } else if (line.includes(' 332 ')) {
+      // RPL_TOPIC :server 332 nick #channel :Topic text
+      const match = line.match(/ 332 [^ ]+ ([#][^ ]+) :(.*)$/);
+      if (match) {
+        const [, rawChannel, topicText] = match;
+        const channel = rawChannel.toLowerCase();
+        setChannels((prev) =>
+          prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, topic: topicText } : ch))
+        );
+      }
     } else if (line.includes(' 353 ')) {
       // RPL_NAMREPLY :server 353 nick = #channel :nick1 nick2
       const match = line.match(/ 353 [^ ]+ [=@*] ([#][^ ]+) :(.*)$/);
@@ -616,13 +682,6 @@ export const App: React.FC = () => {
       }
       joinedChannelsRef.current.add(normTarget);
       if (wsRef.current) wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);
-      addMessage(normTarget, {
-        id: Math.random().toString(),
-        sender: nick,
-        target: normTarget,
-        text,
-        timestamp: time,
-      });
     } else if (normTarget !== 'status' && wsRef.current) {
       wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);
       addMessage(normTarget, {
