@@ -203,6 +203,7 @@ export const App: React.FC = () => {
           wsRef.current.send(`NICK ${nick}`);
           wsRef.current.send(`USER ${nick} 0 * :Web Client User`);
           wsRef.current.send(`JOIN #enterprise`);
+          wsRef.current.send(`JOIN #devops`);
         }
       }
     );
@@ -265,6 +266,13 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleSelectTarget = (target: string) => {
+    setActiveTarget(target);
+    if (target.startsWith('#') && wsRef.current) {
+      wsRef.current.send(`JOIN ${target}`);
+    }
+  };
+
   const currentChannel = channels.find((c) => c.name === activeTarget);
   const currentMessages = messages[activeTarget] || [];
 
@@ -283,7 +291,7 @@ export const App: React.FC = () => {
         <Sidebar
           channels={channels}
           activeTarget={activeTarget}
-          onSelectTarget={setActiveTarget}
+          onSelectTarget={handleSelectTarget}
           onPartChannel={handlePartChannel}
         />
 

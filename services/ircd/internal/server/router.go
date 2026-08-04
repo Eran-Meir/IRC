@@ -161,11 +161,7 @@ func (c *Client) handlePrivmsg(msg *parser.Message) {
 
 	mgr := GetManager()
 	if strings.HasPrefix(target, "#") {
-		// Channel Broadcast
-		if ch, exists := mgr.channels[target]; exists {
-			ch.Broadcast(c, line)
-		}
-		// Also publish to Valkey state layer for cross-pod scaling
+		// Publish to Valkey state layer for unified single-delivery cross-pod & local broadcasting
 		state.PublishChannelMessage(target, line)
 	} else {
 		// Direct Message

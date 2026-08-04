@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.20-alpha (Backend Single-Delivery Broadcast & Multi-Channel Server Join Sync)
+* **Bug Fix (Daemon Backend)**
+  * Fixed dual-broadcast bug in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L161). Channel messages now route exclusively through Valkey Pub/Sub single-delivery broadcast, eliminating duplicate messages for all recipients.
+* **Bug Fix (Multi-Channel Sync)**
+  * Updated `connectWebSocket` and `handleSelectTarget` in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L202) to automatically register `JOIN` commands on the server for all channels (`#enterprise`, `#devops`, `#k`), ensuring messages in secondary channels reach all users.
+  * Formatted real-time `* x has joined #channel` system notifications cleanly while populating side user lists directly from server `353` (RPL_NAMREPLY).
+
 ## v0.5.19-alpha (Duplicate Message Resolution, 16px Fira Code Defaults & Dedicated Font Size Dropdown)
 * **Bug Fix (Messaging)**
   * Eliminated duplicate message rendering in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L255). PRIVMSG lines are now handled once when broadcast back by the server, ensuring zero duplicates and 100% nickname consistency across all open tabs.
