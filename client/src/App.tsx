@@ -361,39 +361,6 @@ export const App: React.FC = () => {
           isSystem: true,
         });
       }
-    } else if (line.includes(' KICK ')) {
-      const match = line.match(/^:([^!]+)![^ ]+ KICK ([^ ]+) ([^ ]+)(?: :(.*))?$/);
-      if (match) {
-        const [, sender, rawChannel, targetNick, reason] = match;
-        const channel = rawChannel.toLowerCase();
-        addMessage(channel, {
-          id: Math.random().toString(),
-          sender: 'System',
-          target: channel,
-          text: `* ${targetNick} was kicked from ${channel} by ${sender}${reason ? ` (${reason})` : ''}`,
-          timestamp: time,
-          isAction: true,
-        });
-        setChannels((prev) =>
-          prev.map((ch) => {
-            if (ch.name.toLowerCase() === channel) {
-              return { ...ch, users: ch.users.filter((u) => u.replace(/^[@+]/, '') !== targetNick) };
-            }
-            return ch;
-          })
-        );
-        if (targetNick === nick) {
-          joinedChannelsRef.current.delete(channel);
-          addMessage(channel, {
-            id: Math.random().toString(),
-            sender: 'System',
-            target: channel,
-            text: `* You were kicked from ${channel}. Type /join ${channel} to re-join.`,
-            timestamp: time,
-            isSystem: true,
-          });
-        }
-      }
     } else if (line.includes(' MODE ')) {
       const match = line.match(/^:([^!]+)![^ ]+ MODE ([^ ]+) (.*)$/);
       if (match) {
@@ -424,23 +391,6 @@ export const App: React.FC = () => {
           isSystem: true,
         });
         if (wsRef.current) wsRef.current.send(`NAMES ${channel}`);
-      }
-    } else if (line.includes(' TOPIC ')) {
-      const match = line.match(/^:([^!]+)![^ ]+ TOPIC ([^ ]+) :(.*)$/);
-      if (match) {
-        const [, sender, rawChannel, newTopic] = match;
-        const channel = rawChannel.toLowerCase();
-        setChannels((prev) =>
-          prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, topic: newTopic } : ch))
-        );
-        addMessage(channel, {
-          id: Math.random().toString(),
-          sender: 'System',
-          target: channel,
-          text: `* ${sender} changed topic to: ${newTopic}`,
-          timestamp: time,
-          isSystem: true,
-        });
       }
     } else if (line.includes(' INVITE ')) {
       const match = line.match(/^:([^!]+)![^ ]+ INVITE [^ ]+ :?([^ ]+)$/);
