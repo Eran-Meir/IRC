@@ -322,13 +322,44 @@
   background-color: var(--bg-tertiary);
 }
 
-.user-badge.op {
-  color: var(--accent-gold);
+.user-badge.protected, .user-nick.protected {
+  color: #ff0055 !important;
   font-weight: bold;
 }
 
-.user-badge.voice {
-  color: var(--accent-cyan);
+.user-badge.op, .user-nick.op {
+  color: #ffcc00 !important;
+  font-weight: bold;
+}
+
+.user-badge.halfop, .user-nick.halfop {
+  color: #00e5ff !important;
+  font-weight: bold;
+}
+
+.user-badge.voice, .user-nick.voice {
+  color: #ff9900 !important;
+  font-weight: bold;
+}
+
+[data-theme='classic-light'] .user-badge.protected,
+[data-theme='classic-light'] .user-nick.protected {
+  color: #cc0044 !important;
+}
+
+[data-theme='classic-light'] .user-badge.op,
+[data-theme='classic-light'] .user-nick.op {
+  color: #d4af37 !important;
+}
+
+[data-theme='classic-light'] .user-badge.halfop,
+[data-theme='classic-light'] .user-nick.halfop {
+  color: #008b8b !important;
+}
+
+[data-theme='classic-light'] .user-badge.voice,
+[data-theme='classic-light'] .user-nick.voice {
+  color: #b8860b !important;
 }
 
 /* Input Bar */

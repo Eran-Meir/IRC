@@ -37,6 +37,13 @@ export const App: React.FC = () => {
   });
 
   const wsRef = useRef<WebSocketService | null>(null);
+  const nickRef = useRef(nick);
+  const joinedChannelsRef = useRef<Set<string>>(new Set());
+  const handleIncomingLineRef = useRef<(line: string) => void>(() => {});
+
+  useEffect(() => {
+    nickRef.current = nick;
+  }, [nick]);
 
   useEffect(() => {
     // Apply dataset attributes to root for CSS theme/font toggling
@@ -69,6 +76,18 @@ export const App: React.FC = () => {
 
   const handleIncomingLine = (line: string) => {
     const time = new Date().toLocaleTimeString();
+
+    // Silently handle PING/PONG keepalives
+    if (line.startsWith('PING ')) {
+      const payload = line.slice(5);
+      if (wsRef.current) {
+        wsRef.current.send(`PONG ${payload}`);
+      }
+      return;
+    }
+    if (line.includes(' PONG ') || line.startsWith('PONG ')) {
+      return;
+    }
 
     // Parse incoming RFC 1459 lines
     if (line.includes(' PRIVMSG ')) {
@@ -131,15 +150,20 @@ export const App: React.FC = () => {
           return prev;
         });
 
-        // Add system join message ONLY when a user joins
-        addMessage(channel, {
-          id: Math.random().toString(),
-          sender: 'System',
-          target: channel,
-          text: `* ${sender} has joined ${channel}`,
-          timestamp: time,
-          isSystem: true,
-        });
+        const isSelf = sender.toLowerCase() === nickRef.current.toLowerCase();
+        const alreadyJoined = joinedChannelsRef.current.has(channel);
+
+        // Add system join message ONLY when a user joins (suppress duplicate self-rejoin notices)
+        if (!isSelf || !alreadyJoined) {
+          addMessage(channel, {
+            id: Math.random().toString(),
+            sender: 'System',
+            target: channel,
+            text: `* ${sender} has joined ${channel}`,
+            timestamp: time,
+            isSystem: true,
+          });
+        }
 
         // Add user to channel user list cleanly
         const cleanSender = sender.replace(/^[*@%+]*/, '');
@@ -152,9 +176,8 @@ export const App: React.FC = () => {
           })
         );
 
-        if (sender.toLowerCase() === nick.toLowerCase()) {
+        if (isSelf) {
           joinedChannelsRef.current.add(channel);
-          setActiveTarget(channel);
         }
       }
     } else if (line.includes(' PART ')) {
@@ -169,7 +192,7 @@ export const App: React.FC = () => {
           target: channel,
           text: `* ${sender} has left ${channel}${reason ? ` (${reason})` : ''}`,
           timestamp: time,
-          isAction: true,
+          isSystem: true,
         });
 
         // Remove user from channel user list
@@ -186,21 +209,30 @@ export const App: React.FC = () => {
       const match = line.match(/^:([^!]+)![^ ]+ QUIT(?: :(.*))?$/);
       if (match) {
         const [, sender, reason] = match;
-        // Remove user from all channels
+        const cleanSender = sender.replace(/^[*@%+]*/, '');
+
+        // Log QUIT ONCE per channel user was in (outside state updater to prevent StrictMode duplicates)
+        channels.forEach((ch) => {
+          const hasUser = ch.users.some((u) => u.replace(/^[*@%+]*/, '') === cleanSender);
+          if (hasUser) {
+            addMessage(ch.name.toLowerCase(), {
+              id: Math.random().toString(),
+              sender: 'System',
+              target: ch.name.toLowerCase(),
+              text: `* ${sender} has quit IRC${reason ? ` (${reason})` : ''}`,
+              timestamp: time,
+              isSystem: true,
+            });
+          }
+        });
+
+        // Remove user from all channels cleanly
         setChannels((prev) =>
           prev.map((ch) => ({
             ...ch,
-            users: ch.users.filter((u) => u !== sender && u !== '@' + sender && u !== '+' + sender),
+            users: ch.users.filter((u) => u.replace(/^[*@%+]*/, '') !== cleanSender),
           }))
         );
-        addMessage(activeTarget.toLowerCase(), {
-          id: Math.random().toString(),
-          sender: 'System',
-          target: activeTarget.toLowerCase(),
-          text: `* ${sender} has quit IRC${reason ? ` (${reason})` : ''}`,
-          timestamp: time,
-          isAction: true,
-        });
       }
     } else if (line.includes(' 353 ')) {
       // RPL_NAMREPLY :server 353 nick = #channel :nick1 nick2
@@ -369,6 +401,10 @@ export const App: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    handleIncomingLineRef.current = handleIncomingLine;
+  });
+
   const addMessage = (target: string, msg: Message) => {
     const normTarget = target.toLowerCase();
     setMessages((prev) => ({
@@ -382,15 +418,16 @@ export const App: React.FC = () => {
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     wsRef.current = new WebSocketService(
       wsUrl,
-      handleIncomingLine,
+      (line: string) => handleIncomingLineRef.current(line),
       (status) => {
         setIsConnected(status);
         if (status && wsRef.current) {
           // Perform automatic registration on connect
-          wsRef.current.send(`NICK ${nick}`);
-          wsRef.current.send(`USER ${nick} 0 * :Web Client User`);
+          wsRef.current.send(`NICK ${nickRef.current}`);
+          wsRef.current.send(`USER ${nickRef.current} 0 * :Web Client User`);
           wsRef.current.send(`JOIN #enterprise`);
           wsRef.current.send(`JOIN #devops`);
+          // Seed joinedChannelsRef so message sending is not blocked
           joinedChannelsRef.current.add('#enterprise');
           joinedChannelsRef.current.add('#devops');
         }

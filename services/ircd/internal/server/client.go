@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Eran-Meir/IRC/services/ircd/internal/logger"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/metrics"
@@ -102,6 +103,23 @@ func (c *Client) Handle() {
 
 	logger.Info("New connection from %s", c.conn.RemoteAddr().String())
 	reader := bufio.NewReader(c.conn)
+
+	// Start server-side keep-alive
+	done := make(chan struct{})
+	defer close(done)
+
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				c.SendRaw([]byte(fmt.Sprintf("PING :%s\r\n", ServerName)))
+			case <-done:
+				return
+			}
+		}
+	}()
 
 	for {
 		line, err := reader.ReadString('\n')

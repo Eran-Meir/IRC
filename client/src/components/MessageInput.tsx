@@ -23,23 +23,35 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    const trimmed = text.trim();
+    if (!trimmed) return;
 
     // Add to 20-item history stack avoiding consecutive duplicates
     setHistory((prev) => {
-      if (prev.length > 0 && prev[prev.length - 1] === text) {
+      if (prev.length > 0 && prev[prev.length - 1] === trimmed) {
         return prev;
       }
-      const updated = [...prev, text];
+      const updated = [...prev, trimmed];
       return updated.length > 20 ? updated.slice(updated.length - 20) : updated;
     });
 
     setHistoryIdx(-1);
-    onSendMessage(text);
     setText('');
+    try {
+      onSendMessage(trimmed);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Enter key submit handling
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+      return;
+    }
+
     // Ctrl + C: Clear current input line if no text selection exists
     if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
       const inputEl = e.currentTarget;

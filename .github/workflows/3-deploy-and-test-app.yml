@@ -1,6 +1,9 @@
 name: 3. Deploy to Test & Run Integration
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
   IMAGE_NAME: ghcr.io/eran-meir/irc/ircd

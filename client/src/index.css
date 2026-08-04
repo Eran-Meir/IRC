@@ -114,7 +114,7 @@ body {
 }
 
 .user-badge.op, .user-nick.op {
-  color: #00ff66;
+  color: #ffcc00;
   font-weight: bold;
 }
 
@@ -124,7 +124,7 @@ body {
 }
 
 .user-badge.voice, .user-nick.voice {
-  color: #ffcc00;
+  color: #ff9900;
   font-weight: bold;
 }
 
@@ -132,24 +132,24 @@ body {
   color: var(--text-main);
 }
 
-/* Light Theme High-Contrast Rank Colors */
-[data-theme='light'] .user-badge.protected,
-[data-theme='light'] .user-nick.protected {
+/* Classic-Light Theme High-Contrast Rank Colors */
+[data-theme='classic-light'] .user-badge.protected,
+[data-theme='classic-light'] .user-nick.protected {
   color: #cc0044;
 }
 
-[data-theme='light'] .user-badge.op,
-[data-theme='light'] .user-nick.op {
-  color: #00802b;
+[data-theme='classic-light'] .user-badge.op,
+[data-theme='classic-light'] .user-nick.op {
+  color: #d4af37;
 }
 
-[data-theme='light'] .user-badge.halfop,
-[data-theme='light'] .user-nick.halfop {
+[data-theme='classic-light'] .user-badge.halfop,
+[data-theme='classic-light'] .user-nick.halfop {
   color: #008b8b;
 }
 
-[data-theme='light'] .user-badge.voice,
-[data-theme='light'] .user-nick.voice {
+[data-theme='classic-light'] .user-badge.voice,
+[data-theme='classic-light'] .user-nick.voice {
   color: #b8860b;
 }
 

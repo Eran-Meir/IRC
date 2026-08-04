@@ -34,7 +34,6 @@ func (w *WSConn) Read(b []byte) (n int, err error) {
 			return 0, err
 		}
 
-		fin := header[0]&0x80 != 0
 		opcode := header[0] & 0x0f
 		masked := header[1]&0x80 != 0
 		payloadLen := int(header[1] & 0x7f)
@@ -69,7 +68,17 @@ func (w *WSConn) Read(b []byte) (n int, err error) {
 			}
 		}
 
-		if opcode == 0x1 || opcode == 0x2 || fin { // Text or Continuation frame
+		if opcode == 0x9 { // Ping frame -> Respond with Pong frame (0x8a)
+			pongHeader := []byte{0x8a, byte(len(payload))}
+			w.conn.Write(append(pongHeader, payload...))
+			continue
+		}
+
+		if opcode == 0xa { // Pong frame -> Keepalive acknowledged
+			continue
+		}
+
+		if opcode == 0x1 || opcode == 0x2 || opcode == 0x0 { // Text, Binary, or Continuation frame
 			w.buf = append(w.buf, payload...)
 		}
 	}

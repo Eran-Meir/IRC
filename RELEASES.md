@@ -1,6 +1,32 @@
 # Release History
 
-## v0.5.34-alpha (Solid Black Nicknames, Optimistic Channel Messaging, Window Switch Reset & Op Grant Fix)
+## v0.5.39-alpha (Enter Key Form Submission Fix, App.css Rank Colors & Duplicate QUIT Fix)
+* **Bug Fix (React Client UI & Input Submission)**
+  * **Enter Key Input Submission**: Intercepted `e.key === 'Enter'` in [client/src/components/MessageInput.tsx](file:///c:/Users/Eran/IRC/client/src/components/MessageInput.tsx#L47), cleared text input *before* triggering `onSendMessage`, and wrapped execution in `try...catch`. Resolves stuck input text and guarantees Enter key command/message execution.
+  * **App.css Rank Color Rules**: Added explicit `.user-badge.op, .user-nick.op` (`#d4af37` gold) and rank color rules with `!important` tags directly to [client/src/App.css](file:///c:/Users/Eran/IRC/client/src/App.css#L325). Prevents nickname text from inheriting default green accent color in the User List.
+  * **Duplicate QUIT Message Elimination**: Extracted `addMessage` calls outside the `setChannels` state update function in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L214). Prevents React state updater re-executions from printing duplicate `QUIT` system messages in chat streams.
+
+## v0.5.38-alpha (Traefik HelmChartConfig 24h IdleTimeout & Stale Closure Fix)
+* **Bug Fix (DevOps, Infrastructure & React Client)**
+  * **Traefik 24h IdleTimeout HelmChartConfig**: Created [services/ircd/deploy/traefik-config.yaml](file:///c:/Users/Eran/IRC/services/ircd/deploy/traefik-config.yaml) using K3s `HelmChartConfig` manifest. Configures Traefik's `web` and `websecure` entrypoint `idleTimeout: "86400s"` (24 hours, fixing premature `0s` 0-second disconnects), replacing invalid per-ingress annotations in [client-deployment.yaml](file:///c:/Users/Eran/IRC/services/ircd/deploy/client-deployment.yaml#L52).
+  * **React Stale Closure Resolution**: Refactored `handleIncomingLine` event subscription in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L402) using `handleIncomingLineRef` pattern. Guarantees WebSocket callbacks always invoke the latest render state, fixing `/join` window target switching and channel state synchronization.
+
+## v0.5.37-alpha (Classic-Light Rank Color Fix, Channel Membership Seeding & Messaging Unblock)
+* **Bug Fix (React Client UI & CSS)**
+  * **Classic-Light Rank Color Selectors**: Changed all `[data-theme='light']` CSS selectors in [client/src/index.css](file:///c:/Users/Eran/IRC/client/src/index.css#L135) to `[data-theme='classic-light']`. The theme attribute was `classic-light` but the CSS overrides targeted `light`, so rank colors (Op gold `#d4af37`, Protected magenta `#cc0044`, HalfOp teal, Voice dark gold) never applied. Operator nicks fell through to `var(--accent-green)` (`#008000` in classic-light), rendering green instead of gold.
+  * **Channel Membership Seeding**: Added `joinedChannelsRef.current.add('#enterprise')` and `#devops` inside `connectWebSocket` in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L424). The ref was never seeded on initial connection, causing the `handleSendMessage` membership check to silently block all channel messages.
+
+## v0.5.36-alpha (Server-Side Keepalive PING for Idle WebSockets)
+* **Bug Fix & Network Reliability (Go Daemon & React Client)**
+  * **Server-Side PING Implementation**: Added a 30-second `PING :irc.enterprise.local` keepalive ticker directly into `Client.Handle()` in [services/ircd/internal/server/client.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/client.go). This ensures the Go IRCd actively maintains connections even if the client's browser tab is backgrounded.
+  * **Client PING Removal**: Removed the unreliable `setInterval` client-side ping from [client/src/services/websocket.ts](file:///c:/Users/Eran/IRC/client/src/services/websocket.ts) to eliminate vulnerability to browser background tab throttling. Client now seamlessly replies with `PONG` to server pings.
+
+## v0.5.35-alpha (WebSocket RFC 6455 Ping/Pong Handling, Traefik Zero-Timeout Ingress & Rank Color Fix)
+* **Bug Fix & Network Reliability (Go Daemon, Traefik & React Client UI)**
+  * **RFC 6455 WebSocket Ping/Pong Control Frames**: Implemented native Opcode `0x9` (Ping) and `0xA` (Pong) frame processing in [services/ircd/internal/server/websocket.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/websocket.go#L72). The Go daemon now immediately replies with Pong control frames (`0x8a`), preventing browsers and ingress proxies from dropping idle connections.
+  * **Traefik Ingress Zero-Timeout Annotations**: Added `traefik.ingress.kubernetes.io/request-timeout: "0s"` and `read-timeout: "0s"` to [services/ircd/deploy/client-deployment.yaml](file:///c:/Users/Eran/IRC/services/ircd/deploy/client-deployment.yaml#L53), eliminating Traefik's default 60-second connection drops for idle WebSockets.
+  * **Channel Operator Rank Color Fix**: Changed `.user-badge.op` and `.user-nick.op` styling in [client/src/index.css](file:///c:/Users/Eran/IRC/client/src/index.css#L116) and light mode theme to Gold (`#ffcc00` / `#d4af37`), eliminating green operator nickname styling.
+  * **Rejoin Deduplication & System Message Cleanup**: Updated `JOIN`, `PART`, and `QUIT` line handlers in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L150) with `isSystem: true` and `joinedChannelsRef` deduplication. Prevents `* System *` double prefixing and suppresses duplicate rejoin lines upon network reconnects.
 * **Bug Fix (Go Daemon & React Client UI)**
   * **Classic Light Mode Solid Black Nicknames**: Updated `.msg-line .sender` in [client/src/App.css](file:///c:/Users/Eran/IRC/client/src/App.css#L274) to use `var(--text-main)` (`#000000` solid black in light mode), eliminating neon green text for sender nicknames.
   * **Optimistic Channel Messaging**: Added immediate local message rendering in `handleSendMessage` in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L580) for channel `PRIVMSG` commands. Channel messages now render instantly in the sender's chat stream without relying on Pub/Sub echo.

@@ -7,7 +7,6 @@ export class WebSocketService {
   private onMessageCallback: MessageHandler;
   private onStatusCallback: StatusHandler;
   private reconnectTimer: number | null = null;
-  private pingTimer: number | null = null;
 
   constructor(url: string, onMessage: MessageHandler, onStatus: StatusHandler) {
     this.url = url;
@@ -30,7 +29,6 @@ export class WebSocketService {
           clearTimeout(this.reconnectTimer);
           this.reconnectTimer = null;
         }
-        this.startPing();
       };
 
       this.ws.onmessage = (event) => {
@@ -44,19 +42,16 @@ export class WebSocketService {
 
       this.ws.onclose = () => {
         console.log('[WebSocket] Disconnected');
-        this.stopPing();
         this.onStatusCallback(false);
         this.scheduleReconnect();
       };
 
       this.ws.onerror = (err) => {
         console.warn('[WebSocket] Connection error:', err);
-        this.stopPing();
         this.onStatusCallback(false);
       };
     } catch (e) {
       console.error('[WebSocket] Setup exception:', e);
-      this.stopPing();
       this.onStatusCallback(false);
       this.scheduleReconnect();
     }
@@ -71,7 +66,6 @@ export class WebSocketService {
   }
 
   public disconnect() {
-    this.stopPing();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -79,22 +73,6 @@ export class WebSocketService {
     if (this.ws) {
       this.ws.close();
       this.ws = null;
-    }
-  }
-
-  private startPing() {
-    this.stopPing();
-    this.pingTimer = window.setInterval(() => {
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.send('PING :keepalive');
-      }
-    }, 25000);
-  }
-
-  private stopPing() {
-    if (this.pingTimer) {
-      clearInterval(this.pingTimer);
-      this.pingTimer = null;
     }
   }
 
