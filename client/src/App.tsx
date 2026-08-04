@@ -422,11 +422,12 @@ export const App: React.FC = () => {
       const arg = parts.slice(1).join(' ');
 
       if (cmd === 'JOIN' && arg) {
-        const channelName = (arg.startsWith('#') ? arg : '#' + arg).toLowerCase();
+        const trimmed = arg.trim();
+        const channelName = (trimmed.startsWith('#') ? trimmed : '#' + trimmed).toLowerCase();
         if (!channels.some((c) => c.name.toLowerCase() === channelName)) {
           setChannels((prev) => [
             ...prev,
-            { name: channelName, topic: 'Joined channel', unreadCount: 0, users: [nick] },
+            { name: channelName, topic: 'Joined channel', unreadCount: 0, users: [] },
           ]);
         }
         joinedChannelsRef.current.add(channelName);
@@ -578,6 +579,13 @@ export const App: React.FC = () => {
       }
       joinedChannelsRef.current.add(normTarget);
       if (wsRef.current) wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);
+      addMessage(normTarget, {
+        id: Math.random().toString(),
+        sender: nick,
+        target: normTarget,
+        text,
+        timestamp: time,
+      });
     } else if (normTarget !== 'status' && wsRef.current) {
       wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);
       addMessage(normTarget, {

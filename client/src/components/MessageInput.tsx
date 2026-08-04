@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface MessageInputProps {
   onSendMessage: (text: string) => void;
@@ -14,6 +14,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [text, setText] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState<number>(-1);
+
+  // Clear text box whenever switching channels or windows
+  useEffect(() => {
+    setText('');
+    setHistoryIdx(-1);
+  }, [activeTarget]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

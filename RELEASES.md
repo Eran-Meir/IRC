@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.34-alpha (Solid Black Nicknames, Optimistic Channel Messaging, Window Switch Reset & Op Grant Fix)
+* **Bug Fix (Go Daemon & React Client UI)**
+  * **Classic Light Mode Solid Black Nicknames**: Updated `.msg-line .sender` in [client/src/App.css](file:///c:/Users/Eran/IRC/client/src/App.css#L274) to use `var(--text-main)` (`#000000` solid black in light mode), eliminating neon green text for sender nicknames.
+  * **Optimistic Channel Messaging**: Added immediate local message rendering in `handleSendMessage` in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L580) for channel `PRIVMSG` commands. Channel messages now render instantly in the sender's chat stream without relying on Pub/Sub echo.
+  * **Input Box Reset on Target Switch**: Added `useEffect` in [client/src/components/MessageInput.tsx](file:///c:/Users/Eran/IRC/client/src/components/MessageInput.tsx#L18) resetting input text and history index whenever switching active channels (`activeTarget`), guaranteeing the text box is cleared on `/join #k`.
+  * **Empty Channel Operator `@` Rank Grant**: Let server `353` RPL_NAMREPLY populate channel member ranks on `/join` in `App.tsx`, guaranteeing the first user joining an empty channel (`/join #k`) receives `@` Operator status.
+
 ## v0.5.33-alpha (Duplicate Nick Registration Protection, Command History & Ctrl+C Clearing)
 * **Feature & Bug Fix (Go Daemon & React Client)**
   * **Duplicate Nick Registration Defense**: Updated `handleNick` in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L63) to verify `RegisterNick` availability *before* unregistering existing nick, preventing multi-user nick collisions when changing nicks to short names like `k`.

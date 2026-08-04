@@ -274,7 +274,7 @@
 }
 
 .msg-line .sender {
-  color: var(--accent-gold);
+  color: var(--text-main);
   font-weight: bold;
   margin-right: 8px;
 }

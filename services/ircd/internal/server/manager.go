@@ -64,10 +64,11 @@ func (m *ServerManager) RegisterNick(nick string, c *Client) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if _, exists := m.clients[nick]; exists {
+	lower := strings.ToLower(nick)
+	if _, exists := m.clients[lower]; exists {
 		return false // Nick in use
 	}
-	m.clients[nick] = c
+	m.clients[lower] = c
 	return true
 }
 
@@ -75,12 +76,14 @@ func (m *ServerManager) RegisterNick(nick string, c *Client) bool {
 func (m *ServerManager) UnregisterNick(nick string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	delete(m.clients, nick)
+	lower := strings.ToLower(nick)
+	delete(m.clients, lower)
 }
 
 // GetClientByNick finds a client by nickname
 func (m *ServerManager) GetClientByNick(nick string) *Client {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.clients[nick]
+	lower := strings.ToLower(nick)
+	return m.clients[lower]
 }
