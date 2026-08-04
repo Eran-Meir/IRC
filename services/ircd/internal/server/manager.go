@@ -29,6 +29,7 @@ func GetManager() *ServerManager {
 
 // GetOrCreateChannel returns existing channel or creates a new one
 func (m *ServerManager) GetOrCreateChannel(name string) *Channel {
+	name = strings.ToLower(name)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -42,6 +43,7 @@ func (m *ServerManager) GetOrCreateChannel(name string) *Channel {
 
 // RemoveChannelIfEmpty removes channel if no users remain
 func (m *ServerManager) RemoveChannelIfEmpty(name string) {
+	name = strings.ToLower(name)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

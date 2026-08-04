@@ -101,6 +101,7 @@ func (c *Client) handleJoin(msg *parser.Message) {
 	if !strings.HasPrefix(chName, "#") {
 		chName = "#" + chName
 	}
+	chName = strings.ToLower(chName)
 
 	mgr := GetManager()
 	ch := mgr.GetOrCreateChannel(chName)
@@ -127,7 +128,10 @@ func (c *Client) handlePart(msg *parser.Message) {
 		return
 	}
 
-	chName := msg.Params[0]
+	chName := strings.ToLower(msg.Params[0])
+	if !strings.HasPrefix(chName, "#") {
+		chName = "#" + chName
+	}
 	mgr := GetManager()
 
 	c.mu.Lock()
@@ -157,13 +161,14 @@ func (c *Client) handlePrivmsg(msg *parser.Message) {
 	target := msg.Params[0]
 	text := msg.Params[1]
 
-	line := fmt.Sprintf(":%s PRIVMSG %s :%s", c.Prefix(), target, text)
-
 	mgr := GetManager()
 	if strings.HasPrefix(target, "#") {
+		target = strings.ToLower(target)
+		line := fmt.Sprintf(":%s PRIVMSG %s :%s", c.Prefix(), target, text)
 		// Publish to Valkey state layer for unified single-delivery cross-pod & local broadcasting
 		state.PublishChannelMessage(target, line)
 	} else {
+		line := fmt.Sprintf(":%s PRIVMSG %s :%s", c.Prefix(), target, text)
 		// Direct Message
 		if targetClient := mgr.GetClientByNick(target); targetClient != nil {
 			targetClient.SendRaw([]byte(line + "\r\n"))

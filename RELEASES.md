@@ -1,5 +1,13 @@
 # Release History
 
+## v0.5.21-alpha (RFC 1459 Channel Case Insensitivity & Deduplicated Channel Joins)
+* **Bug Fix (Daemon & Ingress)**
+  * Normalized all channel names to lowercase (`strings.ToLower`) in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L101) and [services/ircd/internal/server/manager.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/manager.go#L32).
+  * Fixed channel mismatch between Valkey Pub/Sub listener (`#king`) and Go daemon channel registry (`#KING`), restoring real-time messaging across all uppercase/lowercase channel names (`#P`, `#KING`, `#X`).
+* **Bug Fix (React Client UI)**
+  * Normalized all channel state lookup keys and targets to lowercase in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L53).
+  * Added `joinedChannelsRef` set in `App.tsx` to prevent redundant `JOIN` commands and duplicate join lines when clicking existing channel tabs or re-running `/join #channel`.
+
 ## v0.5.20-alpha (Backend Single-Delivery Broadcast & Multi-Channel Server Join Sync)
 * **Bug Fix (Daemon Backend)**
   * Fixed dual-broadcast bug in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L161). Channel messages now route exclusively through Valkey Pub/Sub single-delivery broadcast, eliminating duplicate messages for all recipients.

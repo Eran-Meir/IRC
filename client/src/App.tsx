@@ -44,7 +44,7 @@ export const App: React.FC = () => {
     document.documentElement.setAttribute('data-fontsize', preferences.fontSize);
     document.documentElement.setAttribute('data-fontfamily', preferences.fontFamily);
     document.documentElement.setAttribute('dir', preferences.language === 'he' ? 'rtl' : 'ltr');
-  }, [preferences]);
+  const joinedChannelsRef = useRef<Set<string>>(new Set(['#enterprise', '#devops']));
 
   const handleIncomingLine = (line: string) => {
     const time = new Date().toLocaleTimeString();
@@ -54,7 +54,7 @@ export const App: React.FC = () => {
       const match = line.match(/^:([^!]+)![^ ]+ PRIVMSG ([^ ]+) :(.*)$/);
       if (match) {
         const [, sender, target, text] = match;
-        const msgTarget = target.startsWith('#') ? target : 'Status';
+        const msgTarget = target.startsWith('#') ? target.toLowerCase() : 'Status';
         addMessage(msgTarget, {
           id: Math.random().toString(),
           sender,
@@ -67,7 +67,17 @@ export const App: React.FC = () => {
       const match = line.match(/^:([^!]+)![^ ]+ JOIN :?([^ ]+)$/);
       if (match) {
         const [, sender, rawChannel] = match;
-        const channel = rawChannel.startsWith('#') ? rawChannel : '#' + rawChannel;
+        const channel = rawChannel.startsWith('#') ? rawChannel.toLowerCase() : '#' + rawChannel.toLowerCase();
+        
+        // Add channel to sidebar if not present
+        setChannels((prev) => {
+          if (!prev.some((c) => c.name.toLowerCase() === channel)) {
+            return [...prev, { name: channel, topic: 'Joined channel', unreadCount: 0, users: [sender] }];
+          }
+          return prev;
+        });
+
+        // Add system join message ONLY when a user joins
         addMessage(channel, {
           id: Math.random().toString(),
           sender: 'System',
@@ -80,7 +90,7 @@ export const App: React.FC = () => {
         // Add user to channel user list
         setChannels((prev) =>
           prev.map((ch) => {
-            if (ch.name === channel && !ch.users.includes(sender)) {
+            if (ch.name.toLowerCase() === channel && !ch.users.includes(sender)) {
               return { ...ch, users: [...ch.users, sender] };
             }
             return ch;
@@ -91,7 +101,7 @@ export const App: React.FC = () => {
       const match = line.match(/^:([^!]+)![^ ]+ PART ([^ ]+)(?: :(.*))?$/);
       if (match) {
         const [, sender, rawChannel, reason] = match;
-        const channel = rawChannel.startsWith('#') ? rawChannel : '#' + rawChannel;
+        const channel = rawChannel.startsWith('#') ? rawChannel.toLowerCase() : '#' + rawChannel.toLowerCase();
         addMessage(channel, {
           id: Math.random().toString(),
           sender: 'System',
@@ -104,7 +114,7 @@ export const App: React.FC = () => {
         // Remove user from channel user list
         setChannels((prev) =>
           prev.map((ch) => {
-            if (ch.name === channel) {
+            if (ch.name.toLowerCase() === channel) {
               return { ...ch, users: ch.users.filter((u) => u !== sender && u !== '@' + sender && u !== '+' + sender) };
             }
             return ch;
@@ -122,10 +132,10 @@ export const App: React.FC = () => {
             users: ch.users.filter((u) => u !== sender && u !== '@' + sender && u !== '+' + sender),
           }))
         );
-        addMessage(activeTarget, {
+        addMessage(activeTarget.toLowerCase(), {
           id: Math.random().toString(),
           sender: 'System',
-          target: activeTarget,
+          target: activeTarget.toLowerCase(),
           text: `* ${sender} has quit IRC${reason ? ` (${reason})` : ''}`,
           timestamp: time,
           isAction: true,
@@ -136,12 +146,12 @@ export const App: React.FC = () => {
       const match = line.match(/ 353 [^ ]+ [=@*] ([^ ]+) :(.*)$/);
       if (match) {
         const [, rawChannel, userListStr] = match;
-        const channel = rawChannel.startsWith('#') ? rawChannel : '#' + rawChannel;
+        const channel = rawChannel.startsWith('#') ? rawChannel.toLowerCase() : '#' + rawChannel.toLowerCase();
         const nicks = userListStr.trim().split(/\s+/).filter(Boolean);
 
         setChannels((prev) =>
           prev.map((ch) => {
-            if (ch.name === channel) {
+            if (ch.name.toLowerCase() === channel) {
               return { ...ch, users: nicks };
             }
             return ch;
@@ -161,10 +171,10 @@ export const App: React.FC = () => {
             users: ch.users.map((u) => (u === oldNick ? newNick : u)),
           }))
         );
-        addMessage(activeTarget, {
+        addMessage(activeTarget.toLowerCase(), {
           id: Math.random().toString(),
           sender: 'System',
-          target: activeTarget,
+          target: activeTarget.toLowerCase(),
           text: `* ${oldNick} is now known as ${newNick}`,
           timestamp: time,
           isSystem: true,
@@ -184,9 +194,10 @@ export const App: React.FC = () => {
   };
 
   const addMessage = (target: string, msg: Message) => {
+    const normTarget = target.toLowerCase();
     setMessages((prev) => ({
       ...prev,
-      [target]: [...(prev[target] || []), msg],
+      [normTarget]: [...(prev[normTarget] || []), msg],
     }));
   };
 
@@ -233,20 +244,23 @@ export const App: React.FC = () => {
       const arg = parts.slice(1).join(' ');
 
       if (cmd === 'JOIN' && arg) {
-        const channelName = arg.startsWith('#') ? arg : '#' + arg;
-        if (wsRef.current) wsRef.current.send(`JOIN ${channelName}`);
-        if (!channels.find((c) => c.name === channelName)) {
+        const channelName = (arg.startsWith('#') ? arg : '#' + arg).toLowerCase();
+        if (!channels.some((c) => c.name.toLowerCase() === channelName)) {
           setChannels((prev) => [
             ...prev,
             { name: channelName, topic: 'Joined channel', unreadCount: 0, users: [nick] },
           ]);
+        }
+        if (wsRef.current && !joinedChannelsRef.current.has(channelName)) {
+          joinedChannelsRef.current.add(channelName);
+          wsRef.current.send(`JOIN ${channelName}`);
         }
         setActiveTarget(channelName);
       } else if (cmd === 'NICK' && arg) {
         if (wsRef.current) wsRef.current.send(`NICK ${arg}`);
         setNick(arg);
       } else if (cmd === 'PART') {
-        const channelName = arg || activeTarget;
+        const channelName = (arg || activeTarget).toLowerCase();
         if (wsRef.current) wsRef.current.send(`PART ${channelName}`);
         handlePartChannel(channelName);
       }
@@ -254,27 +268,32 @@ export const App: React.FC = () => {
     }
 
     // Normal PRIVMSG
-    if (activeTarget.startsWith('#') && wsRef.current) {
-      wsRef.current.send(`PRIVMSG ${activeTarget} :${text}`);
+    const normTarget = activeTarget.toLowerCase();
+    if (normTarget.startsWith('#') && wsRef.current) {
+      wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);
     }
   };
 
   const handlePartChannel = (channelName: string) => {
-    setChannels((prev) => prev.filter((c) => c.name !== channelName));
-    if (activeTarget === channelName) {
+    const normName = channelName.toLowerCase();
+    joinedChannelsRef.current.delete(normName);
+    setChannels((prev) => prev.filter((c) => c.name.toLowerCase() !== normName));
+    if (activeTarget.toLowerCase() === normName) {
       setActiveTarget('#enterprise');
     }
   };
 
   const handleSelectTarget = (target: string) => {
-    setActiveTarget(target);
-    if (target.startsWith('#') && wsRef.current) {
-      wsRef.current.send(`JOIN ${target}`);
+    const normTarget = target.toLowerCase();
+    setActiveTarget(normTarget);
+    if (normTarget.startsWith('#') && wsRef.current && !joinedChannelsRef.current.has(normTarget)) {
+      joinedChannelsRef.current.add(normTarget);
+      wsRef.current.send(`JOIN ${normTarget}`);
     }
   };
 
-  const currentChannel = channels.find((c) => c.name === activeTarget);
-  const currentMessages = messages[activeTarget] || [];
+  const currentChannel = channels.find((c) => c.name.toLowerCase() === activeTarget.toLowerCase());
+  const currentMessages = messages[activeTarget.toLowerCase()] || [];
 
   return (
     <div className="app-container">
