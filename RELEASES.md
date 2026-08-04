@@ -1,5 +1,11 @@
 # Release History
 
+## v0.5.22-alpha (Clean Status Window Numerics & Topic Parsing)
+* **Bug Fix (React Client UI)**
+  * Parsed IRC numeric `332` (RPL_TOPIC) in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L183) to dynamically update the active channel header topic without polluting the Status Window.
+  * Ignored IRC numeric `366` (RPL_ENDOFNAMES) to eliminate raw `/NAMES` list end lines.
+  * Stripped raw IRC protocol prefixes (`:server.name 001 nick :`) from welcome banners and notices, rendering clean, human-readable system messages in the Status Window.
+
 ## v0.5.21-alpha (RFC 1459 Channel Case Insensitivity & Deduplicated Channel Joins)
 * **Bug Fix (Daemon & Ingress)**
   * Normalized all channel names to lowercase (`strings.ToLower`) in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L101) and [services/ircd/internal/server/manager.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/manager.go#L32).

@@ -180,16 +180,32 @@ export const App: React.FC = () => {
           isSystem: true,
         });
       }
+    } else if (line.includes(' 332 ')) {
+      // RPL_TOPIC :server 332 nick #channel :topic text
+      const match = line.match(/ 332 [^ ]+ ([^ ]+) :(.*)$/);
+      if (match) {
+        const [, rawChannel, topicText] = match;
+        const channel = rawChannel.startsWith('#') ? rawChannel.toLowerCase() : '#' + rawChannel.toLowerCase();
+        setChannels((prev) =>
+          prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, topic: topicText } : ch))
+        );
+      }
+    } else if (line.includes(' 366 ')) {
+      // RPL_ENDOFNAMES :server 366 nick #channel :End of /NAMES list.
+      return;
     } else {
-      // System Notice / Banner
-      addMessage('Status', {
-        id: Math.random().toString(),
-        sender: 'System',
-        target: 'Status',
-        text: line,
-        timestamp: time,
-        isSystem: true,
-      });
+      // Cleanly format system banners & MOTD numerics (001, 002, 004, NOTICE)
+      const cleanedLine = line.replace(/^:[^ ]+ \d{3} [^ ]+ :?/, '').replace(/^:[^ ]+ NOTICE [^ ]+ :?/, '');
+      if (cleanedLine.trim()) {
+        addMessage('Status', {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: 'Status',
+          text: cleanedLine,
+          timestamp: time,
+          isSystem: true,
+        });
+      }
     }
   };
 
