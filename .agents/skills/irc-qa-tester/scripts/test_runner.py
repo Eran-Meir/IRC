@@ -118,6 +118,8 @@ class IRCTestSuite:
         self.test_oper_authentication_encrypted()
         self.test_kline_disconnect()
         self.test_rehash_admin()
+        self.test_invite_and_mode_i()
+        self.test_list_and_names()
 
     def test_nick_change(self):
         cmd = "NICK"
@@ -509,6 +511,71 @@ class IRCTestSuite:
                 self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"382: {r382}", evaluation="PASS — REHASH configuration reload verified.")
             else:
                 self.log_result(cmd, scenario, "FAIL", f"382: {r382}", protocol=proto, expected=exp, actual=f"382: {r382}", evaluation="FAIL — REHASH command failed.")
+        except Exception as e:
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
+
+    def test_invite_and_mode_i(self):
+        cmd = "INVITE / MODE +i"
+        scenario = "Invite Only Channel Gate & Invitation"
+        proto = "1. OpUser & Guest join #invite_room\n2. OpUser sets MODE +i\n3. Guest tries JOIN without invite -> 473\n4. OpUser issues INVITE Guest #invite_room -> 341\n5. Guest joins -> PASS"
+        exp = "473 ERR_INVITEONLYCHAN on unauthorized join; 341 RPL_INVITING on invite"
+        try:
+            c1 = IRCClient(self.host, self.port)
+            c2 = IRCClient(self.host, self.port)
+            op_nick, guest_nick = f"OpUser_{rand_str()}", f"Guest_{rand_str()}"
+            chan = f"#invite_room_{rand_str()}"
+
+            c1.connect(op_nick)
+            c1.send(f"JOIN {chan}")
+            c1.send(f"MODE {chan} +i")
+            time.sleep(0.2)
+
+            c2.connect(guest_nick)
+            c2.send(f"JOIN {chan}")
+            err_473, _ = c2.read_until(" 473 ")
+
+            c1.send(f"INVITE {guest_nick} {chan}")
+            r341, _ = c1.read_until(" 341 ")
+
+            c2.send(f"JOIN {chan}")
+            j_line, _ = c2.read_until(f"JOIN :{chan}")
+
+            c1.close()
+            c2.close()
+
+            if " 473 " in err_473 and " 341 " in r341 and f"JOIN :{chan}" in j_line:
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"473: {err_473} | 341: {r341} | JOIN: {j_line}", evaluation="PASS — Invite-only channel governance verified.")
+            else:
+                self.log_result(cmd, scenario, "FAIL", f"473: {err_473}, 341: {r341}, JOIN: {j_line}", protocol=proto, expected=exp, actual=f"473: {err_473} | 341: {r341} | JOIN: {j_line}", evaluation="FAIL — Invite-only channel governance failed.")
+        except Exception as e:
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
+
+    def test_list_and_names(self):
+        cmd = "LIST / NAMES"
+        scenario = "Channel List & Names Reply (321-323, 353, 366)"
+        proto = "1. User joins #list_room\n2. User sends LIST #list_room -> 321, 322, 323\n3. User sends NAMES #list_room -> 353, 366"
+        exp = "322 RPL_LIST and 353 RPL_NAMREPLY received"
+        try:
+            c1 = IRCClient(self.host, self.port)
+            nick1 = f"Lister_{rand_str()}"
+            chan = f"#list_room_{rand_str()}"
+
+            c1.connect(nick1)
+            c1.send(f"JOIN {chan}")
+            time.sleep(0.2)
+
+            c1.send(f"LIST {chan}")
+            r322, _ = c1.read_until(" 322 ")
+
+            c1.send(f"NAMES {chan}")
+            r353, _ = c1.read_until(" 353 ")
+
+            c1.close()
+
+            if " 322 " in r322 and " 353 " in r353:
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"322: {r322} | 353: {r353}", evaluation="PASS — LIST and NAMES protocol replies verified.")
+            else:
+                self.log_result(cmd, scenario, "FAIL", f"322: {r322}, 353: {r353}", protocol=proto, expected=exp, actual=f"322: {r322} | 353: {r353}", evaluation="FAIL — LIST or NAMES reply missing.")
         except Exception as e:
             self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
