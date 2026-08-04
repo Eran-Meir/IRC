@@ -53,6 +53,11 @@ func (c *Client) ProcessCommand(msg *parser.Message) {
 	case "LIST":
 		c.handleList(msg)
 	default:
+		nick := c.Nick
+		if nick == "" {
+			nick = "*"
+		}
+		c.SendRaw([]byte(fmt.Sprintf(":%s 421 %s %s :Unknown command\r\n", ServerName, nick, msg.Command)))
 		logger.Debug("[%s] Unknown command: %s", c.Prefix(), msg.Command)
 	}
 }
@@ -122,7 +127,12 @@ func (c *Client) checkRegistration() {
 }
 
 func (c *Client) handleJoin(msg *parser.Message) {
-	if !c.registered || len(msg.Params) == 0 {
+	if !c.registered {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 451 * :You have not registered\r\n", ServerName)))
+		return
+	}
+	if len(msg.Params) == 0 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s JOIN :Not enough parameters\r\n", ServerName, c.Nick)))
 		return
 	}
 
@@ -172,7 +182,12 @@ func (c *Client) handleJoin(msg *parser.Message) {
 }
 
 func (c *Client) handlePart(msg *parser.Message) {
-	if !c.registered || len(msg.Params) == 0 {
+	if !c.registered {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 451 * :You have not registered\r\n", ServerName)))
+		return
+	}
+	if len(msg.Params) == 0 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s PART :Not enough parameters\r\n", ServerName, c.Nick)))
 		return
 	}
 
@@ -198,11 +213,22 @@ func (c *Client) handlePart(msg *parser.Message) {
 			ch.RemoveClient(c)
 			mgr.RemoveChannelIfEmpty(chName)
 		}
+	} else {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 442 %s %s :You're not on that channel\r\n", ServerName, c.Nick, chName)))
 	}
 }
 
 func (c *Client) handlePrivmsg(msg *parser.Message) {
-	if !c.registered || len(msg.Params) < 2 {
+	if !c.registered {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 451 * :You have not registered\r\n", ServerName)))
+		return
+	}
+	if len(msg.Params) < 1 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 411 %s :No recipient given (PRIVMSG)\r\n", ServerName, c.Nick)))
+		return
+	}
+	if len(msg.Params) < 2 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 412 %s :No text to send\r\n", ServerName, c.Nick)))
 		return
 	}
 

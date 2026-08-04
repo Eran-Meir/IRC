@@ -559,6 +559,64 @@ export const App: React.FC = () => {
       const klineMsg = '* YOU ARE BANNED FROM THIS SERVER (K-LINED)';
       addMessage('Status', { id: Math.random().toString(), sender: 'System', target: 'Status', text: klineMsg, timestamp: time, isSystem: true });
       addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: klineMsg, timestamp: time, isSystem: true });
+    } else if (line.includes(' 421 ')) {
+      // ERR_UNKNOWNCOMMAND :server 421 nick CMD :Unknown command
+      const match = line.match(/ 421 [^ ]+ ([^ ]+)/);
+      const unknownCmd = match ? match[1] : 'COMMAND';
+      const errMsg = `* Unknown command /${unknownCmd}. Type /help for available commands.`;
+      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+      if (activeTarget.toLowerCase() !== 'status') {
+        addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: errMsg, timestamp: time, isSystem: true });
+      }
+    } else if (line.includes(' 461 ')) {
+      // ERR_NEEDMOREPARAMS :server 461 nick CMD :Not enough parameters
+      const match = line.match(/ 461 [^ ]+ ([^ ]+)/);
+      const cmdName = match ? match[1] : 'COMMAND';
+      const errMsg = `* Command error: Not enough parameters for /${cmdName}`;
+      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+    } else if (line.includes(' 401 ')) {
+      // ERR_NOSUCHNICK :server 401 nick target :No such nick/channel
+      const match = line.match(/ 401 [^ ]+ ([^ ]+)/);
+      const targetName = match ? match[1] : 'target';
+      const errMsg = `* Error: No such nick or channel "${targetName}"`;
+      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+    } else if (line.includes(' 403 ')) {
+      // ERR_NOSUCHCHANNEL :server 403 nick #chan :No such channel
+      const match = line.match(/ 403 [^ ]+ ([^ ]+)/);
+      const chanName = match ? match[1] : 'channel';
+      const errMsg = `* Error: No such channel "${chanName}"`;
+      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+    } else if (line.includes(' 442 ')) {
+      // ERR_NOTONCHANNEL :server 442 nick #chan :You're not on that channel
+      const match = line.match(/ 442 [^ ]+ ([^ ]+)/);
+      const chanName = match ? match[1] : 'channel';
+      const errMsg = `* Error: You are not in ${chanName}`;
+      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+    } else if (line.includes(' 482 ')) {
+      // ERR_CHANOPRIVSNEEDED :server 482 nick #chan :You're not channel operator
+      const match = line.match(/ 482 [^ ]+ ([^ ]+)/);
+      const chanName = match ? match[1] : activeTarget;
+      const errMsg = `* Permission denied: You are not a channel operator in ${chanName}`;
+      addMessage(chanName.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: chanName.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+      if (activeTarget.toLowerCase() !== chanName.toLowerCase()) {
+        addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+      }
+    } else if (line.includes(' 481 ')) {
+      // ERR_NOPRIVILEGES :server 481 nick :Permission Denied- You're not an IRC operator
+      const errMsg = "* Permission denied: You are not an IRC operator";
+      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+    } else if (line.includes(' 464 ')) {
+      // ERR_PASSWDMISMATCH :server 464 nick :Password incorrect
+      const errMsg = "* Error: OPER password incorrect";
+      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+    } else if (line.includes(' 381 ')) {
+      // RPL_YOUREOPER :server 381 nick :You are now an IRC operator
+      const msgText = "* Success: You are now an IRC operator (@)";
+      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: msgText, timestamp: time, isSystem: true });
+    } else if (line.includes(' 382 ')) {
+      // RPL_REHASHING :server 382 nick file :Rehash file
+      const msgText = "* Success: Server configuration reloaded (REHASH)";
+      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: msgText, timestamp: time, isSystem: true });
     } else if (line.includes(' 367 ')) {
       // RPL_BANLIST :server 367 nick #channel mask
       const match = line.match(/ 367 [^ ]+ ([#][^ ]+) ([^ ]+)/);
@@ -584,14 +642,24 @@ export const App: React.FC = () => {
       // Cleanly format system banners, WHOIS, LIST, and MOTD numerics
       const cleanedLine = line.replace(/^:[^ ]+ \d{3} [^ ]+ :?/, '').replace(/^:[^ ]+ NOTICE [^ ]+ :?/, '');
       if (cleanedLine.trim()) {
-        addMessage('Status', {
+        addMessage(activeTarget.toLowerCase(), {
           id: Math.random().toString(),
           sender: 'System',
-          target: 'Status',
+          target: activeTarget.toLowerCase(),
           text: cleanedLine,
           timestamp: time,
           isSystem: true,
         });
+        if (activeTarget.toLowerCase() !== 'status') {
+          addMessage('status', {
+            id: Math.random().toString(),
+            sender: 'System',
+            target: 'status',
+            text: cleanedLine,
+            timestamp: time,
+            isSystem: true,
+          });
+        }
       }
     }
   };
@@ -780,6 +848,24 @@ export const App: React.FC = () => {
       } else if (cmd === 'QUIT') {
         if (wsRef.current) wsRef.current.send(`QUIT${arg ? ' :' + arg : ''}`);
         disconnectWebSocket();
+      } else if (cmd === 'CLEAR') {
+        setMessages((prev) => ({ ...prev, [activeTarget.toLowerCase()]: [] }));
+      } else if (cmd === 'HELP') {
+        const helpMsg = '* Available commands: /join (#chan), /part (#chan), /nick (newnick), /msg (nick text), /notice (target text), /whois (nick), /topic (text), /kick (nick), /mode (args), /oper (user pass), /kline (mask), /rehash, /names, /list, /clear';
+        addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: helpMsg, timestamp: time, isSystem: true });
+      } else {
+        if (wsRef.current && isConnected) {
+          wsRef.current.send(`${cmd}${arg ? ' ' + arg : ''}`);
+        } else {
+          addMessage(activeTarget.toLowerCase(), {
+            id: Math.random().toString(),
+            sender: 'System',
+            target: activeTarget.toLowerCase(),
+            text: `* Unknown command: /${cmd}. Type /help for available commands.`,
+            timestamp: time,
+            isSystem: true,
+          });
+        }
       }
       return;
     }
