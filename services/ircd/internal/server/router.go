@@ -601,8 +601,30 @@ func (c *Client) handleWhois(msg *parser.Message) {
 	// 312 RPL_WHOISSERVER: <nick> <server> :<server info>
 	c.SendRaw([]byte(fmt.Sprintf(":%s 312 %s %s %s :Enterprise Go-IRCd Server\r\n", ServerName, c.Nick, targetClient.Nick, ServerName)))
 
+	// 313 RPL_WHOISOPERATOR
+	if targetClient.IsOper() {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 313 %s %s :is an IRC Operator - Server Administrator\r\n", ServerName, c.Nick, targetClient.Nick)))
+	} else if isAnyChannelOp(targetClient) {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 313 %s %s :is an IRC Operator\r\n", ServerName, c.Nick, targetClient.Nick)))
+	}
+
 	// 318 RPL_ENDOFWHOIS: <nick> :End of /WHOIS list.
 	c.SendRaw([]byte(fmt.Sprintf(":%s 318 %s %s :End of /WHOIS list.\r\n", ServerName, c.Nick, targetClient.Nick)))
+}
+
+func isAnyChannelOp(client *Client) bool {
+	mgr := GetManager()
+	client.mu.RLock()
+	defer client.mu.RUnlock()
+
+	for chName := range client.channels {
+		if ch, exists := mgr.channels[chName]; exists {
+			if ch.IsOp(client) || ch.IsProtected(client) || ch.IsHalfOp(client) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (c *Client) handleList(msg *parser.Message) {

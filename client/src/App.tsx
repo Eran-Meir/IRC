@@ -568,6 +568,17 @@ export const App: React.FC = () => {
       // RPL_REHASHING :server 382 nick file :Rehash file
       const msgText = "* Success: Server configuration reloaded (REHASH)";
       addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: msgText, timestamp: time, isSystem: true });
+    } else if (line.includes(' 313 ')) {
+      // RPL_WHOISOPERATOR :server 313 nick target :is an IRC Operator ...
+      const match = line.match(/ 313 [^ ]+ ([^ ]+) :(.*)$/);
+      if (match) {
+        const [, targetNick, operRoleText] = match;
+        const msgText = `* ${targetNick} ${operRoleText}`;
+        addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: msgText, timestamp: time, isSystem: true });
+        if (activeTarget.toLowerCase() !== 'status') {
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: msgText, timestamp: time, isSystem: true });
+        }
+      }
     } else if (line.includes(' 367 ')) {
       // RPL_BANLIST :server 367 nick #channel mask
       const match = line.match(/ 367 [^ ]+ ([#][^ ]+) ([^ ]+)/);
