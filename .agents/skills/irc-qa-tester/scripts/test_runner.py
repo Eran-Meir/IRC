@@ -442,12 +442,16 @@ class IRCTestSuite:
         except Exception as e:
             self.log_result(cmd, scenario, "FAIL", str(e))
 
-    def print_summary(self):
-        print("=" * 70)
-        print("                     IRC QA TEST SUITE RUN RESULTS                     ")
-        print("=" * 70)
-        print(f"{'COMMAND':<22} {'TEST SCENARIO':<34} {'STATUS':<8}")
-        print("-" * 70)
+    def print_summary(self, output_file="qa_test_report.log"):
+        lines = []
+        lines.append("=" * 70)
+        lines.append("                     IRC QA TEST SUITE RUN RESULTS                     ")
+        lines.append("=" * 70)
+        lines.append(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(f"Target: {self.host}:{self.port}")
+        lines.append("-" * 70)
+        lines.append(f"{'COMMAND':<22} {'TEST SCENARIO':<34} {'STATUS':<8}")
+        lines.append("-" * 70)
 
         passed = 0
         failed = 0
@@ -457,19 +461,32 @@ class IRCTestSuite:
                 passed += 1
             else:
                 failed += 1
-            print(f"{r['command']:<22} {r['scenario']:<34} {status:<8}")
+            lines.append(f"{r['command']:<22} {r['scenario']:<34} {status:<8}")
             if r['detail']:
-                print(f"   -> Detail: {r['detail']}")
+                lines.append(f"   -> Detail: {r['detail']}")
 
-        print("=" * 70)
-        print(f"TOTAL: {passed} Passed | {failed} Failed | {len(self.results)} Executed")
-        print("=" * 70)
+        lines.append("=" * 70)
+        lines.append(f"TOTAL: {passed} Passed | {failed} Failed | {len(self.results)} Executed")
+        lines.append("=" * 70)
+
+        report_text = "\n".join(lines)
+        print(report_text)
+
+        if output_file:
+            try:
+                with open(output_file, "w", encoding="utf-8") as f:
+                    f.write(report_text + "\n")
+                print(f"\n[+] Detailed QA Report saved to: {output_file}")
+            except Exception as e:
+                print(f"[-] Could not write report file: {e}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="IRC QA Test Suite")
     parser.add_argument("--host", default="127.0.0.1", help="IRCd host")
     parser.add_argument("--port", type=int, default=6667, help="IRCd port")
+    parser.add_argument("--output", default="qa_test_report.log", help="Report output file path")
     args = parser.parse_args()
 
     suite = IRCTestSuite(host=args.host, port=args.port)
     suite.run_all()
+    suite.print_summary(output_file=args.output)
