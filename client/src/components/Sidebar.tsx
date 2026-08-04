@@ -72,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onSelectTarget(ch.name)}
             onContextMenu={(e) => handleContextMenu(e, ch.name)}
           >
-            <span className="channel-name">{ch.name.startsWith('#') ? ch.name : '#' + ch.name}</span>
+            <span className="channel-name">{ch.name.startsWith('#') ? ch.name : '💬 ' + ch.name}</span>
             {idx < 9 && <span className="shortcut-badge">Alt+{idx + 1}</span>}
             {ch.unreadCount > 0 && (
               <span className="badge">{ch.unreadCount}</span>

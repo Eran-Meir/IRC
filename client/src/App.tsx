@@ -724,19 +724,35 @@ export const App: React.FC = () => {
       } else if (cmd === 'WHOIS' && arg) {
         if (wsRef.current) wsRef.current.send(`WHOIS ${arg}`);
         setActiveTarget('Status');
-      } else if ((cmd === 'MSG' || cmd === 'PRIVMSG') && arg) {
+      } else if ((cmd === 'MSG' || cmd === 'PRIVMSG' || cmd === 'QUERY') && arg) {
         const firstSpace = arg.indexOf(' ');
+        let targetNick = arg.trim().toLowerCase();
+        let msgBody = '';
         if (firstSpace > -1) {
-          const msgTarget = arg.slice(0, firstSpace).toLowerCase();
-          const msgBody = arg.slice(firstSpace + 1);
-          if (wsRef.current) wsRef.current.send(`PRIVMSG ${msgTarget} :${msgBody}`);
-          addMessage(msgTarget, {
-            id: Math.random().toString(),
-            sender: nick,
-            target: msgTarget,
-            text: msgBody,
-            timestamp: time,
-          });
+          targetNick = arg.slice(0, firstSpace).trim().toLowerCase();
+          msgBody = arg.slice(firstSpace + 1);
+        }
+        if (targetNick.startsWith('#')) {
+          targetNick = targetNick.slice(1);
+        }
+        if (targetNick) {
+          if (!channels.some((c) => c.name.toLowerCase() === targetNick)) {
+            setChannels((prev) => [
+              ...prev,
+              { name: targetNick, topic: 'Private Query', unreadCount: 0, users: [nick, targetNick] },
+            ]);
+          }
+          setActiveTarget(targetNick);
+          if (msgBody && wsRef.current) {
+            wsRef.current.send(`PRIVMSG ${targetNick} :${msgBody}`);
+            addMessage(targetNick, {
+              id: Math.random().toString(),
+              sender: nick,
+              target: targetNick,
+              text: msgBody,
+              timestamp: time,
+            });
+          }
         }
       } else if (cmd === 'ME' && arg) {
         if (wsRef.current) wsRef.current.send(`PRIVMSG ${activeTarget} :\x01ACTION ${arg}\x01`);

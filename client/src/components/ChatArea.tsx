@@ -71,7 +71,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
               ? activeTarget
               : activeTarget === 'Status'
               ? '🖥️ Status'
-              : '#' + activeTarget}
+              : '💬 ' + activeTarget}
           </span>
         </div>
 
