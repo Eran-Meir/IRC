@@ -1,5 +1,16 @@
 # Release History
 
+## v0.5.25-alpha (Strict Rank Combat Hierarchy, Protected Shields & mIRC User List Context Menu)
+* **Feature (Go IRCd Daemon & User Combat Governance)**
+  * **Strict Rank Hierarchy**: Supported modes `+q` (Protected `*`), `+o` (Op `@`), `+h` (Half-Op `%`), `+v` (Voice `+`), and Unranked.
+  * **Protected User Kick Defense (`484`)**: Protected users (`*`) CANNOT be kicked by anyone unless the kicker also possesses Protected status (`*`). Non-protected Operators attempting to kick a Protected user receive IRC error `484` (`Cannot kick protected user (*)`).
+  * **Half-Op Ejection Limits**: Half-Ops (`%`) can only kick Voiced (`+`) and unranked users. Attempting to kick Half-Ops or Ops returns error `482`.
+* **Feature (React Web Client UI)**
+  * **Strict Hierarchy Nicklist Sorting**: User list sorts users strictly by power (`*` > `@` > `%` > `+` > unranked), then alphabetically by nickname.
+  * **Visual Rank Stacking**: Displays single highest rank badge symbol for users with multiple ranks (e.g. `*@` renders as `*`).
+  * **Double-Click Query**: Double-clicking (or left-clicking) a nickname in the User List opens a 1-on-1 private messaging query window.
+  * **Right-Click mIRC Context Menu**: Right-clicking a user opens a dynamic dropdown menu with Whois, Query, Op/DeOp (`+o`/`-o`), Voice/DeVoice (`+v`/`-v`), HalfOp/DeHalfOp (`+h`/`-h`), Protect/DeProtect (`+q`/`-q`), Kick, Ban (`+b`), and KickBan options.
+
 ## v0.5.24-alpha (Channel Operator Governance, Channel Modes & Screen Reader Formatting)
 * **Feature (Go IRCd Daemon & Web Client)**
   * **Operator (@) Creation**: First user joining an ephemeral channel automatically receives Channel Operator status (`@`).

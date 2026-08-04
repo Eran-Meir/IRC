@@ -106,3 +106,77 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* User Badge Rank Colors */
+.user-badge.protected {
+  color: #ff0055;
+  font-weight: bold;
+}
+
+.user-badge.op {
+  color: #00ff66;
+  font-weight: bold;
+}
+
+.user-badge.halfop {
+  color: #00e5ff;
+  font-weight: bold;
+}
+
+.user-badge.voice {
+  color: #ffcc00;
+  font-weight: bold;
+}
+
+.user-badge.normal {
+  color: var(--text-muted);
+}
+
+/* Context Menu */
+.user-context-menu {
+  position: fixed;
+  z-index: 1000;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  padding: 4px 0;
+  min-width: 170px;
+  font-size: 13px;
+  font-family: var(--font-family);
+}
+
+.user-context-menu .context-header {
+  padding: 6px 12px;
+  font-weight: bold;
+  color: var(--accent-cyan);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 4px;
+}
+
+.user-context-menu .context-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--text-main);
+  transition: background 0.15s;
+}
+
+.user-context-menu .context-item:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--accent-green);
+}
+
+.user-context-menu .context-item.danger {
+  color: #ff4d4d;
+}
+
+.user-context-menu .context-item.danger:hover {
+  background-color: #4a0000;
+  color: #ffffff;
+}
+
+.user-context-menu .context-divider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 4px 0;
+}

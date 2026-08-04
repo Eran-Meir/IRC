@@ -228,16 +228,36 @@ func (c *Client) handleKick(msg *parser.Message) {
 
 	mgr := GetManager()
 	if ch, exists := mgr.channels[chName]; exists {
-		if !ch.IsOp(c) {
+		// Caller must be at least Half-Op (%)
+		if !ch.IsHalfOp(c) {
 			c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
 			return
 		}
+
 		targetClient := mgr.GetClientByNick(targetNick)
-		if targetClient != nil {
-			kickLine := fmt.Sprintf(":%s KICK %s %s :%s", c.Prefix(), chName, targetNick, reason)
-			ch.Broadcast(nil, kickLine)
-			ch.RemoveClient(targetClient)
+		if targetClient == nil {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 401 %s %s :No such nick/channel\r\n", ServerName, c.Nick, targetNick)))
+			return
 		}
+
+		// KICK HIERARCHY RULES:
+		// 1. Protected (*) target CANNOT be kicked by anyone unless caller is also Protected (*)!
+		if ch.IsProtected(targetClient) && !ch.IsProtected(c) {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 484 %s %s :Cannot kick protected user (*)\r\n", ServerName, c.Nick, chName)))
+			return
+		}
+
+		// 2. Half-Op (%) caller can ONLY kick Voiced (+) and unranked users
+		if !ch.IsOp(c) && !ch.IsProtected(c) {
+			if ch.IsHalfOp(targetClient) || ch.IsOp(targetClient) || ch.IsProtected(targetClient) {
+				c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :Half-ops cannot kick ops or half-ops\r\n", ServerName, c.Nick, chName)))
+				return
+			}
+		}
+
+		kickLine := fmt.Sprintf(":%s KICK %s %s :%s", c.Prefix(), chName, targetNick, reason)
+		ch.Broadcast(nil, kickLine)
+		ch.RemoveClient(targetClient)
 	}
 }
 
@@ -346,7 +366,7 @@ func (c *Client) handleMode(msg *parser.Message) {
 		return
 	}
 
-	if !ch.IsOp(c) {
+	if !ch.IsOp(c) && !ch.IsProtected(c) {
 		c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
 		return
 	}
@@ -367,12 +387,32 @@ func (c *Client) handleMode(msg *parser.Message) {
 		}
 
 		switch char {
+		case 'q':
+			if paramIdx < len(msg.Params) {
+				tNick := msg.Params[paramIdx]
+				paramIdx++
+				if tClient := mgr.GetClientByNick(tNick); tClient != nil {
+					ch.SetProtected(tClient, adding)
+					modeLine := fmt.Sprintf(":%s MODE %s %c%c %s", c.Prefix(), chName, flagChar(adding), char, tNick)
+					ch.Broadcast(nil, modeLine)
+				}
+			}
 		case 'o':
 			if paramIdx < len(msg.Params) {
 				tNick := msg.Params[paramIdx]
 				paramIdx++
 				if tClient := mgr.GetClientByNick(tNick); tClient != nil {
 					ch.SetOp(tClient, adding)
+					modeLine := fmt.Sprintf(":%s MODE %s %c%c %s", c.Prefix(), chName, flagChar(adding), char, tNick)
+					ch.Broadcast(nil, modeLine)
+				}
+			}
+		case 'h':
+			if paramIdx < len(msg.Params) {
+				tNick := msg.Params[paramIdx]
+				paramIdx++
+				if tClient := mgr.GetClientByNick(tNick); tClient != nil {
+					ch.SetHalfOp(tClient, adding)
 					modeLine := fmt.Sprintf(":%s MODE %s %c%c %s", c.Prefix(), chName, flagChar(adding), char, tNick)
 					ch.Broadcast(nil, modeLine)
 				}

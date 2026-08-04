@@ -1,31 +1,235 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface UserListProps {
   users: string[];
+  activeChannel: string;
+  onQueryUser?: (nick: string) => void;
+  onSendCommand?: (cmd: string) => void;
 }
 
-export const UserList: React.FC<UserListProps> = ({ users }) => {
+interface ContextMenuState {
+  visible: boolean;
+  x: number;
+  y: number;
+  nick: string;
+  symbol: string;
+}
+
+export const UserList: React.FC<UserListProps> = ({
+  users,
+  activeChannel,
+  onQueryUser,
+  onSendCommand,
+}) => {
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    nick: '',
+    symbol: '',
+  });
+
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close context menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setContextMenu((prev) => ({ ...prev, visible: false }));
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Parse user prefix symbol and clean nick
+  const parseUser = (raw: string) => {
+    const symbol = raw.charAt(0);
+    if (['*', '@', '%', '+'].includes(symbol)) {
+      return { symbol, nick: raw.slice(1) };
+    }
+    return { symbol: '', nick: raw };
+  };
+
+  // Rank weight for strict hierarchy sorting (* > @ > % > + > none)
+  const getRankWeight = (symbol: string) => {
+    switch (symbol) {
+      case '*':
+        return 4;
+      case '@':
+        return 3;
+      case '%':
+        return 2;
+      case '+':
+        return 1;
+      default:
+        return 0;
+    }
+  };
+
+  // Sort users strictly by rank weight descending, then alphabetically by nickname
+  const sortedUsers = [...users].map(parseUser).sort((a, b) => {
+    const weightDiff = getRankWeight(b.symbol) - getRankWeight(a.symbol);
+    if (weightDiff !== 0) return weightDiff;
+    return a.nick.localeCompare(b.nick, undefined, { sensitivity: 'base' });
+  });
+
+  const handleContextMenu = (e: React.MouseEvent, nick: string, symbol: string) => {
+    e.preventDefault();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      nick,
+      symbol,
+    });
+  };
+
+  const handleDoubleClick = (nick: string) => {
+    if (onQueryUser) {
+      onQueryUser(nick);
+    }
+  };
+
+  const executeAction = (action: string) => {
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+    const { nick, symbol } = contextMenu;
+    if (!nick || !onSendCommand) return;
+
+    switch (action) {
+      case 'WHOIS':
+        onSendCommand(`/whois ${nick}`);
+        break;
+      case 'QUERY':
+        if (onQueryUser) onQueryUser(nick);
+        break;
+      case 'OP':
+        onSendCommand(`/mode ${activeChannel} +o ${nick}`);
+        break;
+      case 'DEOP':
+        onSendCommand(`/mode ${activeChannel} -o ${nick}`);
+        break;
+      case 'HALFOP':
+        onSendCommand(`/mode ${activeChannel} +h ${nick}`);
+        break;
+      case 'DEHALFOP':
+        onSendCommand(`/mode ${activeChannel} -h ${nick}`);
+        break;
+      case 'VOICE':
+        onSendCommand(`/mode ${activeChannel} +v ${nick}`);
+        break;
+      case 'DEVOICE':
+        onSendCommand(`/mode ${activeChannel} -v ${nick}`);
+        break;
+      case 'PROTECT':
+        onSendCommand(`/mode ${activeChannel} +q ${nick}`);
+        break;
+      case 'DEPROTECT':
+        onSendCommand(`/mode ${activeChannel} -q ${nick}`);
+        break;
+      case 'KICK':
+        onSendCommand(`/kick ${activeChannel} ${nick}`);
+        break;
+      case 'BAN':
+        onSendCommand(`/mode ${activeChannel} +b ${nick}!*@*`);
+        break;
+      case 'KICKBAN':
+        onSendCommand(`/mode ${activeChannel} +b ${nick}!*@*`);
+        onSendCommand(`/kick ${activeChannel} ${nick} :Banned`);
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <aside className="user-list">
       <div className="user-list-header">
         <span>USERS ({users.length})</span>
       </div>
       <div className="user-items">
-        {users.map((user, idx) => {
-          const isOp = user.startsWith('@');
-          const isVoice = user.startsWith('+');
-          const cleanNick = isOp || isVoice ? user.slice(1) : user;
+        {sortedUsers.map(({ symbol, nick }, idx) => {
+          const badgeClass =
+            symbol === '*'
+              ? 'protected'
+              : symbol === '@'
+              ? 'op'
+              : symbol === '%'
+              ? 'halfop'
+              : symbol === '+'
+              ? 'voice'
+              : 'normal';
 
           return (
-            <div key={idx} className="user-item">
-              <span className={`user-badge ${isOp ? 'op' : isVoice ? 'voice' : 'normal'}`}>
-                {isOp ? '@' : isVoice ? '+' : ''}
-              </span>
-              <span className="user-nick">{cleanNick}</span>
+            <div
+              key={idx}
+              className="user-item"
+              onContextMenu={(e) => handleContextMenu(e, nick, symbol)}
+              onDoubleClick={() => handleDoubleClick(nick)}
+              title="Double-click to Query, Right-click for options"
+            >
+              <span className={`user-badge ${badgeClass}`}>{symbol || ' '}</span>
+              <span className="user-nick">{nick}</span>
             </div>
           );
         })}
       </div>
+
+      {/* Dynamic Right-Click Context Menu */}
+      {contextMenu.visible && (
+        <div
+          ref={menuRef}
+          className="user-context-menu"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <div className="context-header">{contextMenu.nick}</div>
+          <div className="context-item" onClick={() => executeAction('QUERY')}>
+            Message (Query)
+          </div>
+          <div className="context-item" onClick={() => executeAction('WHOIS')}>
+            Whois Information
+          </div>
+          <div className="context-divider" />
+          {activeChannel.startsWith('#') && (
+            <>
+              <div className="context-item" onClick={() => executeAction('PROTECT')}>
+                +q Grant Protect (*)
+              </div>
+              <div className="context-item" onClick={() => executeAction('DEPROTECT')}>
+                -q Remove Protect (*)
+              </div>
+              <div className="context-item" onClick={() => executeAction('OP')}>
+                +o Grant Operator (@)
+              </div>
+              <div className="context-item" onClick={() => executeAction('DEOP')}>
+                -o Revoke Operator (@)
+              </div>
+              <div className="context-item" onClick={() => executeAction('HALFOP')}>
+                +h Grant Half-Op (%)
+              </div>
+              <div className="context-item" onClick={() => executeAction('DEHALFOP')}>
+                -h Revoke Half-Op (%)
+              </div>
+              <div className="context-item" onClick={() => executeAction('VOICE')}>
+                +v Grant Voice (+)
+              </div>
+              <div className="context-item" onClick={() => executeAction('DEVOICE')}>
+                -v Revoke Voice (+)
+              </div>
+              <div className="context-divider" />
+              <div className="context-item danger" onClick={() => executeAction('KICK')}>
+                Kick User
+              </div>
+              <div className="context-item danger" onClick={() => executeAction('BAN')}>
+                Ban User (+b)
+              </div>
+              <div className="context-item danger" onClick={() => executeAction('KICKBAN')}>
+                KickBan User
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </aside>
   );
 };

@@ -505,6 +505,21 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleQueryUser = (targetNick: string) => {
+    const normNick = targetNick.toLowerCase();
+    setActiveTarget(normNick);
+    if (!messages[normNick]) {
+      addMessage(normNick, {
+        id: Math.random().toString(),
+        sender: 'System',
+        target: normNick,
+        text: `* Started private conversation with ${targetNick}`,
+        timestamp: new Date().toLocaleTimeString(),
+        isSystem: true,
+      });
+    }
+  };
+
   const currentChannel = channels.find((c) => c.name.toLowerCase() === activeTarget.toLowerCase());
   const currentMessages = messages[activeTarget.toLowerCase()] || [];
 
@@ -535,7 +550,12 @@ export const App: React.FC = () => {
         />
 
         {preferences.showUserList && currentChannel && (
-          <UserList users={currentChannel.users} />
+          <UserList
+            users={currentChannel.users}
+            activeChannel={activeTarget}
+            onQueryUser={handleQueryUser}
+            onSendCommand={handleSendMessage}
+          />
         )}
       </div>
 
