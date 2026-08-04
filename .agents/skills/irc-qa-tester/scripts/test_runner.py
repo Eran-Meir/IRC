@@ -92,12 +92,16 @@ class IRCTestSuite:
         self.port = port
         self.results = []
 
-    def log_result(self, command, scenario, status, detail=""):
+    def log_result(self, command, scenario, status, detail="", protocol="", expected="", actual="", evaluation=""):
         self.results.append({
             "command": command,
             "scenario": scenario,
             "status": status,
-            "detail": detail
+            "detail": detail,
+            "protocol": protocol,
+            "expected": expected,
+            "actual": actual,
+            "evaluation": evaluation
         })
 
     def run_all(self):
@@ -113,11 +117,12 @@ class IRCTestSuite:
         self.test_rejoin_sync()
         self.test_kline_disconnect()
         self.test_rehash_admin()
-        self.print_summary()
 
     def test_nick_change(self):
         cmd = "NICK"
         scenario = "Nickname Change & Channel Broadcast"
+        proto = "1. Connect Client_A & Client_B -> JOIN #chan\n2. Client_A issues NICK NewNick\n3. Assert Client_B receives :OldNick NICK :NewNick"
+        exp = "Client_B receives :OldNick NICK :NewNick broadcast"
         try:
             c1 = IRCClient(self.host, self.port)
             c2 = IRCClient(self.host, self.port)
@@ -139,15 +144,17 @@ class IRCTestSuite:
             c2.close()
 
             if f"NICK :{new_nick}" in line or new_nick in line:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=line, evaluation="PASS — Protocol broadcast matches RFC 1459 specification.")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"Expected NICK broadcast, got: {line}")
+                self.log_result(cmd, scenario, "FAIL", f"Expected NICK broadcast, got: {line}", protocol=proto, expected=exp, actual=line, evaluation="FAIL — Broadcast frame missing.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def test_privmsg_and_notice(self):
         cmd = "PRIVMSG & NOTICE"
         scenario = "Direct Messaging & Single Delivery"
+        proto = "1. Connect Sender & Receiver\n2. Sender sends PRIVMSG & NOTICE to Receiver\n3. Assert Receiver receives formatted messages without duplicates"
+        exp = "PRIVMSG and NOTICE frames received correctly"
         try:
             c1 = IRCClient(self.host, self.port)
             c2 = IRCClient(self.host, self.port)
@@ -166,15 +173,17 @@ class IRCTestSuite:
             c2.close()
 
             if "Hello Direct Message" in p_line and "System Notice Message" in n_line:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"P: {p_line} | N: {n_line}", evaluation="PASS — Message formatting compliant.")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"P: {p_line}, N: {n_line}")
+                self.log_result(cmd, scenario, "FAIL", f"P: {p_line}, N: {n_line}", protocol=proto, expected=exp, actual=f"P: {p_line} | N: {n_line}", evaluation="FAIL — Message delivery error.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def test_whois(self):
         cmd = "WHOIS"
         scenario = "User Info Query (311/318)"
+        proto = "1. Connect Querier & Target\n2. Querier issues WHOIS Target\n3. Assert 311 (RPL_WHOISUSER) and 318 (RPL_ENDOFWHOIS)"
+        exp = "311 RPL_WHOISUSER and 318 RPL_ENDOFWHOIS numeric replies"
         try:
             c1 = IRCClient(self.host, self.port)
             c2 = IRCClient(self.host, self.port)
@@ -191,15 +200,17 @@ class IRCTestSuite:
             c2.close()
 
             if " 311 " in r311 and " 318 " in r318:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"311: {r311} | 318: {r318}", evaluation="PASS — Numeric WHOIS replies match RFC 2812.")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"311: {r311}, 318: {r318}")
+                self.log_result(cmd, scenario, "FAIL", f"311: {r311}, 318: {r318}", protocol=proto, expected=exp, actual=f"311: {r311} | 318: {r318}", evaluation="FAIL — Missing numeric WHOIS reply.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def test_join_and_op(self):
         cmd = "JOIN"
         scenario = "First Join -> Op (@) Assigned"
+        proto = "1. Connect FirstOp\n2. FirstOp joins new empty #channel\n3. Assert 353 (RPL_NAMREPLY) contains @FirstOp and 366 (RPL_ENDOFNAMES)"
+        exp = "353 RPL_NAMREPLY with '@' prefix for first channel joiner"
         try:
             c1 = IRCClient(self.host, self.port)
             nick1 = f"FirstOp_{rand_str()}"
@@ -213,32 +224,32 @@ class IRCTestSuite:
             c1.close()
 
             if f"@{nick1}" in r353 and " 366 " in r366:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"353: {r353} | 366: {r366}", evaluation="PASS — First user correctly auto-opped (@).")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"RPL_NAMREPLY: {r353}")
+                self.log_result(cmd, scenario, "FAIL", f"RPL_NAMREPLY: {r353}", protocol=proto, expected=exp, actual=f"353: {r353}", evaluation="FAIL — Missing @ operator prefix in RPL_NAMREPLY.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def test_topic_governance(self):
         cmd = "TOPIC"
         scenario = "Op Topic Setting & Discard on Empty"
+        proto = "1. OpUser (@) & Regular join #room\n2. Regular issues TOPIC (must return 482)\n3. OpUser issues TOPIC (must succeed & broadcast)"
+        exp = "482 ERR_CHANOPRIVSNEEDED for non-op; TOPIC broadcast for op"
         try:
             c1 = IRCClient(self.host, self.port)
             c2 = IRCClient(self.host, self.port)
             nick1, nick2 = f"OpUser_{rand_str()}", f"Regular_{rand_str()}"
             chan = f"#topic_room_{rand_str()}"
 
-            c1.connect(nick1) # Gets @
+            c1.connect(nick1)
             c1.send(f"JOIN {chan}")
             c2.connect(nick2)
             c2.send(f"JOIN {chan}")
             time.sleep(0.2)
 
-            # Non-operator attempt to set topic -> FAIL
             c2.send(f"TOPIC {chan} :Hacked Topic")
             err_482, _ = c2.read_until(" 482 ")
 
-            # Op sets topic -> SUCCESS
             c1.send(f"TOPIC {chan} :Valid Channel Topic")
             t_line, _ = c2.read_until("TOPIC")
 
@@ -246,15 +257,17 @@ class IRCTestSuite:
             c2.close()
 
             if " 482 " in err_482 and "Valid Channel Topic" in t_line:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"482: {err_482} | TOPIC: {t_line}", evaluation="PASS — Topic governance strictly enforced.")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"482: {err_482}, Topic: {t_line}")
+                self.log_result(cmd, scenario, "FAIL", f"482: {err_482}, Topic: {t_line}", protocol=proto, expected=exp, actual=f"482: {err_482} | TOPIC: {t_line}", evaluation="FAIL — Topic permission boundary error.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def test_kick_and_membership_revocation(self):
         cmd = "KICK"
         scenario = "Op Kicks User -> Msg Blocked (404)"
+        proto = "1. OpUser (@) & BadUser join #kick_room\n2. OpUser issues KICK BadUser\n3. BadUser tries PRIVMSG -> must return 404 (ERR_CANNOTSENDTOCHAN)"
+        exp = "KICK frame broadcast; 404 ERR_CANNOTSENDTOCHAN when kicked user attempts messaging"
         try:
             c1 = IRCClient(self.host, self.port)
             c2 = IRCClient(self.host, self.port)
@@ -270,7 +283,6 @@ class IRCTestSuite:
             c1.send(f"KICK {chan} {bad_nick} :Rule violation")
             k_line, _ = c2.read_until("KICK")
 
-            # Kicked user attempts to message channel -> 404 CANNOTSENDTOCHAN
             c2.send(f"PRIVMSG {chan} :Am I still here?")
             err_404, _ = c2.read_until(" 404 ")
 
@@ -278,15 +290,17 @@ class IRCTestSuite:
             c2.close()
 
             if "KICK" in k_line and " 404 " in err_404:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"KICK: {k_line} | 404: {err_404}", evaluation="PASS — Kicked user membership cleanly revoked.")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"Kick: {k_line}, ERR_404: {err_404}")
+                self.log_result(cmd, scenario, "FAIL", f"Kick: {k_line}, ERR_404: {err_404}", protocol=proto, expected=exp, actual=f"KICK: {k_line} | 404: {err_404}", evaluation="FAIL — Kicked user channel membership remained active in daemon.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def test_ban_prevention(self):
         cmd = "BAN (+b)"
         scenario = "Banned Mask Blocks Re-Entry (474)"
+        proto = "1. OpUser (@) & Spammer join #ban_room\n2. OpUser issues MODE +b Spammer and KICK Spammer\n3. Spammer attempts JOIN -> must return 474 (ERR_BANNEDFROMCHAN)"
+        exp = "474 ERR_BANNEDFROMCHAN received when banned nick attempts rejoin"
         try:
             c1 = IRCClient(self.host, self.port)
             c2 = IRCClient(self.host, self.port)
@@ -303,7 +317,6 @@ class IRCTestSuite:
             c1.send(f"KICK {chan} {ban_nick} :Banned")
             time.sleep(0.2)
 
-            # Banned user attempts rejoin -> ERR_BANNEDFROMCHAN 474
             c2.send(f"JOIN {chan}")
             err_474, _ = c2.read_until(" 474 ")
 
@@ -311,15 +324,17 @@ class IRCTestSuite:
             c2.close()
 
             if " 474 " in err_474:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"474: {err_474}", evaluation="PASS — Ban mask wildcard matching succeeded.")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"ERR_474: {err_474}")
+                self.log_result(cmd, scenario, "FAIL", f"ERR_474: {err_474}", protocol=proto, expected=exp, actual=f"474: {err_474}", evaluation="FAIL — Ban mask wildcard matching failed.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def test_rank_hierarchy(self):
         cmd = "RANK HIERARCHY"
         scenario = "+v Blocked Kick; +q Protected"
+        proto = "1. Owner (+q/*), Op (+o/@), Voiced (+v/+) join #hierarchy\n2. Voiced tries KICK Op -> 482\n3. Op tries KICK Owner -> 484/482"
+        exp = "482 for +v kick attempt; 484/482 for Op kick against Protected (*)"
         try:
             cq = IRCClient(self.host, self.port)
             co = IRCClient(self.host, self.port)
@@ -340,11 +355,9 @@ class IRCTestSuite:
             cq.send(f"MODE {chan} +v {v_nick}")
             time.sleep(0.2)
 
-            # Voiced (+v) attempts kick -> 482 ERR_CHANOPRIVSNEEDED
             cv.send(f"KICK {chan} {o_nick} :Attempt")
             err_482, _ = cv.read_until(" 482 ")
 
-            # Op (@) attempts kick against Protected (*) -> 484 or 482
             co.send(f"KICK {chan} {q_nick} :Attempt")
             err_prot, _ = co.read_until(" 48")
 
@@ -353,15 +366,17 @@ class IRCTestSuite:
             cv.close()
 
             if " 482 " in err_482 and len(err_prot) > 0:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"VoiceKick: {err_482} | OpKickOwner: {err_prot}", evaluation="PASS — Hierarchy kick rules strictly enforced.")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"VoiceKick: {err_482}, OpKickOwner: {err_prot}")
+                self.log_result(cmd, scenario, "FAIL", f"VoiceKick: {err_482}, OpKickOwner: {err_prot}", protocol=proto, expected=exp, actual=f"VoiceKick: {err_482} | OpKickOwner: {err_prot}", evaluation="FAIL — Hierarchy kick rules violated.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def test_rejoin_sync(self):
         cmd = "REJOIN"
         scenario = "Part + Join Broadcast Sync"
+        proto = "1. RejoinUser & Watcher join #rejoin\n2. RejoinUser sends PART then JOIN\n3. Assert Watcher receives PART notice and JOIN notice"
+        exp = "Watcher receives PART and JOIN frames from RejoinUser"
         try:
             c1 = IRCClient(self.host, self.port)
             c2 = IRCClient(self.host, self.port)
@@ -375,7 +390,6 @@ class IRCTestSuite:
             time.sleep(0.2)
             c2.flush()
 
-            # c1 performs PART + JOIN cycle
             c1.send(f"PART {chan} :Rejoining")
             part_line, _ = c2.read_until(f"PART {chan}")
 
@@ -386,15 +400,17 @@ class IRCTestSuite:
             c2.close()
 
             if f"PART {chan}" in part_line and f"JOIN :{chan}" in join_line:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"PART: {part_line} | JOIN: {join_line}", evaluation="PASS — Rejoin sequence fully synchronized across clients.")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"Part: {part_line}, Join: {join_line}")
+                self.log_result(cmd, scenario, "FAIL", f"Part: {part_line}, Join: {join_line}", protocol=proto, expected=exp, actual=f"PART: {part_line} | JOIN: {join_line}", evaluation="FAIL — Rejoin broadcast dropped.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def test_kline_disconnect(self):
         cmd = "KLINE"
         scenario = "IRCop Severs Target Socket"
+        proto = "1. Admin authenticates via OPER admin_account admin_password\n2. Admin issues KLINE *@127.0.0.1\n3. Assert Target connection receives ERROR link close"
+        exp = "381 RPL_YOUREOPER received; Target connection terminated with ERROR link close"
         try:
             admin = IRCClient(self.host, self.port)
             target = IRCClient(self.host, self.port)
@@ -413,15 +429,17 @@ class IRCTestSuite:
             target.close()
 
             if " 381 " in r381 and "ERROR" in disc_line:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"381: {r381} | ERROR: {disc_line}", evaluation="PASS — KLINE administrative socket termination verified.")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"381: {r381}, Disc: {disc_line}")
+                self.log_result(cmd, scenario, "FAIL", f"381: {r381}, Disc: {disc_line}", protocol=proto, expected=exp, actual=f"381: {r381} | ERROR: {disc_line}", evaluation="FAIL — OPER authentication or KLINE termination failed.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def test_rehash_admin(self):
         cmd = "REHASH"
         scenario = "Admin Reloads Config (382)"
+        proto = "1. Admin authenticates via OPER admin_account admin_password\n2. Admin issues REHASH\n3. Assert 382 (RPL_REHASHING)"
+        exp = "382 RPL_REHASHING numeric response"
         try:
             admin = IRCClient(self.host, self.port)
             admin_nick = f"Admin_{rand_str()}"
@@ -436,16 +454,16 @@ class IRCTestSuite:
             admin.close()
 
             if " 382 " in r382:
-                self.log_result(cmd, scenario, "PASS")
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"382: {r382}", evaluation="PASS — REHASH configuration reload verified.")
             else:
-                self.log_result(cmd, scenario, "FAIL", f"382: {r382}")
+                self.log_result(cmd, scenario, "FAIL", f"382: {r382}", protocol=proto, expected=exp, actual=f"382: {r382}", evaluation="FAIL — REHASH command failed.")
         except Exception as e:
-            self.log_result(cmd, scenario, "FAIL", str(e))
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
     def print_summary(self, output_file="qa_test_report.log"):
         lines = []
         lines.append("=" * 70)
-        lines.append("                     IRC QA TEST SUITE RUN RESULTS                     ")
+        lines.append("                     IRC QA TEST SUITE SUMMARY MATRIX                  ")
         lines.append("=" * 70)
         lines.append(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}")
         lines.append(f"Target: {self.host}:{self.port}")
@@ -462,12 +480,25 @@ class IRCTestSuite:
             else:
                 failed += 1
             lines.append(f"{r['command']:<22} {r['scenario']:<34} {status:<8}")
-            if r['detail']:
-                lines.append(f"   -> Detail: {r['detail']}")
 
         lines.append("=" * 70)
         lines.append(f"TOTAL: {passed} Passed | {failed} Failed | {len(self.results)} Executed")
         lines.append("=" * 70)
+        lines.append("\n\n")
+        lines.append("=" * 70)
+        lines.append("             DETAILED TEST EXECUTION PROTOCOL & DIAGNOSIS LOG          ")
+        lines.append("=" * 70)
+
+        for idx, r in enumerate(self.results, 1):
+            lines.append(f"\n[TEST #{idx}] {r['command']} — {r['scenario']}")
+            lines.append(f"Status: {r['status']}")
+            lines.append("Protocol Steps:")
+            for p_step in r['protocol'].split('\n'):
+                lines.append(f"  {p_step}")
+            lines.append(f"Expected Outcome: {r['expected']}")
+            lines.append(f"Actual Response:  {r['actual']}")
+            lines.append(f"Evaluation:       {r['evaluation']}")
+            lines.append("-" * 70)
 
         report_text = "\n".join(lines)
         print(report_text)
@@ -476,7 +507,7 @@ class IRCTestSuite:
             try:
                 with open(output_file, "w", encoding="utf-8") as f:
                     f.write(report_text + "\n")
-                print(f"\n[+] Detailed QA Report saved to: {output_file}")
+                print(f"\n[+] Detailed QA Protocol Log saved to: {output_file}")
             except Exception as e:
                 print(f"[-] Could not write report file: {e}")
 

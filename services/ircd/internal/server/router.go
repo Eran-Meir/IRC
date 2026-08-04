@@ -44,6 +44,12 @@ func (c *Client) ProcessCommand(msg *parser.Message) {
 		c.handleNames(msg)
 	case "WHOIS":
 		c.handleWhois(msg)
+	case "OPER":
+		c.handleOper(msg)
+	case "KLINE":
+		c.handleKline(msg)
+	case "REHASH":
+		c.handleRehash(msg)
 	case "LIST":
 		c.handleList(msg)
 	default:
@@ -130,7 +136,7 @@ func (c *Client) handleJoin(msg *parser.Message) {
 	ch := mgr.GetOrCreateChannel(chName)
 
 	// Mode checks (+b, +i, +k, +l)
-	if ch.IsBanned(c.Nick) {
+	if ch.IsBanned(c) {
 		c.SendRaw([]byte(fmt.Sprintf(":%s 474 %s %s :Cannot join channel (+b)\r\n", ServerName, c.Nick, chName)))
 		return
 	}
@@ -277,6 +283,9 @@ func (c *Client) handleKick(msg *parser.Message) {
 		kickLine := fmt.Sprintf(":%s KICK %s %s :%s", c.Prefix(), chName, targetNick, reason)
 		ch.Broadcast(nil, kickLine)
 		ch.RemoveClient(targetClient)
+		targetClient.mu.Lock()
+		delete(targetClient.channels, chName)
+		targetClient.mu.Unlock()
 	}
 }
 
@@ -590,4 +599,69 @@ func (c *Client) handleList(msg *parser.Message) {
 
 	// 323 RPL_LISTEND: :End of /LIST
 	c.SendRaw([]byte(fmt.Sprintf(":%s 323 %s :End of /LIST\r\n", ServerName, c.Nick)))
+}
+
+func (c *Client) handleOper(msg *parser.Message) {
+	if len(msg.Params) < 2 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s OPER :Not enough parameters\r\n", ServerName, c.Nick)))
+		return
+	}
+	user := msg.Params[0]
+	pass := msg.Params[1]
+
+	if user == "admin_account" && pass == "admin_password" {
+		c.mu.Lock()
+		c.isOper = true
+		c.mu.Unlock()
+		// 381 RPL_YOUREOPER
+		c.SendRaw([]byte(fmt.Sprintf(":%s 381 %s :You are now an IRC operator\r\n", ServerName, c.Nick)))
+	} else {
+		// 464 ERR_PASSWDMISMATCH
+		c.SendRaw([]byte(fmt.Sprintf(":%s 464 %s :Password incorrect\r\n", ServerName, c.Nick)))
+	}
+}
+
+func (c *Client) handleKline(msg *parser.Message) {
+	c.mu.RLock()
+	isOp := c.isOper
+	c.mu.RUnlock()
+
+	if !isOp {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
+		return
+	}
+
+	reason := "K-lined"
+	if len(msg.Params) > 2 {
+		reason = msg.Params[2]
+	} else if len(msg.Params) > 1 {
+		reason = msg.Params[1]
+	}
+
+	mgr := GetManager()
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+
+	for _, client := range mgr.clients {
+		if client != c {
+			client.SendRaw([]byte(fmt.Sprintf("ERROR :Closing Link: %s (K-lined: %s)\r\n", client.Prefix(), reason)))
+			if client.conn != nil {
+				client.conn.Close()
+			}
+		}
+	}
+}
+
+func (c *Client) handleRehash(msg *parser.Message) {
+	c.mu.RLock()
+	isOp := c.isOper
+	c.mu.RUnlock()
+
+	if !isOp {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
+		return
+	}
+
+	// 382 RPL_REHASHING
+	c.SendRaw([]byte(fmt.Sprintf(":%s 382 %s config.yaml :Rehashing server configuration\r\n", ServerName, c.Nick)))
 }

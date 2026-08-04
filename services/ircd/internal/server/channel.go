@@ -1,6 +1,7 @@
 package server
 
 import (
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -107,12 +108,28 @@ func (ch *Channel) IsVoiced(c *Client) bool {
 	return ch.voiced[c] || ch.halfops[c] || ch.ops[c] || ch.protected[c]
 }
 
-// IsBanned checks if nick/mask is banned
-func (ch *Channel) IsBanned(nick string) bool {
+// IsBanned checks if client nick or hostmask matches any channel ban mask
+func (ch *Channel) IsBanned(c *Client) bool {
 	ch.mu.RLock()
 	defer ch.mu.RUnlock()
-	normNick := strings.ToLower(nick)
-	return ch.bans[normNick]
+
+	normNick := strings.ToLower(c.Nick)
+	prefix := strings.ToLower(c.Prefix())
+
+	for banMask := range ch.bans {
+		mask := strings.ToLower(banMask)
+		if mask == normNick || strings.Contains(prefix, mask) || strings.HasPrefix(mask, normNick) {
+			return true
+		}
+		// Try glob matching e.g. nick!*@* or *!user@*
+		if match, _ := filepath.Match(mask, normNick); match {
+			return true
+		}
+		if match, _ := filepath.Match(mask, prefix); match {
+			return true
+		}
+	}
+	return false
 }
 
 // IsInvited checks if client was invited

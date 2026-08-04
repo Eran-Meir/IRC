@@ -20,6 +20,7 @@ type Client struct {
 	User       string
 	RealName   string
 	registered bool
+	isOper     bool
 	channels   map[string]bool
 	mu         sync.RWMutex
 }

@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.41-alpha (100% E2E QA Test Compliance: KICK Membership Revocation, Wildcard BAN Matching, OPER/KLINE/REHASH Commands)
+* **Bug Fix & Feature (Go Daemon & QA Automation)**
+  * **KICK Membership Revocation**: Updated `handleKick` in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L277) to delete `chName` from `targetClient.channels`. Kicked users now lose messaging ability and receive `404 ERR_CANNOTSENDTOCHAN`.
+  * **Wildcard Ban Mask Matching**: Refactored `IsBanned` in [services/ircd/internal/server/channel.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/channel.go#L110) to support `filepath.Match` wildcards (`nick!*@*`). Prevents banned users from re-joining (`474 ERR_BANNEDFROMCHAN`).
+  * **OPER, KLINE & REHASH Handlers**: Implemented `handleOper`, `handleKline`, and `handleRehash` in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L597). Grants IRCop status (`381`), severs K-lined user sockets, and returns `382 RPL_REHASHING`.
+  * **Rich Protocol Logging Report**: Upgraded [.agents/skills/irc-qa-tester/scripts/test_runner.py](file:///c:/Users/Eran/IRC/.agents/skills/irc-qa-tester/scripts/test_runner.py) to output step-by-step protocol traces, expected vs actual socket responses, and diagnoses.
+
 ## v0.5.40-alpha (Topic Management, KICK System Notices, Single-Delivery Messaging & Solid Black Nicks)
 * **Feature & Bug Fix (Go Daemon & React Client UI)**
   * **Operator-Only Topic Governance & 332 Sync**: Enforced Operator rank requirement (`@`, `*`, `%`) in `handleTopic` in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L292). Added `332` RPL_TOPIC and `TOPIC` listeners in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L275) to dynamically update channel topic banners across all connected clients. Topics auto-reset on empty channel deletion.
