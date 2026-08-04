@@ -30,6 +30,18 @@ func (c *Client) ProcessCommand(msg *parser.Message) {
 		// Ignore PONG keepalive response
 	case "QUIT":
 		c.handleQuit(msg)
+	case "KICK":
+		c.handleKick(msg)
+	case "TOPIC":
+		c.handleTopic(msg)
+	case "MODE":
+		c.handleMode(msg)
+	case "INVITE":
+		c.handleInvite(msg)
+	case "NOTICE":
+		c.handleNotice(msg)
+	case "NAMES":
+		c.handleNames(msg)
 	case "WHOIS":
 		c.handleWhois(msg)
 	case "LIST":
@@ -110,6 +122,24 @@ func (c *Client) handleJoin(msg *parser.Message) {
 	mgr := GetManager()
 	ch := mgr.GetOrCreateChannel(chName)
 
+	// Mode checks (+b, +i, +k, +l)
+	if ch.IsBanned(c.Nick) {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 474 %s %s :Cannot join channel (+b)\r\n", ServerName, c.Nick, chName)))
+		return
+	}
+	if ch.Modes['i'] && !ch.IsInvited(c) {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 473 %s %s :Cannot join channel (+i)\r\n", ServerName, c.Nick, chName)))
+		return
+	}
+	if ch.Modes['k'] && (len(msg.Params) < 2 || msg.Params[1] != ch.Key) {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 475 %s %s :Cannot join channel (+k)\r\n", ServerName, c.Nick, chName)))
+		return
+	}
+	if ch.Modes['l'] && ch.Limit > 0 && len(ch.clients) >= ch.Limit {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 471 %s %s :Cannot join channel (+l)\r\n", ServerName, c.Nick, chName)))
+		return
+	}
+
 	ch.AddClient(c)
 	c.mu.Lock()
 	c.channels[chName] = true
@@ -168,16 +198,248 @@ func (c *Client) handlePrivmsg(msg *parser.Message) {
 	mgr := GetManager()
 	if strings.HasPrefix(target, "#") {
 		target = strings.ToLower(target)
+		if ch, exists := mgr.channels[target]; exists {
+			// Check +m (moderated channel)
+			if ch.Modes['m'] && !ch.IsVoiced(c) {
+				c.SendRaw([]byte(fmt.Sprintf(":%s 404 %s %s :Cannot send to channel (+m)\r\n", ServerName, c.Nick, target)))
+				return
+			}
+		}
 		line := fmt.Sprintf(":%s PRIVMSG %s :%s", c.Prefix(), target, text)
-		// Publish to Valkey state layer for unified single-delivery cross-pod & local broadcasting
 		state.PublishChannelMessage(target, line)
 	} else {
 		line := fmt.Sprintf(":%s PRIVMSG %s :%s", c.Prefix(), target, text)
-		// Direct Message
 		if targetClient := mgr.GetClientByNick(target); targetClient != nil {
 			targetClient.SendRaw([]byte(line + "\r\n"))
 		}
 	}
+}
+
+func (c *Client) handleKick(msg *parser.Message) {
+	if !c.registered || len(msg.Params) < 2 {
+		return
+	}
+	chName := strings.ToLower(msg.Params[0])
+	targetNick := msg.Params[1]
+	reason := "Kicked"
+	if len(msg.Params) > 2 {
+		reason = msg.Params[2]
+	}
+
+	mgr := GetManager()
+	if ch, exists := mgr.channels[chName]; exists {
+		if !ch.IsOp(c) {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
+			return
+		}
+		targetClient := mgr.GetClientByNick(targetNick)
+		if targetClient != nil {
+			kickLine := fmt.Sprintf(":%s KICK %s %s :%s", c.Prefix(), chName, targetNick, reason)
+			ch.Broadcast(nil, kickLine)
+			ch.RemoveClient(targetClient)
+		}
+	}
+}
+
+func (c *Client) handleTopic(msg *parser.Message) {
+	if !c.registered || len(msg.Params) == 0 {
+		return
+	}
+	chName := strings.ToLower(msg.Params[0])
+	mgr := GetManager()
+	if ch, exists := mgr.channels[chName]; exists {
+		if len(msg.Params) > 1 {
+			newTopic := msg.Params[1]
+			if ch.Modes['t'] && !ch.IsOp(c) {
+				c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
+				return
+			}
+			ch.Topic = newTopic
+			topicLine := fmt.Sprintf(":%s TOPIC %s :%s", c.Prefix(), chName, newTopic)
+			ch.Broadcast(nil, topicLine)
+		} else {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 332 %s %s :%s\r\n", ServerName, c.Nick, chName, ch.Topic)))
+		}
+	}
+}
+
+func (c *Client) handleInvite(msg *parser.Message) {
+	if !c.registered || len(msg.Params) < 2 {
+		return
+	}
+	targetNick := msg.Params[0]
+	chName := strings.ToLower(msg.Params[1])
+	mgr := GetManager()
+
+	targetClient := mgr.GetClientByNick(targetNick)
+	if targetClient == nil {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 401 %s %s :No such nick/channel\r\n", ServerName, c.Nick, targetNick)))
+		return
+	}
+
+	if ch, exists := mgr.channels[chName]; exists {
+		if ch.Modes['i'] && !ch.IsOp(c) {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
+			return
+		}
+		ch.AddInvite(targetClient)
+		c.SendRaw([]byte(fmt.Sprintf(":%s 341 %s %s %s\r\n", ServerName, c.Nick, targetNick, chName)))
+		targetClient.SendRaw([]byte(fmt.Sprintf(":%s INVITE %s :%s\r\n", c.Prefix(), targetNick, chName)))
+	}
+}
+
+func (c *Client) handleNotice(msg *parser.Message) {
+	if !c.registered || len(msg.Params) < 2 {
+		return
+	}
+	target := msg.Params[0]
+	text := msg.Params[1]
+	mgr := GetManager()
+
+	if strings.HasPrefix(target, "#") {
+		target = strings.ToLower(target)
+		line := fmt.Sprintf(":%s NOTICE %s :%s", c.Prefix(), target, text)
+		state.PublishChannelMessage(target, line)
+	} else {
+		line := fmt.Sprintf(":%s NOTICE %s :%s", c.Prefix(), target, text)
+		if targetClient := mgr.GetClientByNick(target); targetClient != nil {
+			targetClient.SendRaw([]byte(line + "\r\n"))
+		}
+	}
+}
+
+func (c *Client) handleNames(msg *parser.Message) {
+	if !c.registered || len(msg.Params) == 0 {
+		return
+	}
+	chName := strings.ToLower(msg.Params[0])
+	mgr := GetManager()
+	if ch, exists := mgr.channels[chName]; exists {
+		nicks := ch.GetNicks()
+		c.SendRaw([]byte(fmt.Sprintf(":%s 353 %s = %s :%s\r\n", ServerName, c.Nick, chName, nicks)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s 366 %s %s :End of /NAMES list.\r\n", ServerName, c.Nick, chName)))
+	}
+}
+
+func (c *Client) handleMode(msg *parser.Message) {
+	if !c.registered || len(msg.Params) == 0 {
+		return
+	}
+	target := msg.Params[0]
+	if !strings.HasPrefix(target, "#") {
+		return
+	}
+
+	chName := strings.ToLower(target)
+	mgr := GetManager()
+	ch, exists := mgr.channels[chName]
+	if !exists {
+		return
+	}
+
+	if len(msg.Params) == 1 {
+		modeStr := "+"
+		for m := range ch.Modes {
+			modeStr += string(m)
+		}
+		c.SendRaw([]byte(fmt.Sprintf(":%s 324 %s %s %s\r\n", ServerName, c.Nick, chName, modeStr)))
+		return
+	}
+
+	if !ch.IsOp(c) {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
+		return
+	}
+
+	modesArg := msg.Params[1]
+	adding := true
+	paramIdx := 2
+
+	for i := 0; i < len(modesArg); i++ {
+		char := modesArg[i]
+		if char == '+' {
+			adding = true
+			continue
+		}
+		if char == '-' {
+			adding = false
+			continue
+		}
+
+		switch char {
+		case 'o':
+			if paramIdx < len(msg.Params) {
+				tNick := msg.Params[paramIdx]
+				paramIdx++
+				if tClient := mgr.GetClientByNick(tNick); tClient != nil {
+					ch.SetOp(tClient, adding)
+					modeLine := fmt.Sprintf(":%s MODE %s %c%c %s", c.Prefix(), chName, flagChar(adding), char, tNick)
+					ch.Broadcast(nil, modeLine)
+				}
+			}
+		case 'v':
+			if paramIdx < len(msg.Params) {
+				tNick := msg.Params[paramIdx]
+				paramIdx++
+				if tClient := mgr.GetClientByNick(tNick); tClient != nil {
+					ch.SetVoice(tClient, adding)
+					modeLine := fmt.Sprintf(":%s MODE %s %c%c %s", c.Prefix(), chName, flagChar(adding), char, tNick)
+					ch.Broadcast(nil, modeLine)
+				}
+			}
+		case 'b':
+			if paramIdx < len(msg.Params) {
+				mask := msg.Params[paramIdx]
+				paramIdx++
+				ch.SetBan(mask, adding)
+				modeLine := fmt.Sprintf(":%s MODE %s %c%c %s", c.Prefix(), chName, flagChar(adding), char, mask)
+				ch.Broadcast(nil, modeLine)
+			}
+		case 'k':
+			if adding && paramIdx < len(msg.Params) {
+				ch.Key = msg.Params[paramIdx]
+				paramIdx++
+				ch.Modes['k'] = true
+				modeLine := fmt.Sprintf(":%s MODE %s +k %s", c.Prefix(), chName, ch.Key)
+				ch.Broadcast(nil, modeLine)
+			} else if !adding {
+				ch.Key = ""
+				ch.Modes['k'] = false
+				modeLine := fmt.Sprintf(":%s MODE %s -k", c.Prefix(), chName)
+				ch.Broadcast(nil, modeLine)
+			}
+		case 'l':
+			if adding && paramIdx < len(msg.Params) {
+				var limit int
+				fmt.Sscanf(msg.Params[paramIdx], "%d", &limit)
+				paramIdx++
+				ch.Limit = limit
+				ch.Modes['l'] = true
+				modeLine := fmt.Sprintf(":%s MODE %s +l %d", c.Prefix(), chName, limit)
+				ch.Broadcast(nil, modeLine)
+			} else if !adding {
+				ch.Limit = 0
+				ch.Modes['l'] = false
+				modeLine := fmt.Sprintf(":%s MODE %s -l", c.Prefix(), chName)
+				ch.Broadcast(nil, modeLine)
+			}
+		case 'm', 'i', 's', 'n', 't':
+			if adding {
+				ch.Modes[char] = true
+			} else {
+				delete(ch.Modes, char)
+			}
+			modeLine := fmt.Sprintf(":%s MODE %s %c%c", c.Prefix(), chName, flagChar(adding), char)
+			ch.Broadcast(nil, modeLine)
+		}
+	}
+}
+
+func flagChar(adding bool) byte {
+	if adding {
+		return '+'
+	}
+	return '-'
 }
 
 func (c *Client) handlePing(msg *parser.Message) {

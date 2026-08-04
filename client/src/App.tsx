@@ -172,6 +172,91 @@ export const App: React.FC = () => {
           })
         );
       }
+    } else if (line.includes(' NOTICE ')) {
+      const match = line.match(/^:([^!]+)![^ ]+ NOTICE ([^ ]+) :(.*)$/);
+      if (match) {
+        const [, sender, target, text] = match;
+        const msgTarget = target.startsWith('#') ? target.toLowerCase() : 'Status';
+        addMessage(msgTarget, {
+          id: Math.random().toString(),
+          sender: `-${sender}-`,
+          target: msgTarget,
+          text,
+          timestamp: time,
+          isSystem: true,
+        });
+      }
+    } else if (line.includes(' KICK ')) {
+      const match = line.match(/^:([^!]+)![^ ]+ KICK ([^ ]+) ([^ ]+)(?: :(.*))?$/);
+      if (match) {
+        const [, sender, rawChannel, targetNick, reason] = match;
+        const channel = rawChannel.toLowerCase();
+        addMessage(channel, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: channel,
+          text: `* ${targetNick} was kicked from ${channel} by ${sender}${reason ? ` (${reason})` : ''}`,
+          timestamp: time,
+          isAction: true,
+        });
+        setChannels((prev) =>
+          prev.map((ch) => {
+            if (ch.name.toLowerCase() === channel) {
+              return { ...ch, users: ch.users.filter((u) => u.replace(/^[@+]/, '') !== targetNick) };
+            }
+            return ch;
+          })
+        );
+        if (targetNick === nick) {
+          handlePartChannel(channel);
+        }
+      }
+    } else if (line.includes(' MODE ')) {
+      const match = line.match(/^:([^!]+)![^ ]+ MODE ([^ ]+) (.*)$/);
+      if (match) {
+        const [, sender, rawChannel, modeText] = match;
+        const channel = rawChannel.toLowerCase();
+        addMessage(channel, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: channel,
+          text: `* ${sender} sets mode: ${modeText}`,
+          timestamp: time,
+          isSystem: true,
+        });
+        if (wsRef.current) wsRef.current.send(`NAMES ${channel}`);
+      }
+    } else if (line.includes(' TOPIC ')) {
+      const match = line.match(/^:([^!]+)![^ ]+ TOPIC ([^ ]+) :(.*)$/);
+      if (match) {
+        const [, sender, rawChannel, newTopic] = match;
+        const channel = rawChannel.toLowerCase();
+        setChannels((prev) =>
+          prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, topic: newTopic } : ch))
+        );
+        addMessage(channel, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: channel,
+          text: `* ${sender} changed topic to: ${newTopic}`,
+          timestamp: time,
+          isSystem: true,
+        });
+      }
+    } else if (line.includes(' INVITE ')) {
+      const match = line.match(/^:([^!]+)![^ ]+ INVITE [^ ]+ :?([^ ]+)$/);
+      if (match) {
+        const [, sender, rawChannel] = match;
+        const channel = rawChannel.toLowerCase();
+        addMessage('Status', {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: 'Status',
+          text: `* ${sender} invited you to join ${channel}`,
+          timestamp: time,
+          isSystem: true,
+        });
+      }
     } else if (line.includes(' NICK ')) {
       const match = line.match(/^:([^!]+)![^ ]+ NICK :?([^ ]+)$/);
       if (match) {
@@ -182,7 +267,7 @@ export const App: React.FC = () => {
         setChannels((prev) =>
           prev.map((ch) => ({
             ...ch,
-            users: ch.users.map((u) => (u === oldNick ? newNick : u)),
+            users: ch.users.map((u) => (u.replace(/^[@+]/, '') === oldNick ? u.charAt(0) + newNick : u)),
           }))
         );
         addMessage(activeTarget.toLowerCase(), {
@@ -322,6 +407,69 @@ export const App: React.FC = () => {
           timestamp: time,
           isAction: true,
         });
+      } else if (cmd === 'KICK' && arg) {
+        let channel = activeTarget;
+        let targetNick = '';
+        let reason = 'Kicked';
+
+        if (arg.startsWith('#')) {
+          const parts = arg.split(' ');
+          channel = parts[0].toLowerCase();
+          targetNick = parts[1] || '';
+          if (parts.length > 2) reason = parts.slice(2).join(' ');
+        } else {
+          const parts = arg.split(' ');
+          targetNick = parts[0];
+          if (parts.length > 1) reason = parts.slice(1).join(' ');
+        }
+
+        if (wsRef.current && targetNick) {
+          wsRef.current.send(`KICK ${channel} ${targetNick} :${reason}`);
+        }
+      } else if (cmd === 'TOPIC') {
+        let channel = activeTarget;
+        let newTopic = arg;
+
+        if (arg.startsWith('#')) {
+          const firstSpace = arg.indexOf(' ');
+          if (firstSpace > -1) {
+            channel = arg.slice(0, firstSpace).toLowerCase();
+            newTopic = arg.slice(firstSpace + 1);
+          } else {
+            channel = arg.toLowerCase();
+            newTopic = '';
+          }
+        }
+
+        if (wsRef.current) {
+          wsRef.current.send(`TOPIC ${channel}${newTopic ? ' :' + newTopic : ''}`);
+        }
+      } else if (cmd === 'MODE') {
+        const modeArgs = arg.startsWith('#') ? arg : `${activeTarget} ${arg}`;
+        if (wsRef.current) wsRef.current.send(`MODE ${modeArgs}`);
+      } else if (cmd === 'INVITE' && arg) {
+        const parts = arg.split(' ');
+        const targetNick = parts[0];
+        const channel = parts[1] ? parts[1].toLowerCase() : activeTarget;
+        if (wsRef.current) wsRef.current.send(`INVITE ${targetNick} ${channel}`);
+      } else if (cmd === 'NOTICE' && arg) {
+        const firstSpace = arg.indexOf(' ');
+        if (firstSpace > -1) {
+          const target = arg.slice(0, firstSpace);
+          const noticeMsg = arg.slice(firstSpace + 1);
+          if (wsRef.current) wsRef.current.send(`NOTICE ${target} :${noticeMsg}`);
+          addMessage(target.startsWith('#') ? target.toLowerCase() : activeTarget, {
+            id: Math.random().toString(),
+            sender: `-${nick}-`,
+            target,
+            text: noticeMsg,
+            timestamp: time,
+            isSystem: true,
+          });
+        }
+      } else if (cmd === 'NAMES') {
+        const channel = (arg || activeTarget).toLowerCase();
+        if (wsRef.current) wsRef.current.send(`NAMES ${channel}`);
       } else if (cmd === 'LIST') {
         if (wsRef.current) wsRef.current.send(`LIST${arg ? ' ' + arg : ''}`);
         setActiveTarget('Status');

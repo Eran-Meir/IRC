@@ -1,5 +1,17 @@
 # Release History
 
+## v0.5.24-alpha (Channel Operator Governance, Channel Modes & Screen Reader Formatting)
+* **Feature (Go IRCd Daemon & Web Client)**
+  * **Operator (@) Creation**: First user joining an ephemeral channel automatically receives Channel Operator status (`@`).
+  * **Moderation Commands**:
+    * `/KICK [#channel] <nick> [reason]` - Forcibly ejects user from channel.
+    * `/TOPIC [#channel] [new_topic]` - Gets or updates channel banner topic (enforces `+t` Op lock).
+    * `/INVITE <nick> [#channel]` - Sends channel invitation (bypasses `+i` invite-only restriction).
+    * `/NOTICE <target> <message>` - Sends urgent alert/notice, rendered as `-Sender- Message`.
+  * **Channel Modes (`/MODE`)**:
+    * Privileges: `+o`/`-o` (Op `@`), `+v`/`-v` (Voice `+`), `+b`/`-b` (Ban mask).
+    * Channel Rules: `+m` (Moderated: Ops & Voiced only speak), `+i` (Invite-Only), `+k` (Password Key), `+s` (Secret), `+n` (No external msgs), `+l` (User count limit), `+t` (Topic Lock).
+
 ## v0.5.23-alpha (Full Basic IRC User Commands Implementation)
 * **Feature (Go IRCd Daemon & Web Client)**
   * Implemented `/NICK [new_nickname]` - Changes display name on the network.
