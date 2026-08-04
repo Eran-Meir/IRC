@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Eran-Meir/IRC/services/ircd/internal/auth"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/logger"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/parser"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/state"
@@ -602,9 +603,9 @@ func (c *Client) handleWhois(msg *parser.Message) {
 	c.SendRaw([]byte(fmt.Sprintf(":%s 312 %s %s %s :Enterprise Go-IRCd Server\r\n", ServerName, c.Nick, targetClient.Nick, ServerName)))
 
 	// 313 RPL_WHOISOPERATOR
-	if targetClient.IsOper() {
+	if targetClient.IsServerAdmin() {
 		c.SendRaw([]byte(fmt.Sprintf(":%s 313 %s %s :is an IRC Operator - Server Administrator\r\n", ServerName, c.Nick, targetClient.Nick)))
-	} else if isAnyChannelOp(targetClient) {
+	} else if targetClient.IsOper() || isAnyChannelOp(targetClient) {
 		c.SendRaw([]byte(fmt.Sprintf(":%s 313 %s %s :is an IRC Operator\r\n", ServerName, c.Nick, targetClient.Nick)))
 	}
 
@@ -667,9 +668,11 @@ func (c *Client) handleOper(msg *parser.Message) {
 	user := msg.Params[0]
 	pass := msg.Params[1]
 
-	if user == "admin_account" && pass == "admin_password" {
+	role, ok := auth.GetOperManager().Authenticate(user, pass)
+	if ok {
 		c.mu.Lock()
 		c.isOper = true
+		c.isServerAdmin = (role == "server_admin")
 		c.mu.Unlock()
 		// 381 RPL_YOUREOPER
 		c.SendRaw([]byte(fmt.Sprintf(":%s 381 %s :You are now an IRC operator\r\n", ServerName, c.Nick)))
@@ -680,11 +683,7 @@ func (c *Client) handleOper(msg *parser.Message) {
 }
 
 func (c *Client) handleKline(msg *parser.Message) {
-	c.mu.RLock()
-	isOp := c.isOper
-	c.mu.RUnlock()
-
-	if !isOp {
+	if !c.IsOper() {
 		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
 		return
 	}
@@ -711,15 +710,12 @@ func (c *Client) handleKline(msg *parser.Message) {
 }
 
 func (c *Client) handleRehash(msg *parser.Message) {
-	c.mu.RLock()
-	isOp := c.isOper
-	c.mu.RUnlock()
-
-	if !isOp {
+	if !c.IsOper() {
 		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
 		return
 	}
 
+	_ = auth.GetOperManager().Reload()
 	// 382 RPL_REHASHING
-	c.SendRaw([]byte(fmt.Sprintf(":%s 382 %s config.yaml :Rehashing server configuration\r\n", ServerName, c.Nick)))
+	c.SendRaw([]byte(fmt.Sprintf(":%s 382 %s opers.json :Rehashing server configuration\r\n", ServerName, c.Nick)))
 }

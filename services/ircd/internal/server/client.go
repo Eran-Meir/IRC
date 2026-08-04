@@ -19,10 +19,11 @@ type Client struct {
 	Nick       string
 	User       string
 	RealName   string
-	registered bool
-	isOper     bool
-	channels   map[string]bool
-	mu         sync.RWMutex
+	registered    bool
+	isOper        bool
+	isServerAdmin bool
+	channels      map[string]bool
+	mu            sync.RWMutex
 }
 
 // NewClient initializes a new client object
@@ -34,11 +35,18 @@ func NewClient(conn net.Conn) *Client {
 	}
 }
 
-// IsOper returns true if client has authenticated as an IRC Server Administrator
+// IsOper returns true if client has authenticated as an IRC Operator or Server Administrator
 func (c *Client) IsOper() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.isOper
+}
+
+// IsServerAdmin returns true if client has authenticated as a Server Administrator
+func (c *Client) IsServerAdmin() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.isServerAdmin
 }
 
 // Prefix returns standard IRC hostmask (nick!user@host)
