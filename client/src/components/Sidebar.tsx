@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Channel } from '../types/irc';
 
 interface SidebarProps {
@@ -7,6 +7,13 @@ interface SidebarProps {
   activeTarget: string;
   onSelectTarget: (target: string) => void;
   onPartChannel: (channelName: string) => void;
+  onOpenBanList: (channelName: string) => void;
+}
+
+interface ContextMenuState {
+  x: number;
+  y: number;
+  channelName: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -15,7 +22,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTarget,
   onSelectTarget,
   onPartChannel,
+  onOpenBanList,
 }) => {
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+
+  useEffect(() => {
+    const handleGlobalClick = () => setContextMenu(null);
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
+
+  const handleContextMenu = (e: React.MouseEvent, channelName: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      channelName,
+    });
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -44,6 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             key={ch.name}
             className={`tree-item ${activeTarget.toLowerCase() === ch.name.toLowerCase() ? 'active' : ''}`}
             onClick={() => onSelectTarget(ch.name)}
+            onContextMenu={(e) => handleContextMenu(e, ch.name)}
           >
             <span className="channel-name">{ch.name.startsWith('#') ? ch.name : '#' + ch.name}</span>
             {idx < 9 && <span className="shortcut-badge">Alt+{idx + 1}</span>}
@@ -63,6 +90,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         ))}
       </div>
+
+      {/* Right-click Context Menu */}
+      {contextMenu && (
+        <div
+          className="context-menu"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="context-menu-header">{contextMenu.channelName}</div>
+          <button
+            className="context-menu-item"
+            onClick={() => {
+              onOpenBanList(contextMenu.channelName);
+              setContextMenu(null);
+            }}
+          >
+            🛡️ View Ban List
+          </button>
+          <button
+            className="context-menu-item danger"
+            onClick={() => {
+              onPartChannel(contextMenu.channelName);
+              setContextMenu(null);
+            }}
+          >
+            🚪 Leave Channel
+          </button>
+        </div>
+      )}
     </aside>
   );
 };

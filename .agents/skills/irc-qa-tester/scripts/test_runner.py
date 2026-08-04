@@ -460,7 +460,7 @@ class IRCTestSuite:
         except Exception as e:
             self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 
-    def print_summary(self, output_file="qa_test_report.log"):
+    def print_summary(self, output_file="qa_test_report.txt"):
         lines = []
         lines.append("=" * 70)
         lines.append("                     IRC QA TEST SUITE SUMMARY MATRIX                  ")
@@ -515,7 +515,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="IRC QA Test Suite")
     parser.add_argument("--host", default="127.0.0.1", help="IRCd host")
     parser.add_argument("--port", type=int, default=6667, help="IRCd port")
-    parser.add_argument("--output", default="qa_test_report.log", help="Report output file path")
+    parser.add_argument("--output", default="qa_test_report.txt", help="Report output file path")
     args = parser.parse_args()
 
     suite = IRCTestSuite(host=args.host, port=args.port)

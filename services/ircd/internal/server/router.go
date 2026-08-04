@@ -395,6 +395,14 @@ func (c *Client) handleMode(msg *parser.Message) {
 		return
 	}
 
+	if len(msg.Params) == 2 && (msg.Params[1] == "b" || msg.Params[1] == "+b") {
+		for _, mask := range ch.GetBans() {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 367 %s %s %s\r\n", ServerName, c.Nick, chName, mask)))
+		}
+		c.SendRaw([]byte(fmt.Sprintf(":%s 368 %s %s :End of Channel Ban List\r\n", ServerName, c.Nick, chName)))
+		return
+	}
+
 	if !ch.IsOp(c) && !ch.IsProtected(c) {
 		c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
 		return

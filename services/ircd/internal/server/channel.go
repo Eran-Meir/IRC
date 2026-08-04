@@ -146,60 +146,92 @@ func (ch *Channel) AddInvite(c *Client) {
 	ch.invited[c] = true
 }
 
-// SetProtected grants or revokes Protected (*) status (+q)
-func (ch *Channel) SetProtected(c *Client, enable bool) {
+// SetProtected grants or revokes Protected (*) status (+q). Returns true if state changed.
+func (ch *Channel) SetProtected(c *Client, enable bool) bool {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
+	if ch.protected[c] == enable {
+		return false
+	}
 	if enable {
 		ch.protected[c] = true
 	} else {
 		delete(ch.protected, c)
 	}
+	return true
 }
 
-// SetOp grants or revokes Operator (@) status (+o)
-func (ch *Channel) SetOp(c *Client, enable bool) {
+// SetOp grants or revokes Operator (@) status (+o). Returns true if state changed.
+func (ch *Channel) SetOp(c *Client, enable bool) bool {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
+	if ch.ops[c] == enable {
+		return false
+	}
 	if enable {
 		ch.ops[c] = true
 	} else {
 		delete(ch.ops, c)
 	}
+	return true
 }
 
-// SetHalfOp grants or revokes Half-Op (%) status (+h)
-func (ch *Channel) SetHalfOp(c *Client, enable bool) {
+// SetHalfOp grants or revokes Half-Op (%) status (+h). Returns true if state changed.
+func (ch *Channel) SetHalfOp(c *Client, enable bool) bool {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
+	if ch.halfops[c] == enable {
+		return false
+	}
 	if enable {
 		ch.halfops[c] = true
 	} else {
 		delete(ch.halfops, c)
 	}
+	return true
 }
 
-// SetVoice grants or revokes Voice (+) status (+v)
-func (ch *Channel) SetVoice(c *Client, enable bool) {
+// SetVoice grants or revokes Voice (+) status (+v). Returns true if state changed.
+func (ch *Channel) SetVoice(c *Client, enable bool) bool {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
+	if ch.voiced[c] == enable {
+		return false
+	}
 	if enable {
 		ch.voiced[c] = true
 	} else {
 		delete(ch.voiced, c)
 	}
+	return true
 }
 
-// SetBan adds or removes ban
-func (ch *Channel) SetBan(mask string, enable bool) {
+// SetBan adds or removes ban. Returns true if state changed.
+func (ch *Channel) SetBan(mask string, enable bool) bool {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
 	norm := strings.ToLower(mask)
+	if ch.bans[norm] == enable {
+		return false
+	}
 	if enable {
 		ch.bans[norm] = true
 	} else {
 		delete(ch.bans, norm)
 	}
+	return true
+}
+
+// GetBans returns a slice of active ban masks for the channel
+func (ch *Channel) GetBans() []string {
+	ch.mu.RLock()
+	defer ch.mu.RUnlock()
+
+	var banList []string
+	for mask := range ch.bans {
+		banList = append(banList, mask)
+	}
+	return banList
 }
 
 // GetNicks returns space-separated list of nicks with highest rank symbol (*, @, %, +)

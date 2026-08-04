@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar';
 import { ChatArea } from './components/ChatArea';
 import { UserList } from './components/UserList';
 import { MessageInput } from './components/MessageInput';
+import { BanListModal } from './components/BanListModal';
 import { WebSocketService } from './services/websocket';
 import { Message, Channel, UserPreferences } from './types/irc';
 import './App.css';
@@ -12,6 +13,8 @@ export const App: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [activeTarget, setActiveTarget] = useState<string>('#enterprise');
   const [nick, setNick] = useState<string>(`Guest${Math.floor(Math.random() * 900 + 100)}`);
+  const [banListMap, setBanListMap] = useState<Record<string, string[]>>({});
+  const [banModalTarget, setBanModalTarget] = useState<string | null>(null);
   
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: 'classic-light',
@@ -296,9 +299,36 @@ export const App: React.FC = () => {
       if (match) {
         const [, rawChannel, topicText] = match;
         const channel = rawChannel.toLowerCase();
+        const cleanTopic = topicText.trim();
         setChannels((prev) =>
-          prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, topic: topicText } : ch))
+          prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, topic: cleanTopic || 'No topic is set' } : ch))
         );
+        addMessage(channel, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: channel,
+          text: cleanTopic ? `* Welcome to ${channel}! Topic is: "${cleanTopic}"` : `* Welcome to ${channel}! No topic is set.`,
+          timestamp: time,
+          isSystem: true,
+        });
+      }
+    } else if (line.includes(' 331 ')) {
+      // RPL_NOTOPIC :server 331 nick #channel :No topic is set
+      const match = line.match(/ 331 [^ ]+ ([#][^ ]+)/);
+      if (match) {
+        const [, rawChannel] = match;
+        const channel = rawChannel.toLowerCase();
+        setChannels((prev) =>
+          prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, topic: 'No topic is set' } : ch))
+        );
+        addMessage(channel, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: channel,
+          text: `* Welcome to ${channel}! No topic is set.`,
+          timestamp: time,
+          isSystem: true,
+        });
       }
     } else if (line.includes(' 353 ')) {
       // RPL_NAMREPLY :server 353 nick = #channel :nick1 nick2
@@ -369,6 +399,22 @@ export const App: React.FC = () => {
       if (match) {
         const [, sender, rawChannel, modeText] = match;
         const channel = rawChannel.toLowerCase();
+
+        const bMatch = modeText.match(/([+-])b\s+([^ ]+)/);
+        if (bMatch) {
+          const [, sign, mask] = bMatch;
+          const normMask = mask.toLowerCase();
+          setBanListMap((prev) => {
+            const current = prev[channel] || [];
+            if (sign === '+') {
+              if (!current.includes(normMask)) return { ...prev, [channel]: [...current, normMask] };
+            } else {
+              return { ...prev, [channel]: current.filter((m) => m !== normMask) };
+            }
+            return prev;
+          });
+        }
+
         addMessage(channel, {
           id: Math.random().toString(),
           sender: 'System',
@@ -438,16 +484,99 @@ export const App: React.FC = () => {
           isSystem: true,
         });
       }
-    } else if (line.includes(' 332 ')) {
-      // RPL_TOPIC :server 332 nick #channel :topic text
-      const match = line.match(/ 332 [^ ]+ ([^ ]+) :(.*)$/);
+    } else if (line.includes(' 474 ')) {
+      // ERR_BANNEDFROMCHAN :server 474 nick #channel :Cannot join channel (+b)
+      const match = line.match(/ 474 [^ ]+ ([#][^ ]+)/);
       if (match) {
-        const [, rawChannel, topicText] = match;
-        const channel = rawChannel.startsWith('#') ? rawChannel.toLowerCase() : '#' + rawChannel.toLowerCase();
-        setChannels((prev) =>
-          prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, topic: topicText } : ch))
-        );
+        const channel = match[1].toLowerCase();
+        joinedChannelsRef.current.delete(channel);
+        const banMsg = `* Cannot join ${channel} — You are banned from this channel`;
+        addMessage(channel, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: channel,
+          text: banMsg,
+          timestamp: time,
+          isSystem: true,
+        });
+        if (activeTarget.toLowerCase() !== channel) {
+          addMessage(activeTarget.toLowerCase(), {
+            id: Math.random().toString(),
+            sender: 'System',
+            target: activeTarget.toLowerCase(),
+            text: banMsg,
+            timestamp: time,
+            isSystem: true,
+          });
+        }
       }
+    } else if (line.includes(' 473 ')) {
+      // ERR_INVITEONLYCHAN
+      const match = line.match(/ 473 [^ ]+ ([#][^ ]+)/);
+      if (match) {
+        const channel = match[1].toLowerCase();
+        joinedChannelsRef.current.delete(channel);
+        const errMsg = `* Cannot join ${channel} — Channel is invite-only (+i)`;
+        addMessage(channel, { id: Math.random().toString(), sender: 'System', target: channel, text: errMsg, timestamp: time, isSystem: true });
+        if (activeTarget.toLowerCase() !== channel) {
+          addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+        }
+      }
+    } else if (line.includes(' 475 ')) {
+      // ERR_BADCHANNELKEY
+      const match = line.match(/ 475 [^ ]+ ([#][^ ]+)/);
+      if (match) {
+        const channel = match[1].toLowerCase();
+        joinedChannelsRef.current.delete(channel);
+        const errMsg = `* Cannot join ${channel} — Invalid channel key (+k)`;
+        addMessage(channel, { id: Math.random().toString(), sender: 'System', target: channel, text: errMsg, timestamp: time, isSystem: true });
+        if (activeTarget.toLowerCase() !== channel) {
+          addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+        }
+      }
+    } else if (line.includes(' 471 ')) {
+      // ERR_CHANNELISFULL
+      const match = line.match(/ 471 [^ ]+ ([#][^ ]+)/);
+      if (match) {
+        const channel = match[1].toLowerCase();
+        joinedChannelsRef.current.delete(channel);
+        const errMsg = `* Cannot join ${channel} — Channel is full (+l)`;
+        addMessage(channel, { id: Math.random().toString(), sender: 'System', target: channel, text: errMsg, timestamp: time, isSystem: true });
+        if (activeTarget.toLowerCase() !== channel) {
+          addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+        }
+      }
+    } else if (line.includes(' 404 ')) {
+      // ERR_CANNOTSENDTOCHAN
+      const match = line.match(/ 404 [^ ]+ ([#][^ ]+)/);
+      if (match) {
+        const channel = match[1].toLowerCase();
+        const errMsg = `* Cannot send message to ${channel} — You are not in the channel or banned`;
+        addMessage(channel, { id: Math.random().toString(), sender: 'System', target: channel, text: errMsg, timestamp: time, isSystem: true });
+      }
+    } else if (line.includes(' 465 ')) {
+      // ERR_YOUREBANNEDCREEP (K-LINE)
+      const klineMsg = '* YOU ARE BANNED FROM THIS SERVER (K-LINED)';
+      addMessage('Status', { id: Math.random().toString(), sender: 'System', target: 'Status', text: klineMsg, timestamp: time, isSystem: true });
+      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: klineMsg, timestamp: time, isSystem: true });
+    } else if (line.includes(' 367 ')) {
+      // RPL_BANLIST :server 367 nick #channel mask
+      const match = line.match(/ 367 [^ ]+ ([#][^ ]+) ([^ ]+)/);
+      if (match) {
+        const [, rawChannel, mask] = match;
+        const channel = rawChannel.toLowerCase();
+        const normMask = mask.toLowerCase();
+        setBanListMap((prev) => {
+          const current = prev[channel] || [];
+          if (!current.includes(normMask)) {
+            return { ...prev, [channel]: [...current, normMask] };
+          }
+          return prev;
+        });
+      }
+    } else if (line.includes(' 368 ')) {
+      // RPL_ENDOFBANLIST :server 368 nick #channel :End of Channel Ban List
+      return;
     } else if (line.includes(' 366 ')) {
       // RPL_ENDOFNAMES :server 366 nick #channel :End of /NAMES list.
       return;
@@ -524,7 +653,7 @@ export const App: React.FC = () => {
       const cmd = parts[0].toUpperCase();
       const arg = parts.slice(1).join(' ');
 
-      if (cmd === 'JOIN' && arg) {
+      if ((cmd === 'JOIN' || cmd === 'J') && arg) {
         const trimmed = arg.trim();
         const channelName = (trimmed.startsWith('#') ? trimmed : '#' + trimmed).toLowerCase();
         if (!channels.some((c) => c.name.toLowerCase() === channelName)) {
@@ -571,23 +700,13 @@ export const App: React.FC = () => {
         const firstSpace = arg.indexOf(' ');
         if (firstSpace > -1) {
           const msgTarget = arg.slice(0, firstSpace).toLowerCase();
-          const msgText = arg.slice(firstSpace + 1);
-          if (wsRef.current) wsRef.current.send(`PRIVMSG ${msgTarget} :${msgText}`);
-
-          if (!msgTarget.startsWith('#')) {
-            setChannels((prev) => {
-              if (!prev.some((c) => c.name.toLowerCase() === msgTarget)) {
-                return [...prev, { name: msgTarget, topic: 'Private Query', unreadCount: 0, users: [nick, msgTarget] }];
-              }
-              return prev;
-            });
-            setActiveTarget(msgTarget);
-          }
+          const msgBody = arg.slice(firstSpace + 1);
+          if (wsRef.current) wsRef.current.send(`PRIVMSG ${msgTarget} :${msgBody}`);
           addMessage(msgTarget, {
             id: Math.random().toString(),
             sender: nick,
             target: msgTarget,
-            text: msgText,
+            text: msgBody,
             timestamp: time,
           });
         }
@@ -641,16 +760,15 @@ export const App: React.FC = () => {
       } else if (cmd === 'NOTICE' && arg) {
         const firstSpace = arg.indexOf(' ');
         if (firstSpace > -1) {
-          const target = arg.slice(0, firstSpace);
+          const target = arg.slice(0, firstSpace).toLowerCase();
           const noticeMsg = arg.slice(firstSpace + 1);
           if (wsRef.current) wsRef.current.send(`NOTICE ${target} :${noticeMsg}`);
-          addMessage(target.startsWith('#') ? target.toLowerCase() : activeTarget, {
+          addMessage(target, {
             id: Math.random().toString(),
             sender: `-${nick}-`,
             target,
             text: noticeMsg,
             timestamp: time,
-            isSystem: true,
           });
         }
       } else if (cmd === 'NAMES') {
@@ -703,6 +821,41 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleOpenBanList = (channelName: string) => {
+    const norm = channelName.toLowerCase();
+    setBanListMap((prev) => ({ ...prev, [norm]: [] }));
+    if (wsRef.current) {
+      wsRef.current.send(`MODE ${norm} +b`);
+    }
+    setBanModalTarget(norm);
+  };
+
+  const handleAddBan = (channelName: string, mask: string) => {
+    const norm = channelName.toLowerCase();
+    if (wsRef.current) {
+      wsRef.current.send(`MODE ${norm} +b ${mask}`);
+    }
+  };
+
+  const handleRemoveBan = (channelName: string, mask: string) => {
+    const norm = channelName.toLowerCase();
+    if (wsRef.current) {
+      wsRef.current.send(`MODE ${norm} -b ${mask}`);
+    }
+  };
+
+  const isOpInChannel = (channelName: string) => {
+    const norm = channelName.toLowerCase();
+    const ch = channels.find((c) => c.name.toLowerCase() === norm);
+    if (!ch) return false;
+    const cleanNick = nick.toLowerCase();
+    return ch.users.some((u) => {
+      const isOpSymbol = u.startsWith('@') || u.startsWith('*') || u.startsWith('%');
+      const uNick = u.replace(/^[*@%+]*/, '').toLowerCase();
+      return isOpSymbol && uNick === cleanNick;
+    });
+  };
+
   const handleSelectTarget = (target: string) => {
     const normTarget = target.toLowerCase();
     setActiveTarget(normTarget);
@@ -744,6 +897,7 @@ export const App: React.FC = () => {
           activeTarget={activeTarget}
           onSelectTarget={handleSelectTarget}
           onPartChannel={handlePartChannel}
+          onOpenBanList={handleOpenBanList}
         />
 
         <ChatArea
@@ -751,6 +905,8 @@ export const App: React.FC = () => {
           activeChannel={currentChannel}
           messages={currentMessages}
           isRtlLanguage={preferences.language === 'he'}
+          onOpenBanList={handleOpenBanList}
+          onJoinChannel={handleSelectTarget}
         />
 
         {preferences.showUserList && currentChannel && (
@@ -768,6 +924,17 @@ export const App: React.FC = () => {
         activeTarget={activeTarget}
         isRtlLanguage={preferences.language === 'he'}
       />
+
+      {banModalTarget && (
+        <BanListModal
+          channel={banModalTarget}
+          bans={banListMap[banModalTarget.toLowerCase()] || []}
+          isOp={isOpInChannel(banModalTarget)}
+          onClose={() => setBanModalTarget(null)}
+          onAddBan={handleAddBan}
+          onRemoveBan={handleRemoveBan}
+        />
+      )}
     </div>
   );
 };
