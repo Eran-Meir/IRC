@@ -232,12 +232,19 @@ jobs:
           sys.exit(1)
           EOF
           
-          if python3 test.py ${SERVER_IP}; then
-            echo "✅ Smoke test PASSED — Server is alive and responding!"
+          if python3 .agents/skills/irc-qa-tester/scripts/test_runner.py --host ${SERVER_IP} --port 6667 --output qa_test_report.log; then
+            echo "✅ E2E QA Test Suite PASSED — All IRC server commands & scenarios verified!"
           else
-            echo "❌ Smoke test FAILED — No valid response from server."
+            echo "❌ E2E QA Test Suite FAILED — Protocol errors detected."
             exit 1
           fi
+
+      - name: Upload QA Test Report Artifact
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: qa-test-report
+          path: qa_test_report.log
 
   # ─────────────────────────────────────────────────────────
   # Job 4: Prune Old Images from GHCR (Max 4 Retained)
