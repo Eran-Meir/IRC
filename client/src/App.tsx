@@ -689,9 +689,16 @@ export const App: React.FC = () => {
   const sendSingleMessage = (text: string) => {
     const time = new Date().toLocaleTimeString();
 
-    if (text.startsWith('/')) {
+    let processedText = text;
+    if (processedText.startsWith('/') && activeTarget.startsWith('#')) {
+      const parts = processedText.slice(1).split(' ');
+      const expandedParts = parts.map((part, idx) => (idx > 0 && part === '#' ? activeTarget : part));
+      processedText = '/' + expandedParts.join(' ');
+    }
+
+    if (processedText.startsWith('/')) {
       // Handle slash commands
-      const parts = text.slice(1).split(' ');
+      const parts = processedText.slice(1).split(' ');
       const cmd = parts[0].toUpperCase();
       const arg = parts.slice(1).join(' ');
 
@@ -940,7 +947,19 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleRemoveAllBans = (channelName: string) => {
+    const norm = channelName.toLowerCase();
+    const activeBans = banListMap[norm] || [];
+    if (wsRef.current && activeBans.length > 0) {
+      activeBans.forEach((mask) => {
+        wsRef.current?.send(`MODE ${norm} -b ${mask}`);
+      });
+    }
+    setBanListMap((prev) => ({ ...prev, [norm]: [] }));
+  };
+
   const isOpInChannel = (channelName: string) => {
+    if (isOper) return true;
     const norm = channelName.toLowerCase();
     const ch = channels.find((c) => c.name.toLowerCase() === norm);
     if (!ch) return false;
@@ -1019,6 +1038,8 @@ export const App: React.FC = () => {
         onSendMessage={handleSendMessage}
         activeTarget={activeTarget}
         isRtlLanguage={preferences.language === 'he'}
+        channelUsers={currentChannel ? currentChannel.users : []}
+        availableChannels={channels.map((c) => c.name)}
       />
 
       {banModalTarget && (
@@ -1029,6 +1050,7 @@ export const App: React.FC = () => {
           onClose={() => setBanModalTarget(null)}
           onAddBan={handleAddBan}
           onRemoveBan={handleRemoveBan}
+          onRemoveAllBans={handleRemoveAllBans}
         />
       )}
     </div>

@@ -48,7 +48,6 @@ func (ch *Channel) AddClient(c *Client) {
 	ch.clients[c] = true
 
 	if isFirst {
-		ch.protected[c] = true
 		ch.ops[c] = true
 	}
 }

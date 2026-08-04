@@ -346,6 +346,8 @@ class IRCTestSuite:
             chan = f"#hierarchy_room_{rand_str()}"
 
             cq.connect(q_nick)
+            cq.send("OPER testadmin testadmin")
+            cq.read_until(" 381 ")
             cq.send(f"JOIN {chan}")
             co.connect(o_nick)
             co.send(f"JOIN {chan}")

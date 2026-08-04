@@ -675,7 +675,11 @@ func (c *Client) handleOper(msg *parser.Message) {
 		c.isServerAdmin = (role == "server_admin")
 		c.mu.Unlock()
 		// 381 RPL_YOUREOPER
-		c.SendRaw([]byte(fmt.Sprintf(":%s 381 %s :You are now an IRC operator\r\n", ServerName, c.Nick)))
+		if role == "server_admin" {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 381 %s :You are now a Server Administrator\r\n", ServerName, c.Nick)))
+		} else {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 381 %s :You are now an IRC operator\r\n", ServerName, c.Nick)))
+		}
 	} else {
 		// 464 ERR_PASSWDMISMATCH
 		c.SendRaw([]byte(fmt.Sprintf(":%s 464 %s :Password incorrect\r\n", ServerName, c.Nick)))

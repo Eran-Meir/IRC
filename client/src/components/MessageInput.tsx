@@ -4,12 +4,28 @@ interface MessageInputProps {
   onSendMessage: (text: string) => void;
   activeTarget: string;
   isRtlLanguage: boolean;
+  channelUsers?: string[];
+  availableChannels?: string[];
+}
+
+function findLongestCommonPrefix(strings: string[]): string {
+  if (strings.length === 0) return '';
+  let prefix = strings[0];
+  for (let i = 1; i < strings.length; i++) {
+    while (!strings[i].toLowerCase().startsWith(prefix.toLowerCase())) {
+      prefix = prefix.slice(0, -1);
+      if (prefix === '') return '';
+    }
+  }
+  return prefix;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   activeTarget,
   isRtlLanguage,
+  channelUsers = [],
+  availableChannels = [],
 }) => {
   const [text, setText] = useState('');
   const [history, setHistory] = useState<string[]>([]);
@@ -45,6 +61,61 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Tab autocompletion for nicknames and channels
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const textarea = e.currentTarget;
+      const cursorPos = textarea.selectionStart;
+      const textBeforeCursor = text.slice(0, cursorPos);
+      const textAfterCursor = text.slice(cursorPos);
+
+      const lastSpaceIdx = textBeforeCursor.lastIndexOf(' ');
+      const currentWord = textBeforeCursor.slice(lastSpaceIdx + 1);
+
+      if (!currentWord) return;
+
+      // 1. Channel completion (starts with '#')
+      if (currentWord.startsWith('#')) {
+        if (currentWord === '#') {
+          if (activeTarget.startsWith('#')) {
+            const completed = textBeforeCursor.slice(0, lastSpaceIdx + 1) + activeTarget + ' ' + textAfterCursor;
+            setText(completed);
+          }
+          return;
+        }
+
+        const normSearch = currentWord.toLowerCase();
+        const matches = availableChannels.filter((ch) => ch.toLowerCase().startsWith(normSearch));
+        if (matches.length === 1) {
+          const completed = textBeforeCursor.slice(0, lastSpaceIdx + 1) + matches[0] + ' ' + textAfterCursor;
+          setText(completed);
+        } else if (matches.length > 1) {
+          const common = findLongestCommonPrefix(matches);
+          const completed = textBeforeCursor.slice(0, lastSpaceIdx + 1) + common + textAfterCursor;
+          setText(completed);
+        }
+        return;
+      }
+
+      // 2. Nickname completion (mIRC style)
+      const cleanUsers = Array.from(new Set(channelUsers.map((u) => u.replace(/^[*@%+]*/, ''))));
+      const normWord = currentWord.toLowerCase();
+      const matchingNicks = cleanUsers.filter((u) => u.toLowerCase().startsWith(normWord));
+
+      if (matchingNicks.length === 1) {
+        const completedNick = matchingNicks[0];
+        const isStartOfLine = lastSpaceIdx === -1;
+        const suffix = isStartOfLine ? ': ' : ' ';
+        const completed = textBeforeCursor.slice(0, lastSpaceIdx + 1) + completedNick + suffix + textAfterCursor;
+        setText(completed);
+      } else if (matchingNicks.length > 1) {
+        const commonPrefix = findLongestCommonPrefix(matchingNicks);
+        const completed = textBeforeCursor.slice(0, lastSpaceIdx + 1) + commonPrefix + textAfterCursor;
+        setText(completed);
+      }
+      return;
+    }
+
     // Enter key submit handling (Enter = send, Shift + Enter = newline)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -63,7 +134,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       }
     }
 
-    // Up Arrow: Navigate backwards in command history (when cursor is on top line or empty)
+    // Up Arrow: Navigate backwards in command history
     if (e.key === 'ArrowUp') {
       if (history.length === 0) return;
       if (!text.includes('\n') || e.currentTarget.selectionStart === 0) {
