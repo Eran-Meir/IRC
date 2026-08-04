@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.31-alpha (Infinite Auto-Reconnect Retries & Keepalive Ping)
+* **Bug Fix & Reliability (WebSocket Service)**
+  * **Infinite Auto-Reconnect Retries**: Fixed `scheduleReconnect()` in [client/src/services/websocket.ts](file:///c:/Users/Eran/IRC/client/src/services/websocket.ts#L80) to reset timer references on execution, ensuring continuous automatic reconnection attempts every 3s during container rollouts.
+  * **25-Second Keepalive PING**: Added a periodic 25-second `PING :keepalive` loop to `WebSocketService`, preventing cloud load balancers and intermediate proxies from timing out idle WebSocket connections.
+
 ## v0.5.30-alpha (User List Rank Symbol Sanitization)
 * **Bug Fix (React Client UI)**
   * **User List Rank Symbol Deduplication**: Updated `JOIN` and `PART` handlers in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L145) to strip rank symbols (`*`, `@`, `%`, `+`) before comparing nicknames. Prevents duplicate unranked entries when users join or change modes.
