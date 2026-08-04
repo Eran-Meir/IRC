@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.26-alpha (Alt + 0..9 Window Switching Keyboard Shortcuts)
+* **Feature (React Web Client UI)**
+  * **Window Switching Shortcuts**:
+    * `Alt + 0`: Immediately switches active focus to the **Status Window**.
+    * `Alt + 1` through `Alt + 9`: Switches active focus to the 1st through 9th joined channel target.
+  * **Sidebar Shortcut Badges**: Added visual `Alt+0`, `Alt+1`.. `Alt+9` shortcut badges in [client/src/components/Sidebar.tsx](file:///c:/Users/Eran/IRC/client/src/components/Sidebar.tsx#L27) for mIRC-style quick navigation.
+
 ## v0.5.25-alpha (Strict Rank Combat Hierarchy, Protected Shields & mIRC User List Context Menu)
 * **Feature (Go IRCd Daemon & User Combat Governance)**
   * **Strict Rank Hierarchy**: Supported modes `+q` (Protected `*`), `+o` (Op `@`), `+h` (Half-Op `%`), `+v` (Voice `+`), and Unranked.

@@ -27,17 +27,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => onSelectTarget('Status')}
         >
           <span className="icon">🖥️</span> Status Window
+          <span className="shortcut-badge">Alt+0</span>
         </div>
 
         <div className="category-title">CHANNELS ({channels.length})</div>
 
-        {channels.map((ch) => (
+        {channels.map((ch, idx) => (
           <div
             key={ch.name}
-            className={`tree-item ${activeTarget === ch.name ? 'active' : ''}`}
+            className={`tree-item ${activeTarget.toLowerCase() === ch.name.toLowerCase() ? 'active' : ''}`}
             onClick={() => onSelectTarget(ch.name)}
           >
             <span className="channel-name">{ch.name.startsWith('#') ? ch.name : '#' + ch.name}</span>
+            {idx < 9 && <span className="shortcut-badge">Alt+{idx + 1}</span>}
             {ch.unreadCount > 0 && (
               <span className="badge">{ch.unreadCount}</span>
             )}

@@ -180,3 +180,14 @@ body {
   background-color: var(--border-color);
   margin: 4px 0;
 }
+
+/* Sidebar Shortcut Badges */
+.shortcut-badge {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-muted);
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid var(--border-color);
+}

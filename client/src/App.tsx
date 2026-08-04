@@ -44,7 +44,28 @@ export const App: React.FC = () => {
     document.documentElement.setAttribute('data-fontsize', preferences.fontSize);
     document.documentElement.setAttribute('data-fontfamily', preferences.fontFamily);
     document.documentElement.setAttribute('dir', preferences.language === 'he' ? 'rtl' : 'ltr');
-  const joinedChannelsRef = useRef<Set<string>>(new Set(['#enterprise', '#devops']));
+  }, [preferences]);
+
+  // Global Window Switching Keyboard Shortcuts (Alt + 0..9)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        if (e.key === '0') {
+          e.preventDefault();
+          handleSelectTarget('Status');
+        } else if (e.key >= '1' && e.key <= '9') {
+          const idx = parseInt(e.key, 10) - 1;
+          if (channels[idx]) {
+            e.preventDefault();
+            handleSelectTarget(channels[idx].name);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [channels]);
 
   const handleIncomingLine = (line: string) => {
     const time = new Date().toLocaleTimeString();
