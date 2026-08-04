@@ -145,22 +145,24 @@ func (c *Client) handleJoin(msg *parser.Message) {
 	mgr := GetManager()
 	ch := mgr.GetOrCreateChannel(chName)
 
-	// Mode checks (+b, +i, +k, +l)
-	if ch.IsBanned(c) {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 474 %s %s :Cannot join channel (+b)\r\n", ServerName, c.Nick, chName)))
-		return
-	}
-	if ch.Modes['i'] && !ch.IsInvited(c) {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 473 %s %s :Cannot join channel (+i)\r\n", ServerName, c.Nick, chName)))
-		return
-	}
-	if ch.Modes['k'] && (len(msg.Params) < 2 || msg.Params[1] != ch.Key) {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 475 %s %s :Cannot join channel (+k)\r\n", ServerName, c.Nick, chName)))
-		return
-	}
-	if ch.Modes['l'] && ch.Limit > 0 && len(ch.clients) >= ch.Limit {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 471 %s %s :Cannot join channel (+l)\r\n", ServerName, c.Nick, chName)))
-		return
+	// Mode checks (+b, +i, +k, +l) - Server Admin (IsOper) overrides all
+	if !c.IsOper() {
+		if ch.IsBanned(c) {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 474 %s %s :Cannot join channel (+b)\r\n", ServerName, c.Nick, chName)))
+			return
+		}
+		if ch.Modes['i'] && !ch.IsInvited(c) {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 473 %s %s :Cannot join channel (+i)\r\n", ServerName, c.Nick, chName)))
+			return
+		}
+		if ch.Modes['k'] && (len(msg.Params) < 2 || msg.Params[1] != ch.Key) {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 475 %s %s :Cannot join channel (+k)\r\n", ServerName, c.Nick, chName)))
+			return
+		}
+		if ch.Modes['l'] && ch.Limit > 0 && len(ch.clients) >= ch.Limit {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 471 %s %s :Cannot join channel (+l)\r\n", ServerName, c.Nick, chName)))
+			return
+		}
 	}
 
 	ch.AddClient(c)
@@ -279,8 +281,8 @@ func (c *Client) handleKick(msg *parser.Message) {
 
 	mgr := GetManager()
 	if ch, exists := mgr.channels[chName]; exists {
-		// Caller must be at least Half-Op (%)
-		if !ch.IsHalfOp(c) {
+		// Caller must be at least Half-Op (%) or Server Admin
+		if !c.IsOper() && !ch.IsHalfOp(c) {
 			c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
 			return
 		}
@@ -292,14 +294,14 @@ func (c *Client) handleKick(msg *parser.Message) {
 		}
 
 		// KICK HIERARCHY RULES:
-		// 1. Protected (*) target CANNOT be kicked by anyone unless caller is also Protected (*)!
-		if ch.IsProtected(targetClient) && !ch.IsProtected(c) {
+		// 1. Protected (*) target CANNOT be kicked by anyone unless caller is also Protected (*) or Server Admin!
+		if ch.IsProtected(targetClient) && !c.IsOper() && !ch.IsProtected(c) {
 			c.SendRaw([]byte(fmt.Sprintf(":%s 484 %s %s :Cannot kick protected user (*)\r\n", ServerName, c.Nick, chName)))
 			return
 		}
 
 		// 2. Half-Op (%) caller can ONLY kick Voiced (+) and unranked users
-		if !ch.IsOp(c) && !ch.IsProtected(c) {
+		if !c.IsOper() && !ch.IsOp(c) && !ch.IsProtected(c) {
 			if ch.IsHalfOp(targetClient) || ch.IsOp(targetClient) || ch.IsProtected(targetClient) {
 				c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :Half-ops cannot kick ops or half-ops\r\n", ServerName, c.Nick, chName)))
 				return
@@ -324,7 +326,7 @@ func (c *Client) handleTopic(msg *parser.Message) {
 	if ch, exists := mgr.channels[chName]; exists {
 		if len(msg.Params) > 1 {
 			newTopic := msg.Params[1]
-			if !ch.IsHalfOp(c) && !ch.IsOp(c) && !ch.IsProtected(c) {
+			if !c.IsOper() && !ch.IsHalfOp(c) && !ch.IsOp(c) && !ch.IsProtected(c) {
 				c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
 				return
 			}
@@ -353,7 +355,7 @@ func (c *Client) handleInvite(msg *parser.Message) {
 	}
 
 	if ch, exists := mgr.channels[chName]; exists {
-		if ch.Modes['i'] && !ch.IsOp(c) {
+		if ch.Modes['i'] && !c.IsOper() && !ch.IsOp(c) {
 			c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
 			return
 		}
@@ -429,7 +431,7 @@ func (c *Client) handleMode(msg *parser.Message) {
 		return
 	}
 
-	if !ch.IsOp(c) && !ch.IsProtected(c) {
+	if !c.IsOper() && !ch.IsOp(c) && !ch.IsProtected(c) {
 		c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You're not channel operator\r\n", ServerName, c.Nick, chName)))
 		return
 	}
@@ -454,8 +456,8 @@ func (c *Client) handleMode(msg *parser.Message) {
 			if paramIdx < len(msg.Params) {
 				tNick := msg.Params[paramIdx]
 				paramIdx++
-				if !ch.IsProtected(c) {
-					c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :Only protected users (*@) can grant or revoke +q\r\n", ServerName, c.Nick, chName)))
+				if !c.IsOper() && !ch.IsProtected(c) {
+					c.SendRaw([]byte(fmt.Sprintf(":%s 482 %s %s :You are not a protected operator (+q)\r\n", ServerName, c.Nick, chName)))
 					continue
 				}
 				if tClient := mgr.GetClientByNick(tNick); tClient != nil {

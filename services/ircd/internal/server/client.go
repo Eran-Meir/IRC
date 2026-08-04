@@ -34,6 +34,13 @@ func NewClient(conn net.Conn) *Client {
 	}
 }
 
+// IsOper returns true if client has authenticated as an IRC Server Administrator
+func (c *Client) IsOper() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.isOper
+}
+
 // Prefix returns standard IRC hostmask (nick!user@host)
 func (c *Client) Prefix() string {
 	c.mu.RLock()
