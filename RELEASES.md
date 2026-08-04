@@ -1,5 +1,16 @@
 # Release History
 
+## v0.5.23-alpha (Full Basic IRC User Commands Implementation)
+* **Feature (Go IRCd Daemon & Web Client)**
+  * Implemented `/NICK [new_nickname]` - Changes display name on the network.
+  * Implemented `/JOIN [#channel] [password]` - Joins specified channel.
+  * Implemented `/PART [#channel] [message]` - Leaves channel with optional reason.
+  * Implemented `/WHOIS [nickname]` - Returns user metadata (`311` RPL_WHOISUSER, `319` RPL_WHOISCHANNELS, `312` RPL_WHOISSERVER, `318` RPL_ENDOFWHOIS).
+  * Implemented `/MSG [nickname] [message]` (or `/PRIVMSG`) - Direct private messaging.
+  * Implemented `/ME [action]` - CTCP action roleplay messages (`* Nick waves to everyone`).
+  * Implemented `/LIST [search_term]` - Queries network channel directory (`321` RPL_LISTSTART, `322` RPL_LIST, `323` RPL_LISTEND).
+  * Implemented `/QUIT [message]` - Gracefully disconnects with optional parting reason.
+
 ## v0.5.22-alpha (Clean Status Window Numerics & Topic Parsing)
 * **Bug Fix (React Client UI)**
   * Parsed IRC numeric `332` (RPL_TOPIC) in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L183) to dynamically update the active channel header topic without polluting the Status Window.

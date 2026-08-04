@@ -54,14 +54,28 @@ export const App: React.FC = () => {
       const match = line.match(/^:([^!]+)![^ ]+ PRIVMSG ([^ ]+) :(.*)$/);
       if (match) {
         const [, sender, target, text] = match;
-        const msgTarget = target.startsWith('#') ? target.toLowerCase() : 'Status';
-        addMessage(msgTarget, {
-          id: Math.random().toString(),
-          sender,
-          target: msgTarget,
-          text,
-          timestamp: time,
-        });
+        const msgTarget = target.startsWith('#') ? target.toLowerCase() : sender;
+
+        // Check if message is a CTCP ACTION (/me)
+        const actionMatch = text.match(/^\x01ACTION (.*)\x01$/);
+        if (actionMatch) {
+          addMessage(msgTarget, {
+            id: Math.random().toString(),
+            sender,
+            target: msgTarget,
+            text: actionMatch[1],
+            timestamp: time,
+            isAction: true,
+          });
+        } else {
+          addMessage(msgTarget, {
+            id: Math.random().toString(),
+            sender,
+            target: msgTarget,
+            text,
+            timestamp: time,
+          });
+        }
       }
     } else if (line.includes(' JOIN ')) {
       const match = line.match(/^:([^!]+)![^ ]+ JOIN :?([^ ]+)$/);
@@ -194,7 +208,7 @@ export const App: React.FC = () => {
       // RPL_ENDOFNAMES :server 366 nick #channel :End of /NAMES list.
       return;
     } else {
-      // Cleanly format system banners & MOTD numerics (001, 002, 004, NOTICE)
+      // Cleanly format system banners, WHOIS, LIST, and MOTD numerics
       const cleanedLine = line.replace(/^:[^ ]+ \d{3} [^ ]+ :?/, '').replace(/^:[^ ]+ NOTICE [^ ]+ :?/, '');
       if (cleanedLine.trim()) {
         addMessage('Status', {
@@ -279,6 +293,41 @@ export const App: React.FC = () => {
         const channelName = (arg || activeTarget).toLowerCase();
         if (wsRef.current) wsRef.current.send(`PART ${channelName}`);
         handlePartChannel(channelName);
+      } else if (cmd === 'WHOIS' && arg) {
+        if (wsRef.current) wsRef.current.send(`WHOIS ${arg}`);
+        setActiveTarget('Status');
+      } else if ((cmd === 'MSG' || cmd === 'PRIVMSG') && arg) {
+        const firstSpace = arg.indexOf(' ');
+        if (firstSpace > -1) {
+          const msgTarget = arg.slice(0, firstSpace);
+          const msgText = arg.slice(firstSpace + 1);
+          if (wsRef.current) wsRef.current.send(`PRIVMSG ${msgTarget} :${msgText}`);
+
+          // Show outgoing private message in query window or current target
+          addMessage(msgTarget, {
+            id: Math.random().toString(),
+            sender: nick,
+            target: msgTarget,
+            text: msgText,
+            timestamp: time,
+          });
+        }
+      } else if (cmd === 'ME' && arg) {
+        if (wsRef.current) wsRef.current.send(`PRIVMSG ${activeTarget} :\x01ACTION ${arg}\x01`);
+        addMessage(activeTarget, {
+          id: Math.random().toString(),
+          sender: nick,
+          target: activeTarget,
+          text: arg,
+          timestamp: time,
+          isAction: true,
+        });
+      } else if (cmd === 'LIST') {
+        if (wsRef.current) wsRef.current.send(`LIST${arg ? ' ' + arg : ''}`);
+        setActiveTarget('Status');
+      } else if (cmd === 'QUIT') {
+        if (wsRef.current) wsRef.current.send(`QUIT${arg ? ' :' + arg : ''}`);
+        disconnectWebSocket();
       }
       return;
     }

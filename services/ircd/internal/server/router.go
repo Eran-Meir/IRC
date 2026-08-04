@@ -30,6 +30,10 @@ func (c *Client) ProcessCommand(msg *parser.Message) {
 		// Ignore PONG keepalive response
 	case "QUIT":
 		c.handleQuit(msg)
+	case "WHOIS":
+		c.handleWhois(msg)
+	case "LIST":
+		c.handleList(msg)
 	default:
 		logger.Debug("[%s] Unknown command: %s", c.Prefix(), msg.Command)
 	}
@@ -192,4 +196,72 @@ func (c *Client) handleQuit(msg *parser.Message) {
 
 	quitLine := fmt.Sprintf(":%s QUIT :%s", c.Prefix(), reason)
 	c.broadcastQuit(quitLine)
+}
+
+func (c *Client) handleWhois(msg *parser.Message) {
+	if !c.registered || len(msg.Params) == 0 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 431 %s :No nickname given\r\n", ServerName, c.Nick)))
+		return
+	}
+
+	targetNick := msg.Params[0]
+	mgr := GetManager()
+	targetClient := mgr.GetClientByNick(targetNick)
+	if targetClient == nil {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 401 %s %s :No such nick/channel\r\n", ServerName, c.Nick, targetNick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s 318 %s %s :End of /WHOIS list.\r\n", ServerName, c.Nick, targetNick)))
+		return
+	}
+
+	// 311 RPL_WHOISUSER: <nick> <user> <host> * :<realname>
+	c.SendRaw([]byte(fmt.Sprintf(":%s 311 %s %s %s %s * :%s\r\n", ServerName, c.Nick, targetClient.Nick, targetClient.User, targetClient.Host, targetClient.RealName)))
+
+	// 319 RPL_WHOISCHANNELS: <nick> :<channels>
+	targetClient.mu.RLock()
+	var chList []string
+	for chName := range targetClient.channels {
+		chList = append(chList, chName)
+	}
+	targetClient.mu.RUnlock()
+	if len(chList) > 0 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 319 %s %s :%s\r\n", ServerName, c.Nick, targetClient.Nick, strings.Join(chList, " "))))
+	}
+
+	// 312 RPL_WHOISSERVER: <nick> <server> :<server info>
+	c.SendRaw([]byte(fmt.Sprintf(":%s 312 %s %s %s :Enterprise Go-IRCd Server\r\n", ServerName, c.Nick, targetClient.Nick, ServerName)))
+
+	// 318 RPL_ENDOFWHOIS: <nick> :End of /WHOIS list.
+	c.SendRaw([]byte(fmt.Sprintf(":%s 318 %s %s :End of /WHOIS list.\r\n", ServerName, c.Nick, targetClient.Nick)))
+}
+
+func (c *Client) handleList(msg *parser.Message) {
+	if !c.registered {
+		return
+	}
+
+	searchTerm := ""
+	if len(msg.Params) > 0 {
+		searchTerm = strings.ToLower(strings.Trim(msg.Params[0], "*"))
+	}
+
+	mgr := GetManager()
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+
+	// 321 RPL_LISTSTART: Channel :Users Name
+	c.SendRaw([]byte(fmt.Sprintf(":%s 321 %s Channel :Users Name\r\n", ServerName, c.Nick)))
+
+	for name, ch := range mgr.channels {
+		if searchTerm == "" || strings.Contains(strings.ToLower(name), searchTerm) {
+			ch.mu.RLock()
+			userCount := len(ch.clients)
+			topic := ch.Topic
+			ch.mu.RUnlock()
+			// 322 RPL_LIST: <channel> <# visible> :<topic>
+			c.SendRaw([]byte(fmt.Sprintf(":%s 322 %s %s %d :%s\r\n", ServerName, c.Nick, name, userCount, topic)))
+		}
+	}
+
+	// 323 RPL_LISTEND: :End of /LIST
+	c.SendRaw([]byte(fmt.Sprintf(":%s 323 %s :End of /LIST\r\n", ServerName, c.Nick)))
 }
