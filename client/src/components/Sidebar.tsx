@@ -2,6 +2,7 @@ import React from 'react';
 import { Channel } from '../types/irc';
 
 interface SidebarProps {
+  nick: string;
   channels: Channel[];
   activeTarget: string;
   onSelectTarget: (target: string) => void;
@@ -9,6 +10,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
+  nick,
   channels,
   activeTarget,
   onSelectTarget,
@@ -18,6 +20,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className="sidebar">
       <div className="sidebar-header">
         <span>CHANNELS & FOLDERS</span>
+      </div>
+
+      <div className="sidebar-user-card">
+        <span className="user-card-label">USER:</span>
+        <span className="user-card-nick">{nick}</span>
       </div>
 
       <div className="sidebar-tree">

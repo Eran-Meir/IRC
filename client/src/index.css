@@ -107,29 +107,49 @@ body {
   background: var(--text-muted);
 }
 
-/* User Badge Rank Colors */
-.user-badge.protected {
+/* User Badge & Nickname Rank Colors */
+.user-badge.protected, .user-nick.protected {
   color: #ff0055;
   font-weight: bold;
 }
 
-.user-badge.op {
+.user-badge.op, .user-nick.op {
   color: #00ff66;
   font-weight: bold;
 }
 
-.user-badge.halfop {
+.user-badge.halfop, .user-nick.halfop {
   color: #00e5ff;
   font-weight: bold;
 }
 
-.user-badge.voice {
+.user-badge.voice, .user-nick.voice {
   color: #ffcc00;
   font-weight: bold;
 }
 
-.user-badge.normal {
+.user-badge.normal, .user-nick.normal {
+  color: var(--text-main);
+}
+
+/* Sidebar User Card */
+.sidebar-user-card {
+  padding: 8px 12px;
+  background-color: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.sidebar-user-card .user-card-label {
   color: var(--text-muted);
+}
+
+.sidebar-user-card .user-card-nick {
+  color: var(--accent-cyan);
 }
 
 /* Context Menu */

@@ -75,8 +75,27 @@ export const App: React.FC = () => {
       const match = line.match(/^:([^!]+)![^ ]+ PRIVMSG ([^ ]+) :(.*)$/);
       if (match) {
         const [, sender, target, text] = match;
-        const msgTarget = target.startsWith('#') ? target.toLowerCase() : sender;
 
+        if (!target.startsWith('#')) {
+          // Direct Private Message
+          const senderTarget = sender.toLowerCase();
+          setChannels((prev) => {
+            if (!prev.some((c) => c.name.toLowerCase() === senderTarget)) {
+              return [...prev, { name: senderTarget, topic: 'Private Query', unreadCount: 1, users: [nick, sender] }];
+            }
+            return prev;
+          });
+          addMessage(senderTarget, {
+            id: Math.random().toString(),
+            sender,
+            target: senderTarget,
+            text,
+            timestamp: time,
+          });
+          return;
+        }
+
+        const msgTarget = target.toLowerCase();
         // Check if message is a CTCP ACTION (/me)
         const actionMatch = text.match(/^\x01ACTION (.*)\x01$/);
         if (actionMatch) {
@@ -131,6 +150,11 @@ export const App: React.FC = () => {
             return ch;
           })
         );
+
+        if (sender === nick) {
+          joinedChannelsRef.current.add(channel);
+          setActiveTarget(channel);
+        }
       }
     } else if (line.includes(' PART ')) {
       const match = line.match(/^:([^!]+)![^ ]+ PART ([^ ]+)(?: :(.*))?$/);
@@ -229,7 +253,15 @@ export const App: React.FC = () => {
           })
         );
         if (targetNick === nick) {
-          handlePartChannel(channel);
+          joinedChannelsRef.current.delete(channel);
+          addMessage(channel, {
+            id: Math.random().toString(),
+            sender: 'System',
+            target: channel,
+            text: `* You were kicked from ${channel}. Type /join ${channel} to re-join.`,
+            timestamp: time,
+            isSystem: true,
+          });
         }
       }
     } else if (line.includes(' MODE ')) {
@@ -387,8 +419,8 @@ export const App: React.FC = () => {
             { name: channelName, topic: 'Joined channel', unreadCount: 0, users: [nick] },
           ]);
         }
-        if (wsRef.current && !joinedChannelsRef.current.has(channelName)) {
-          joinedChannelsRef.current.add(channelName);
+        joinedChannelsRef.current.add(channelName);
+        if (wsRef.current) {
           wsRef.current.send(`JOIN ${channelName}`);
         }
         setActiveTarget(channelName);
@@ -405,11 +437,19 @@ export const App: React.FC = () => {
       } else if ((cmd === 'MSG' || cmd === 'PRIVMSG') && arg) {
         const firstSpace = arg.indexOf(' ');
         if (firstSpace > -1) {
-          const msgTarget = arg.slice(0, firstSpace);
+          const msgTarget = arg.slice(0, firstSpace).toLowerCase();
           const msgText = arg.slice(firstSpace + 1);
           if (wsRef.current) wsRef.current.send(`PRIVMSG ${msgTarget} :${msgText}`);
 
-          // Show outgoing private message in query window or current target
+          if (!msgTarget.startsWith('#')) {
+            setChannels((prev) => {
+              if (!prev.some((c) => c.name.toLowerCase() === msgTarget)) {
+                return [...prev, { name: msgTarget, topic: 'Private Query', unreadCount: 0, users: [nick, msgTarget] }];
+              }
+              return prev;
+            });
+            setActiveTarget(msgTarget);
+          }
           addMessage(msgTarget, {
             id: Math.random().toString(),
             sender: nick,
@@ -420,14 +460,6 @@ export const App: React.FC = () => {
         }
       } else if (cmd === 'ME' && arg) {
         if (wsRef.current) wsRef.current.send(`PRIVMSG ${activeTarget} :\x01ACTION ${arg}\x01`);
-        addMessage(activeTarget, {
-          id: Math.random().toString(),
-          sender: nick,
-          target: activeTarget,
-          text: arg,
-          timestamp: time,
-          isAction: true,
-        });
       } else if (cmd === 'KICK' && arg) {
         let channel = activeTarget;
         let targetNick = '';
@@ -503,8 +535,28 @@ export const App: React.FC = () => {
 
     // Normal PRIVMSG
     const normTarget = activeTarget.toLowerCase();
-    if (normTarget.startsWith('#') && wsRef.current) {
+    if (normTarget.startsWith('#')) {
+      if (!joinedChannelsRef.current.has(normTarget)) {
+        addMessage(normTarget, {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: normTarget,
+          text: `* You cannot send messages to ${normTarget} because you are not in that channel. Type /join ${normTarget} to re-join.`,
+          timestamp: time,
+          isSystem: true,
+        });
+        return;
+      }
+      if (wsRef.current) wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);
+    } else if (normTarget !== 'status' && wsRef.current) {
       wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);
+      addMessage(normTarget, {
+        id: Math.random().toString(),
+        sender: nick,
+        target: normTarget,
+        text,
+        timestamp: time,
+      });
     }
   };
 
@@ -528,17 +580,13 @@ export const App: React.FC = () => {
 
   const handleQueryUser = (targetNick: string) => {
     const normNick = targetNick.toLowerCase();
+    setChannels((prev) => {
+      if (!prev.some((c) => c.name.toLowerCase() === normNick)) {
+        return [...prev, { name: normNick, topic: 'Private Query', unreadCount: 0, users: [nick, targetNick] }];
+      }
+      return prev;
+    });
     setActiveTarget(normNick);
-    if (!messages[normNick]) {
-      addMessage(normNick, {
-        id: Math.random().toString(),
-        sender: 'System',
-        target: normNick,
-        text: `* Started private conversation with ${targetNick}`,
-        timestamp: new Date().toLocaleTimeString(),
-        isSystem: true,
-      });
-    }
   };
 
   const currentChannel = channels.find((c) => c.name.toLowerCase() === activeTarget.toLowerCase());
@@ -557,6 +605,7 @@ export const App: React.FC = () => {
 
       <div className="main-layout">
         <Sidebar
+          nick={nick}
           channels={channels}
           activeTarget={activeTarget}
           onSelectTarget={handleSelectTarget}

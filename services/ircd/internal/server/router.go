@@ -148,13 +148,14 @@ func (c *Client) handleJoin(msg *parser.Message) {
 	joinLine := fmt.Sprintf(":%s JOIN :%s", c.Prefix(), chName)
 	ch.Broadcast(nil, joinLine)
 
+	// Broadcast updated RPL_NAMREPLY (353) to all channel members so everyone sees @ and + ranks
+	nicks := ch.GetNicks()
+	namesLine := fmt.Sprintf(":%s 353 %s = %s :%s", ServerName, c.Nick, chName, nicks)
+	ch.Broadcast(nil, namesLine)
+	ch.Broadcast(nil, fmt.Sprintf(":%s 366 %s %s :End of /NAMES list.", ServerName, c.Nick, chName))
+
 	// RPL_TOPIC (332)
 	c.SendRaw([]byte(fmt.Sprintf(":%s 332 %s %s :%s\r\n", ServerName, c.Nick, chName, ch.Topic)))
-
-	// RPL_NAMREPLY (353) & RPL_ENDOFNAMES (366)
-	nicks := ch.GetNicks()
-	c.SendRaw([]byte(fmt.Sprintf(":%s 353 %s = %s :%s\r\n", ServerName, c.Nick, chName, nicks)))
-	c.SendRaw([]byte(fmt.Sprintf(":%s 366 %s %s :End of /NAMES list.\r\n", ServerName, c.Nick, chName)))
 }
 
 func (c *Client) handlePart(msg *parser.Message) {
@@ -198,12 +199,23 @@ func (c *Client) handlePrivmsg(msg *parser.Message) {
 	mgr := GetManager()
 	if strings.HasPrefix(target, "#") {
 		target = strings.ToLower(target)
-		if ch, exists := mgr.channels[target]; exists {
-			// Check +m (moderated channel)
-			if ch.Modes['m'] && !ch.IsVoiced(c) {
-				c.SendRaw([]byte(fmt.Sprintf(":%s 404 %s %s :Cannot send to channel (+m)\r\n", ServerName, c.Nick, target)))
-				return
-			}
+		ch, exists := mgr.channels[target]
+		if !exists {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 403 %s %s :No such channel\r\n", ServerName, c.Nick, target)))
+			return
+		}
+		// Enforce membership: client must be joined to channel to send messages
+		c.mu.RLock()
+		_, joined := c.channels[target]
+		c.mu.RUnlock()
+		if !joined {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 404 %s %s :Cannot send to channel (you are not in channel)\r\n", ServerName, c.Nick, target)))
+			return
+		}
+		// Check +m (moderated channel)
+		if ch.Modes['m'] && !ch.IsVoiced(c) {
+			c.SendRaw([]byte(fmt.Sprintf(":%s 404 %s %s :Cannot send to channel (+m)\r\n", ServerName, c.Nick, target)))
+			return
 		}
 		line := fmt.Sprintf(":%s PRIVMSG %s :%s", c.Prefix(), target, text)
 		state.PublishChannelMessage(target, line)

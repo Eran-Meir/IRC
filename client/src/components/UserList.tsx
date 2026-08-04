@@ -76,10 +76,14 @@ export const UserList: React.FC<UserListProps> = ({
 
   const handleContextMenu = (e: React.MouseEvent, nick: string, symbol: string) => {
     e.preventDefault();
+    const menuWidth = 190;
+    const menuHeight = 350;
+    const x = e.clientX + menuWidth > window.innerWidth ? window.innerWidth - menuWidth - 10 : e.clientX;
+    const y = e.clientY + menuHeight > window.innerHeight ? window.innerHeight - menuHeight - 10 : e.clientY;
     setContextMenu({
       visible: true,
-      x: e.clientX,
-      y: e.clientY,
+      x: Math.max(10, x),
+      y: Math.max(10, y),
       nick,
       symbol,
     });
@@ -163,13 +167,13 @@ export const UserList: React.FC<UserListProps> = ({
           return (
             <div
               key={idx}
-              className="user-item"
+              className={`user-item ${badgeClass}`}
               onContextMenu={(e) => handleContextMenu(e, nick, symbol)}
               onDoubleClick={() => handleDoubleClick(nick)}
               title="Double-click to Query, Right-click for options"
             >
               <span className={`user-badge ${badgeClass}`}>{symbol || ' '}</span>
-              <span className="user-nick">{nick}</span>
+              <span className={`user-nick ${badgeClass}`}>{nick}</span>
             </div>
           );
         })}

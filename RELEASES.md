@@ -1,5 +1,17 @@
 # Release History
 
+## v0.5.28-alpha (Kicked Rejoin & Messaging, Query Windows, Nick Header & Context Menu Bounds)
+* **Bug Fix (React Client & Go Daemon)**
+  * **Kicked Rejoin Fix**: Removed channel from `joinedChannelsRef` set upon `KICK` so users can immediately `/join #channel` back.
+  * **Non-Member Message Block**: Enforced membership checks in both client (`App.tsx`) and Go daemon (`router.go` `404`), displaying system notice `* You cannot send messages to #channel because you are not in that channel` when attempting to speak after being kicked.
+  * **Matching Rank Colors**: Styled nickname text to match their respective badge rank color (`protected` magenta, `op` emerald green, `halfop` cyan, `voice` gold).
+  * **Sidebar User Card Header**: Added dynamic user card badge above Status Window showing current nickname (`USER: Guest100`).
+  * **`/me` Single Broadcast**: Eliminated optimistic duplication for `/me` CTCP actions.
+  * **Auto Shift Window on Join**: Automatically shifts active focus to newly joined channels upon `/join`.
+  * **Private Message Query Popups**: Private messages automatically create a 1-on-1 query window in sidebar for both sender and recipient.
+  * **Channel Join Rank Sync**: Daemon broadcasts `353` RPL_NAMREPLY to all channel members upon join so `@`/`+` ranks update instantly.
+  * **Context Menu Boundary Clamping**: Clamped context menu coordinates inside viewport, preventing clipping at screen edges.
+
 ## v0.5.27-alpha (Go Compilation Build Fix)
 * **Bug Fix (Go Daemon Build)**
   * Added missing `"strings"` package import to [services/ircd/internal/server/manager.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/manager.go#L4).
