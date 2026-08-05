@@ -121,6 +121,8 @@ class IRCTestSuite:
         self.test_invite_and_mode_i()
         self.test_list_and_names()
         self.test_chatops_and_chatadmin()
+        self.test_kill_command()
+        self.test_wallops_and_locops()
 
     def test_nick_change(self):
         cmd = "NICK"
@@ -616,6 +618,70 @@ class IRCTestSuite:
                 self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"OpsLine: {ops_line} | AdmLine: {adm_line}", evaluation="PASS — ChatOps and ChatAdmin notice broadcasts verified.")
             else:
                 self.log_result(cmd, scenario, "FAIL", f"OpsLine: {ops_line}, AdmLine: {adm_line}", protocol=proto, expected=exp, actual=f"OpsLine: {ops_line} | AdmLine: {adm_line}", evaluation="FAIL — Notice broadcast missing.")
+        except Exception as e:
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
+
+    def test_kill_command(self):
+        cmd = "KILL"
+        scenario = "Oper Kills User Connection"
+        proto = "1. Connect Victim & Oper\n2. Oper issues KILL Victim :Rule violation\n3. Victim receives ERROR Closing Link (Killed by Oper)"
+        exp = "ERROR Closing Link containing 'Killed by' received by victim"
+        try:
+            c_oper = IRCClient(self.host, self.port)
+            c_victim = IRCClient(self.host, self.port)
+
+            oper_nick = f"Oper_{rand_str()}"
+            victim_nick = f"Victim_{rand_str()}"
+
+            c_oper.connect(oper_nick)
+            c_oper.send("OPER testadmin testadmin")
+            c_oper.read_until(" 381 ")
+
+            c_victim.connect(victim_nick)
+            time.sleep(0.2)
+
+            c_oper.send(f"KILL {victim_nick} :Rule violation")
+            err_line, _ = c_victim.read_until("ERROR :Closing Link:")
+
+            c_oper.close()
+            c_victim.close()
+
+            if "Closing Link:" in err_line and "Killed by" in err_line:
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"ErrLine: {err_line}", evaluation="PASS — KILL socket termination verified.")
+            else:
+                self.log_result(cmd, scenario, "FAIL", f"ErrLine: {err_line}", protocol=proto, expected=exp, actual=f"ErrLine: {err_line}", evaluation="FAIL — KILL line missing.")
+        except Exception as e:
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
+
+    def test_wallops_and_locops(self):
+        cmd = "WALLOPS / LOCOPS"
+        scenario = "Network & Local Oper Broadcast Notices"
+        proto = "1. Connect Oper & User\n2. Oper sends WALLOPS :System Maintenance\n3. User receives NOTICE *** WALLOPS from Oper"
+        exp = "NOTICE containing '*** WALLOPS from' received by user"
+        try:
+            c_oper = IRCClient(self.host, self.port)
+            c_user = IRCClient(self.host, self.port)
+
+            oper_nick = f"Oper_{rand_str()}"
+            user_nick = f"User_{rand_str()}"
+
+            c_oper.connect(oper_nick)
+            c_oper.send("OPER testadmin testadmin")
+            c_oper.read_until(" 381 ")
+
+            c_user.connect(user_nick)
+            time.sleep(0.2)
+
+            c_oper.send("WALLOPS :System Maintenance Notice")
+            wall_line, _ = c_user.read_until("WALLOPS from")
+
+            c_oper.close()
+            c_user.close()
+
+            if "WALLOPS from" in wall_line:
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"WallLine: {wall_line}", evaluation="PASS — WALLOPS notice broadcast verified.")
+            else:
+                self.log_result(cmd, scenario, "FAIL", f"WallLine: {wall_line}", protocol=proto, expected=exp, actual=f"WallLine: {wall_line}", evaluation="FAIL — WALLOPS broadcast missing.")
         except Exception as e:
             self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 

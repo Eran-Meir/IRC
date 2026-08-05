@@ -41,12 +41,17 @@ export const App: React.FC = () => {
 
   const wsRef = useRef<WebSocketService | null>(null);
   const nickRef = useRef(nick);
+  const activeTargetRef = useRef(activeTarget);
   const joinedChannelsRef = useRef<Set<string>>(new Set());
   const handleIncomingLineRef = useRef<(line: string) => void>(() => {});
 
   useEffect(() => {
     nickRef.current = nick;
   }, [nick]);
+
+  useEffect(() => {
+    activeTargetRef.current = activeTarget;
+  }, [activeTarget]);
 
   useEffect(() => {
     // Apply dataset attributes to root for CSS theme/font toggling
@@ -579,8 +584,9 @@ export const App: React.FC = () => {
       const match = line.match(/ 381 [^ ]+ :(.*)$/);
       const text = match ? match[1] : 'You are now an IRC operator';
       const msgText = `* Success: ${text}`;
-      addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: msgText, timestamp: time, isSystem: true });
-      if (activeTarget.toLowerCase() !== 'status') {
+      const curTarget = activeTargetRef.current.toLowerCase();
+      addMessage(curTarget, { id: Math.random().toString(), sender: 'System', target: curTarget, text: msgText, timestamp: time, isSystem: true });
+      if (curTarget !== 'status') {
         addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: msgText, timestamp: time, isSystem: true });
       }
     } else if (line.includes(' 382 ')) {
