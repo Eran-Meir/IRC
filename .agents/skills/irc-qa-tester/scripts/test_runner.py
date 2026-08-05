@@ -120,6 +120,7 @@ class IRCTestSuite:
         self.test_rehash_admin()
         self.test_invite_and_mode_i()
         self.test_list_and_names()
+        self.test_chatops_and_chatadmin()
 
     def test_nick_change(self):
         cmd = "NICK"
@@ -578,6 +579,43 @@ class IRCTestSuite:
                 self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"322: {r322} | 353: {r353}", evaluation="PASS — LIST and NAMES protocol replies verified.")
             else:
                 self.log_result(cmd, scenario, "FAIL", f"322: {r322}, 353: {r353}", protocol=proto, expected=exp, actual=f"322: {r322} | 353: {r353}", evaluation="FAIL — LIST or NAMES reply missing.")
+        except Exception as e:
+            self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
+
+    def test_chatops_and_chatadmin(self):
+        cmd = "CHATOPS / CHATADMIN"
+        scenario = "Operator & Admin Internal Chat Notices"
+        proto = "1. Admin & Oper authenticate via OPER\n2. Admin sends CHATOPS -> broadcast to Oper & Admin\n3. Admin sends CHATADMIN -> broadcast to Admin only"
+        exp = "ChatOps received by Oper & Admin; ChatAdmin received by Admin"
+        try:
+            c_admin = IRCClient(self.host, self.port)
+            c_oper = IRCClient(self.host, self.port)
+
+            admin_nick, oper_nick = f"Admin_{rand_str()}", f"Oper_{rand_str()}"
+
+            c_admin.connect(admin_nick)
+            c_admin.send("OPER testadmin testadmin")
+            c_admin.read_until(" 381 ")
+
+            c_oper.connect(oper_nick)
+            c_oper.send("OPER testoper testoper")
+            c_oper.read_until(" 381 ")
+
+            time.sleep(0.2)
+
+            c_admin.send("CHATOPS :Testing ChatOps Notice")
+            ops_line, _ = c_oper.read_until("ChatOps:")
+
+            c_admin.send("CHATADMIN :Testing ChatAdmin Notice")
+            adm_line, _ = c_admin.read_until("ChatAdmin:")
+
+            c_admin.close()
+            c_oper.close()
+
+            if "ChatOps:" in ops_line and "ChatAdmin:" in adm_line:
+                self.log_result(cmd, scenario, "PASS", protocol=proto, expected=exp, actual=f"OpsLine: {ops_line} | AdmLine: {adm_line}", evaluation="PASS — ChatOps and ChatAdmin notice broadcasts verified.")
+            else:
+                self.log_result(cmd, scenario, "FAIL", f"OpsLine: {ops_line}, AdmLine: {adm_line}", protocol=proto, expected=exp, actual=f"OpsLine: {ops_line} | AdmLine: {adm_line}", evaluation="FAIL — Notice broadcast missing.")
         except Exception as e:
             self.log_result(cmd, scenario, "FAIL", str(e), protocol=proto, expected=exp, actual=str(e), evaluation=f"FAIL — Socket exception: {e}")
 

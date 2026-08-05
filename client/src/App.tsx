@@ -349,10 +349,10 @@ export const App: React.FC = () => {
         );
       }
     } else if (line.includes(' NOTICE ')) {
-      const match = line.match(/^:([^!]+)![^ ]+ NOTICE ([^ ]+) :(.*)$/);
+      const match = line.match(/^:([^!]+)![^ ]+ NOTICE ([^ ]+) :(.*)$/) || line.match(/^:([^ ]+) NOTICE ([^ ]+) :(.*)$/);
       if (match) {
         const [, sender, target, text] = match;
-        const msgTarget = target.startsWith('#') ? target.toLowerCase() : 'Status';
+        const msgTarget = target.startsWith('#') ? target.toLowerCase() : activeTarget.toLowerCase();
         addMessage(msgTarget, {
           id: Math.random().toString(),
           sender: `-${sender}-`,
@@ -361,6 +361,16 @@ export const App: React.FC = () => {
           timestamp: time,
           isSystem: true,
         });
+        if (msgTarget !== 'status') {
+          addMessage('status', {
+            id: Math.random().toString(),
+            sender: `-${sender}-`,
+            target: 'status',
+            text,
+            timestamp: time,
+            isSystem: true,
+          });
+        }
       }
     } else if (line.includes(' MODE ')) {
       const match = line.match(/^:([^!]+)![^ ]+ MODE ([^ ]+) (.*)$/);
@@ -878,6 +888,10 @@ export const App: React.FC = () => {
         const targetNick = parts[0];
         const channel = parts[1] ? parts[1].toLowerCase() : activeTarget;
         if (wsRef.current) wsRef.current.send(`INVITE ${targetNick} ${channel}`);
+      } else if (cmd === 'CHATOPS' && arg) {
+        if (wsRef.current) wsRef.current.send(`CHATOPS :${arg}`);
+      } else if (cmd === 'CHATADMIN' && arg) {
+        if (wsRef.current) wsRef.current.send(`CHATADMIN :${arg}`);
       } else if (cmd === 'NOTICE' && arg) {
         const firstSpace = arg.indexOf(' ');
         if (firstSpace > -1) {

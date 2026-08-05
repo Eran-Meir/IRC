@@ -53,6 +53,10 @@ func (c *Client) ProcessCommand(msg *parser.Message) {
 		c.handleKill(msg)
 	case "WALLOPS", "LOCOPS":
 		c.handleWallops(msg)
+	case "CHATOPS":
+		c.handleChatOps(msg)
+	case "CHATADMIN":
+		c.handleChatAdmin(msg)
 	case "REHASH":
 		c.handleRehash(msg)
 	case "LIST":
@@ -678,12 +682,22 @@ func (c *Client) handleOper(msg *parser.Message) {
 		c.isOper = true
 		c.isServerAdmin = (role == "server_admin")
 		c.mu.Unlock()
-		// 381 RPL_YOUREOPER
+		roleName := "an IRC Operator"
 		if role == "server_admin" {
-			c.SendRaw([]byte(fmt.Sprintf(":%s 381 %s :You are now a Server Administrator\r\n", ServerName, c.Nick)))
-		} else {
-			c.SendRaw([]byte(fmt.Sprintf(":%s 381 %s :You are now an IRC operator\r\n", ServerName, c.Nick)))
+			roleName = "a Server Administrator"
 		}
+		c.SendRaw([]byte(fmt.Sprintf(":%s 381 %s :You are now %s\r\n", ServerName, c.Nick, roleName)))
+
+		// Broadcast oper notice to all operators
+		noticeLine := fmt.Sprintf(":%s NOTICE * :*** Notice: %s is now %s\r\n", ServerName, c.Nick, roleName)
+		mgr := GetManager()
+		mgr.mu.RLock()
+		for _, client := range mgr.clients {
+			if client.IsOper() {
+				client.SendRaw([]byte(noticeLine))
+			}
+		}
+		mgr.mu.RUnlock()
 	} else {
 		// 464 ERR_PASSWDMISMATCH
 		c.SendRaw([]byte(fmt.Sprintf(":%s 464 %s :Password incorrect\r\n", ServerName, c.Nick)))
@@ -784,5 +798,55 @@ func (c *Client) handleWallops(msg *parser.Message) {
 
 	for _, client := range mgr.clients {
 		client.SendRaw([]byte(noticeLine))
+	}
+}
+
+func (c *Client) handleChatOps(msg *parser.Message) {
+	if !c.IsOper() {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
+		return
+	}
+
+	if len(msg.Params) < 1 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s CHATOPS :Not enough parameters\r\n", ServerName, c.Nick)))
+		return
+	}
+
+	chatMsg := msg.Params[0]
+	noticeLine := fmt.Sprintf(":%s NOTICE * :ChatOps: %s: %s\r\n", ServerName, c.Nick, chatMsg)
+
+	mgr := GetManager()
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+
+	for _, client := range mgr.clients {
+		if client.IsOper() {
+			client.SendRaw([]byte(noticeLine))
+		}
+	}
+}
+
+func (c *Client) handleChatAdmin(msg *parser.Message) {
+	if !c.IsServerAdmin() {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You are not a Server Administrator\r\n", ServerName, c.Nick)))
+		return
+	}
+
+	if len(msg.Params) < 1 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s CHATADMIN :Not enough parameters\r\n", ServerName, c.Nick)))
+		return
+	}
+
+	chatMsg := msg.Params[0]
+	noticeLine := fmt.Sprintf(":%s NOTICE * :ChatAdmin: %s: %s\r\n", ServerName, c.Nick, chatMsg)
+
+	mgr := GetManager()
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+
+	for _, client := range mgr.clients {
+		if client.IsServerAdmin() {
+			client.SendRaw([]byte(noticeLine))
+		}
 	}
 }
