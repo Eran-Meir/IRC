@@ -42,6 +42,8 @@ export const App: React.FC = () => {
   const [nick, setNick] = useState<string>(`Guest${Math.floor(Math.random() * 900 + 100)}`);
   const [banListMap, setBanListMap] = useState<Record<string, string[]>>({});
   const [banModalTarget, setBanModalTarget] = useState<string | null>(null);
+  const [isOper, setIsOper] = useState(false);
+  const [isServerAdmin, setIsServerAdmin] = useState(false);
   
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: 'classic-light',
@@ -631,6 +633,9 @@ export const App: React.FC = () => {
     } else if (line.includes(' 381 ')) {
       // RPL_YOUREOPER :server 381 nick :You are now ...
       setIsOper(true);
+      if (line.includes('Server Administrator')) {
+        setIsServerAdmin(true);
+      }
       const match = line.match(/ 381 [^ ]+ :(.*)$/);
       const text = match ? match[1] : 'You are now an IRC operator';
       const msgText = `* Success: ${text}`;
