@@ -84,7 +84,8 @@ export const UserList: React.FC<UserListProps> = ({
   };
 
   // Sort users strictly by rank weight descending, then alphabetically by nickname
-  const sortedUsers = [...users].map(parseUser).sort((a, b) => {
+  const safeUsers = Array.isArray(users) ? users : [];
+  const sortedUsers = [...safeUsers].map(parseUser).sort((a, b) => {
     const weightDiff = getRankWeight(b.symbol) - getRankWeight(a.symbol);
     if (weightDiff !== 0) return weightDiff;
     return a.nick.localeCompare(b.nick, undefined, { sensitivity: 'base' });

@@ -97,7 +97,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         className={`message-stream ${isRtlLanguage ? 'rtl-dir' : 'ltr-dir'}`}
         onMouseUp={handleMouseUp}
       >
-        {messages.map((msg) => {
+        {(Array.isArray(messages) ? messages : []).map((msg) => {
           if (msg.isChatOps) {
             return (
               <div key={msg.id} className="msg-line chatops-line">
