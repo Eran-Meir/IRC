@@ -108,6 +108,8 @@ func (m *OperManager) Reload() error {
 	if err != nil {
 		logger.Warn("Could not read oper config at %s (%v). Using default encrypted oper accounts.", m.configPath, err)
 		m.operators = getDefaultOperators()
+		// Write local template file if config directory is writable
+		_ = SaveDefaultTemplate("config/opers.json")
 		return nil
 	}
 
@@ -149,13 +151,15 @@ func (m *OperManager) Authenticate(username, password string) (role string, ok b
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	inputUserHash := hashString(strings.ToLower(username))
+	inputUserLower := hashString(strings.ToLower(username))
+	inputUserExact := hashString(username)
 	inputPassHash := hashString(password)
 
 	for _, op := range m.operators {
 		userMatches := false
 		if op.UsernameHash != "" {
-			if subtle.ConstantTimeCompare([]byte(inputUserHash), []byte(op.UsernameHash)) == 1 {
+			if subtle.ConstantTimeCompare([]byte(inputUserLower), []byte(op.UsernameHash)) == 1 ||
+				subtle.ConstantTimeCompare([]byte(inputUserExact), []byte(op.UsernameHash)) == 1 {
 				userMatches = true
 			}
 		} else if op.Username != "" {

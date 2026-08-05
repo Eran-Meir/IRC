@@ -560,6 +560,9 @@ export const App: React.FC = () => {
       // ERR_PASSWDMISMATCH :server 464 nick :Password incorrect
       const errMsg = "* Error: OPER password incorrect";
       addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+      if (activeTarget.toLowerCase() !== 'status') {
+        addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: errMsg, timestamp: time, isSystem: true });
+      }
     } else if (line.includes(' 381 ')) {
       // RPL_YOUREOPER :server 381 nick :You are now ...
       setIsOper(true);
@@ -567,6 +570,9 @@ export const App: React.FC = () => {
       const text = match ? match[1] : 'You are now an IRC operator';
       const msgText = `* Success: ${text}`;
       addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: msgText, timestamp: time, isSystem: true });
+      if (activeTarget.toLowerCase() !== 'status') {
+        addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: msgText, timestamp: time, isSystem: true });
+      }
     } else if (line.includes(' 382 ')) {
       // RPL_REHASHING :server 382 nick file :Rehash file
       const msgText = "* Success: Server configuration reloaded (REHASH)";
