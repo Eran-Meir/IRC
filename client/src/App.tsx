@@ -741,8 +741,19 @@ export const App: React.FC = () => {
       nickRef.current = activeNick;
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const isHttps = window.location.protocol === 'https:';
+    const protocol = isHttps ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+    addMessage('status', {
+      id: Math.random().toString(),
+      sender: 'System',
+      target: 'status',
+      text: `* Connecting to IRC server via ${wsUrl}...`,
+      timestamp: new Date().toLocaleTimeString(),
+      isSystem: true,
+    });
+
     wsRef.current = new WebSocketService(
       wsUrl,
       (line: string) => handleIncomingLineRef.current(line),
@@ -757,6 +768,15 @@ export const App: React.FC = () => {
           // Seed joinedChannelsRef so message sending is not blocked
           joinedChannelsRef.current.add('#enterprise');
           joinedChannelsRef.current.add('#devops');
+        } else if (!status && isHttps) {
+          addMessage('status', {
+            id: Math.random().toString(),
+            sender: 'System',
+            target: 'status',
+            text: `* WebSocket connection failed over HTTPS (self-signed IP certificate). Please open the client using HTTP: http://${window.location.host}/`,
+            timestamp: new Date().toLocaleTimeString(),
+            isSystem: true,
+          });
         }
       }
     );
