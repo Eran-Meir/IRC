@@ -770,12 +770,11 @@ func (c *Client) handleKill(msg *parser.Message) {
 	targetClient.SendRaw([]byte(killMsg))
 
 	quitLine := fmt.Sprintf(":%s QUIT :Killed (%s (%s))", targetClient.Prefix(), c.Nick, reason)
-	mgr.BroadcastToSharedChannels(targetClient, quitLine)
+	targetClient.broadcastQuit(quitLine)
 
 	if targetClient.conn != nil {
 		targetClient.conn.Close()
 	}
-	mgr.RemoveClient(targetClient)
 }
 
 func (c *Client) handleWallops(msg *parser.Message) {
