@@ -675,3 +675,67 @@
   border-radius: 4px;
   cursor: pointer;
 }
+
+/* Modal Overlay & Pop-up Window Fix */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background-color: var(--bg-secondary, #1a1a24);
+  color: var(--text-color, #ffffff);
+  border: 1px solid var(--border-color, #333344);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 540px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  z-index: 10000;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: var(--bg-tertiary, #222233);
+  border-bottom: 1px solid var(--border-color, #333344);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted, #888);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* ChatOps & ChatAdmin Notice Styling */
+.chatops-text {
+  color: #a52a2a;
+  font-weight: bold;
+}
+
+[data-theme='mirc-dark'] .chatops-text,
+[data-theme='cyberpunk'] .chatops-text,
+[data-theme='matrix-emerald'] .chatops-text {
+  color: #d2b48c;
+}

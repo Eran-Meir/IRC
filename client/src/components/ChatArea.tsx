@@ -98,6 +98,15 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         onMouseUp={handleMouseUp}
       >
         {messages.map((msg) => {
+          if (msg.isChatOps) {
+            return (
+              <div key={msg.id} className="msg-line chatops-line">
+                <span className="timestamp">[{msg.timestamp}]</span>
+                <span className="chatops-text">{renderFormattedText(msg.text)}</span>
+              </div>
+            );
+          }
+
           if (msg.isWhois) {
             return (
               <div key={msg.id} className="msg-line whois-line">

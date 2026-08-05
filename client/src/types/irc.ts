@@ -7,6 +7,7 @@ export interface Message {
   isSystem?: boolean;
   isAction?: boolean;
   isWhois?: boolean;
+  isChatOps?: boolean;
   isRtl?: boolean;
 }
 

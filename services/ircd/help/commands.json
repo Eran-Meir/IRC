@@ -1,0 +1,130 @@
+{
+  "commands": {
+    "join": {
+      "command": "JOIN",
+      "syntax": "/join #channel [key]",
+      "role": "user",
+      "description": "Joins a chat room channel on the server.",
+      "example": "/join #enterprise"
+    },
+    "part": {
+      "command": "PART",
+      "syntax": "/part #channel [reason]",
+      "role": "user",
+      "description": "Leaves the specified channel.",
+      "example": "/part #enterprise :Leaving channel"
+    },
+    "msg": {
+      "command": "MSG",
+      "syntax": "/msg <nickname/#channel> <message>",
+      "role": "user",
+      "description": "Sends a private message to a user or channel.",
+      "example": "/msg Guest123 Hello there!"
+    },
+    "nick": {
+      "command": "NICK",
+      "syntax": "/nick <new_nickname>",
+      "role": "user",
+      "description": "Changes your active IRC nickname.",
+      "example": "/nick Alice"
+    },
+    "whois": {
+      "command": "WHOIS",
+      "syntax": "/whois <nickname>",
+      "role": "user",
+      "description": "Queries user details, roles, and connected channels.",
+      "example": "/whois Guest123"
+    },
+    "topic": {
+      "command": "TOPIC",
+      "syntax": "/topic #channel [new_topic]",
+      "role": "user",
+      "description": "Displays or updates the topic of a channel.",
+      "example": "/topic #enterprise Enterprise Go-IRCd Network"
+    },
+    "names": {
+      "command": "NAMES",
+      "syntax": "/names [#channel]",
+      "role": "user",
+      "description": "Lists all user nicknames connected to a channel.",
+      "example": "/names #enterprise"
+    },
+    "list": {
+      "command": "LIST",
+      "syntax": "/list",
+      "role": "user",
+      "description": "Lists public channels and member counts on the server.",
+      "example": "/list"
+    },
+    "oper": {
+      "command": "OPER",
+      "syntax": "/oper <username> <password>",
+      "role": "user",
+      "description": "Authenticates as an IRC Operator or Server Administrator.",
+      "example": "/oper Smiley SmileyAdminPassword123!@#"
+    },
+    "kick": {
+      "command": "KICK",
+      "syntax": "/kick #channel <nickname> [reason]",
+      "role": "op",
+      "description": "Removes a user from a channel (Channel Op required).",
+      "example": "/kick #enterprise BadUser Spamming"
+    },
+    "kickban": {
+      "command": "KICKBAN",
+      "syntax": "/kb <nickname> [reason]",
+      "role": "op",
+      "description": "Sets channel ban (+b) and kicks the target user.",
+      "example": "/kb BadUser Trolling"
+    },
+    "kill": {
+      "command": "KILL",
+      "syntax": "/kill <nickname> <reason>",
+      "role": "oper",
+      "description": "Terminates target user socket connection across the network.",
+      "example": "/kill BadUser Violation of network rules"
+    },
+    "kline": {
+      "command": "KLINE",
+      "syntax": "/kline <mask/IP> [reason]",
+      "role": "oper",
+      "description": "Bans a hostmask or IP from connecting to the server.",
+      "example": "/kline BadUser!*@* Malicious behavior"
+    },
+    "wallops": {
+      "command": "WALLOPS",
+      "syntax": "/wallops <message>",
+      "role": "oper",
+      "description": "Sends a network-wide broadcast notice to all IRC Operators.",
+      "example": "/wallops Scheduled server maintenance in 10 mins"
+    },
+    "locops": {
+      "command": "LOCOPS",
+      "syntax": "/locops <message>",
+      "role": "oper",
+      "description": "Sends a local node broadcast notice to IRC Operators.",
+      "example": "/locops Local node memory check initiated"
+    },
+    "chatops": {
+      "command": "CHATOPS",
+      "syntax": "/chatops <message>",
+      "role": "oper",
+      "description": "Sends a private chat message to all connected IRC Operators & Admins.",
+      "example": "/chatops Investigating high CPU load"
+    },
+    "chatadmin": {
+      "command": "CHATADMIN",
+      "syntax": "/chatadmin <message>",
+      "role": "admin",
+      "description": "Sends a private chat message strictly to Server Administrators.",
+      "example": "/chatadmin Secret key rotation scheduled"
+    },
+    "rehash": {
+      "command": "REHASH",
+      "syntax": "/rehash",
+      "role": "admin",
+      "description": "Reloads operator configuration files from disk.",
+      "example": "/rehash"
+    }
+  }
+}

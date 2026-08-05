@@ -7,7 +7,34 @@ import { MessageInput } from './components/MessageInput';
 import { BanListModal } from './components/BanListModal';
 import { WebSocketService } from './services/websocket';
 import { Message, Channel, UserPreferences } from './types/irc';
-import './App.css';
+interface HelpCommandInfo {
+  command: string;
+  syntax: string;
+  role: 'user' | 'op' | 'oper' | 'admin';
+  description: string;
+  example: string;
+}
+
+const HELP_REGISTRY: Record<string, HelpCommandInfo> = {
+  join: { command: 'JOIN', syntax: '/join #channel [key]', role: 'user', description: 'Joins a chat room channel on the server.', example: '/join #enterprise' },
+  part: { command: 'PART', syntax: '/part #channel [reason]', role: 'user', description: 'Leaves the specified channel.', example: '/part #enterprise :Leaving channel' },
+  msg: { command: 'MSG', syntax: '/msg <nickname/#channel> <message>', role: 'user', description: 'Sends a private message to a user or channel.', example: '/msg Guest123 Hello there!' },
+  nick: { command: 'NICK', syntax: '/nick <new_nickname>', role: 'user', description: 'Changes your active IRC nickname.', example: '/nick Alice' },
+  whois: { command: 'WHOIS', syntax: '/whois <nickname>', role: 'user', description: 'Queries user details, roles, and connected channels.', example: '/whois Guest123' },
+  topic: { command: 'TOPIC', syntax: '/topic #channel [new_topic]', role: 'user', description: 'Displays or updates the topic of a channel.', example: '/topic #enterprise Enterprise Go-IRCd Network' },
+  names: { command: 'NAMES', syntax: '/names [#channel]', role: 'user', description: 'Lists all user nicknames connected to a channel.', example: '/names #enterprise' },
+  list: { command: 'LIST', syntax: '/list', role: 'user', description: 'Lists public channels and member counts on the server.', example: '/list' },
+  oper: { command: 'OPER', syntax: '/oper <username> <password>', role: 'user', description: 'Authenticates as an IRC Operator or Server Administrator.', example: '/oper Smiley SmileyAdminPassword123!@#' },
+  kick: { command: 'KICK', syntax: '/kick #channel <nickname> [reason]', role: 'op', description: 'Removes a user from a channel (Channel Op required).', example: '/kick #enterprise BadUser Spamming' },
+  kickban: { command: 'KICKBAN', syntax: '/kb <nickname> [reason]', role: 'op', description: 'Sets channel ban (+b) and kicks the target user.', example: '/kb BadUser Trolling' },
+  kill: { command: 'KILL', syntax: '/kill <nickname> <reason>', role: 'oper', description: 'Terminates target user socket connection across the network.', example: '/kill BadUser Violation of network rules' },
+  kline: { command: 'KLINE', syntax: '/kline <mask/IP> [reason]', role: 'oper', description: 'Bans a hostmask or IP from connecting to the server.', example: '/kline BadUser!*@* Malicious behavior' },
+  wallops: { command: 'WALLOPS', syntax: '/wallops <message>', role: 'oper', description: 'Sends a network-wide broadcast notice to all IRC Operators.', example: '/wallops Scheduled server maintenance in 10 mins' },
+  locops: { command: 'LOCOPS', syntax: '/locops <message>', role: 'oper', description: 'Sends a local node broadcast notice to IRC Operators.', example: '/locops Local node memory check initiated' },
+  chatops: { command: 'CHATOPS', syntax: '/chatops <message>', role: 'oper', description: 'Sends a private chat message to all connected IRC Operators & Admins.', example: '/chatops Investigating high CPU load' },
+  chatadmin: { command: 'CHATADMIN', syntax: '/chatadmin <message>', role: 'admin', description: 'Sends a private chat message strictly to Server Administrators.', example: '/chatadmin Secret key rotation scheduled' },
+  rehash: { command: 'REHASH', syntax: '/rehash', role: 'admin', description: 'Reloads operator configuration files from disk.', example: '/rehash' },
+};
 
 export const App: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -571,6 +598,24 @@ export const App: React.FC = () => {
       // ERR_NOPRIVILEGES :server 481 nick :Permission Denied- You're not an IRC operator
       const errMsg = "* Permission denied: You are not an IRC operator";
       addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: errMsg, timestamp: time, isSystem: true });
+    } else if (line.includes(' 433 ')) {
+      // ERR_NICKNAMEINUSE :server 433 oldnick newnick :Nickname is already in use
+      const match = line.match(/ 433 [^ ]+ ([^ ]+)/);
+      const takenNick = match ? match[1] : nickRef.current;
+      const errMsg = `* Error: Nickname "${takenNick}" is already in use.`;
+      addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: errMsg, timestamp: time, isSystem: true });
+
+      setTimeout(() => {
+        const choice = window.prompt(`Nickname "${takenNick}" is already in use.\nPlease enter a different nickname:`);
+        if (choice && choice.trim()) {
+          const cleanChoice = choice.trim();
+          setNick(cleanChoice);
+          nickRef.current = cleanChoice;
+          if (wsRef.current) {
+            wsRef.current.send(`NICK ${cleanChoice}`);
+          }
+        }
+      }, 100);
     } else if (line.includes(' 464 ')) {
       // ERR_PASSWDMISMATCH :server 464 nick :Password incorrect
       const errMsg = "* Error: OPER password incorrect";
@@ -687,6 +732,15 @@ export const App: React.FC = () => {
   };
 
   const connectWebSocket = () => {
+    let activeNick = nickRef.current;
+    if (!activeNick || activeNick.trim() === '') {
+      const promptNick = window.prompt('Enter your desired IRC nickname before connecting:');
+      if (!promptNick || !promptNick.trim()) return;
+      activeNick = promptNick.trim();
+      setNick(activeNick);
+      nickRef.current = activeNick;
+    }
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     wsRef.current = new WebSocketService(
@@ -924,8 +978,40 @@ export const App: React.FC = () => {
       } else if (cmd === 'CLEAR') {
         setMessages((prev) => ({ ...prev, [activeTarget.toLowerCase()]: [] }));
       } else if (cmd === 'HELP') {
-        const helpMsg = '* Available commands: /join (#chan), /part (#chan), /nick (newnick), /msg (nick text), /notice (target text), /whois (nick), /topic (text), /kick (nick), /mode (args), /oper (user pass), /kline (mask), /rehash, /names, /list, /clear';
-        addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: helpMsg, timestamp: time, isSystem: true });
+        const subCmd = arg.trim().toLowerCase();
+        setActiveTarget('status');
+
+        if (subCmd && HELP_REGISTRY[subCmd]) {
+          const info = HELP_REGISTRY[subCmd];
+          if ((info.role === 'oper' && !isOper) || (info.role === 'admin' && !isServerAdmin)) {
+            addMessage('status', {
+              id: Math.random().toString(),
+              sender: 'System',
+              target: 'status',
+              text: `* Help Error: Command /${info.command.toLowerCase()} requires elevated ${info.role.toUpperCase()} privileges.`,
+              timestamp: time,
+              isSystem: true,
+            });
+            return;
+          }
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `================ HELP: /${info.command} ================`, timestamp: time, isSystem: true });
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `Syntax:      ${info.syntax}`, timestamp: time, isSystem: true });
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `Required:    ${info.role.toUpperCase()}`, timestamp: time, isSystem: true });
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `Description: ${info.description}`, timestamp: time, isSystem: true });
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `Example:     ${info.example}`, timestamp: time, isSystem: true });
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `=====================================================`, timestamp: time, isSystem: true });
+        } else {
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `================== COMMAND HELP MATRIX ==================`, timestamp: time, isSystem: true });
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `User Commands: /join, /part, /nick, /msg, /notice, /whois, /topic, /names, /list, /oper, /clear, /help`, timestamp: time, isSystem: true });
+          if (isOper || isServerAdmin) {
+            addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `IRCop Commands: /kill, /kline, /wallops, /locops, /chatops, /kickban`, timestamp: time, isSystem: true });
+          }
+          if (isServerAdmin) {
+            addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `Admin Commands: /chatadmin, /rehash`, timestamp: time, isSystem: true });
+          }
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `Type /help <command> (e.g. /help kline, /help join) for detailed syntax & examples.`, timestamp: time, isSystem: true });
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: `=====================================================`, timestamp: time, isSystem: true });
+        }
       } else {
         if (wsRef.current && isConnected) {
           wsRef.current.send(`${cmd}${arg ? ' ' + arg : ''}`);
