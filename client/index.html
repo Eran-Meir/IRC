@@ -3,20 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mIRC v7.78 Web Edition - Enterprise IRC Client</title>
+    <title>Enterprise IRC Web Client - mIRC Classic Edition</title>
     <style id="mirc-core-stylesheet">
       :root {
         --bg-primary: #ffffff;
-        --bg-secondary: #e4e4e4;
-        --bg-tertiary: #d4d0c8;
+        --bg-secondary: #f0f0f0;
+        --bg-tertiary: #e4e4e4;
         --accent-green: #008000;
         --accent-cyan: #000080;
         --accent-gold: #000000;
         --accent-magenta: #800080;
         --text-main: #000000;
-        --text-muted: #444444;
+        --text-muted: #555555;
         --text-notice: #008000;
-        --border-color: #a0a0a0;
+        --border-color: #c0c0c0;
         --font-family: 'Fira Code', 'Courier New', Consolas, monospace;
         --font-size: 14px;
         --dir: ltr;
@@ -71,12 +71,12 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        height: 34px;
+        height: 36px;
         background-color: var(--bg-tertiary);
         border-bottom: 1px solid var(--border-color);
-        padding: 0 10px;
+        padding: 0 12px;
         z-index: 100;
-        font-size: 12px;
+        font-size: 13px;
       }
 
       .menu-left {
@@ -88,7 +88,7 @@
       .logo-badge {
         font-weight: bold;
         color: var(--text-main);
-        padding-right: 10px;
+        padding-right: 12px;
         border-right: 1px solid var(--border-color);
       }
 
@@ -98,25 +98,27 @@
         color: var(--text-main);
         font-family: inherit;
         font-size: 12px;
-        padding: 2px 8px;
+        font-weight: bold;
+        padding: 4px 10px;
         cursor: pointer;
-        border-radius: 2px;
+        border-radius: 3px;
       }
 
       .theme-toggle-btn:hover, .menu-btn:hover {
         background: #ffffff;
         color: #000000;
+        border-color: #000000;
       }
 
       .main-layout {
         display: flex;
         flex: 1;
-        height: calc(100vh - 70px);
+        height: calc(100vh - 85px);
         overflow: hidden;
       }
 
       .sidebar {
-        width: 200px;
+        width: 210px;
         background-color: var(--bg-secondary);
         border-right: 1px solid var(--border-color);
         display: flex;
@@ -125,12 +127,13 @@
       }
 
       .sidebar-header {
-        padding: 6px 10px;
+        padding: 8px 12px;
         font-weight: bold;
         font-size: 11px;
         background-color: var(--bg-tertiary);
         border-bottom: 1px solid var(--border-color);
         color: var(--text-muted);
+        letter-spacing: 0.5px;
       }
 
       .sidebar-tree {
@@ -142,9 +145,11 @@
       .tree-item {
         display: flex;
         align-items: center;
-        padding: 4px 10px;
+        padding: 6px 12px;
         cursor: pointer;
         font-size: 13px;
+        border-radius: 2px;
+        margin: 1px 4px;
       }
 
       .tree-item:hover {
@@ -153,7 +158,7 @@
 
       .tree-item.active {
         background-color: #000080;
-        color: #ffffff;
+        color: #ffffff !important;
         font-weight: bold;
       }
 
@@ -167,25 +172,27 @@
       }
 
       .chat-header {
-        padding: 6px 12px;
+        padding: 8px 14px;
         background-color: var(--bg-secondary);
         border-bottom: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: space-between;
         font-size: 13px;
+        font-weight: bold;
       }
 
       .message-stream {
         flex: 1;
-        padding: 10px 14px;
+        padding: 12px 16px;
         overflow-y: auto;
         font-family: var(--font-family);
-        line-height: 1.4;
+        line-height: 1.5;
+        font-size: 14px;
       }
 
       .msg-line {
-        margin-bottom: 3px;
+        margin-bottom: 4px;
         word-break: break-word;
       }
 
@@ -209,8 +216,24 @@
         color: var(--text-main);
       }
 
+      /* Interactive Clickable Channel Links e.g. #kkk */
+      .channel-link {
+        color: #000080;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: underline;
+        padding: 0 2px;
+        border-radius: 2px;
+      }
+
+      .channel-link:hover {
+        color: #008000;
+        background-color: rgba(0, 0, 128, 0.1);
+      }
+
+      /* User List Sidebar — Pure Black Nicknames in Light Mode */
       .user-list {
-        width: 170px;
+        width: 180px;
         background-color: var(--bg-primary);
         border-left: 1px solid var(--border-color);
         display: flex;
@@ -218,12 +241,13 @@
       }
 
       .user-list-header {
-        padding: 6px 10px;
+        padding: 8px 12px;
         font-weight: bold;
         font-size: 11px;
         background-color: var(--bg-tertiary);
         border-bottom: 1px solid var(--border-color);
         color: var(--text-muted);
+        letter-spacing: 0.5px;
       }
 
       .user-items {
@@ -233,7 +257,7 @@
       }
 
       .user-item {
-        padding: 2px 8px;
+        padding: 4px 10px;
         font-size: 13px;
         cursor: pointer;
         display: flex;
@@ -245,21 +269,54 @@
       }
 
       .user-badge {
-        width: 14px;
+        width: 16px;
         font-weight: bold;
+        display: inline-block;
       }
 
-      .user-nick.op, .user-badge.op { color: #d4af37; font-weight: bold; }
-      .user-nick.protected, .user-badge.protected { color: #cc0044; font-weight: bold; }
-      .user-nick.voice, .user-badge.voice { color: #b8860b; font-weight: bold; }
-      .user-nick.normal { color: var(--text-main); }
+      .user-badge.op { color: #d4af37; }
+      .user-badge.protected { color: #cc0044; }
+      .user-badge.voice { color: #b8860b; }
 
-      .message-input-container {
+      /* Force User List Nicknames to Pure Black in Light Mode */
+      .user-nick,
+      .user-nick.op,
+      .user-nick.protected,
+      .user-nick.voice,
+      .user-nick.normal {
+        color: #000000 !important;
+        font-weight: normal;
+      }
+
+      [data-theme="mirc-dark"] .user-nick,
+      [data-theme="mirc-dark"] .user-nick.normal {
+        color: #e0e6ed !important;
+      }
+
+      /* Bottom Message Input Bar — Large Crisp Text */
+      .message-input-bar, .message-input-container {
         display: flex;
-        padding: 6px;
+        padding: 8px 12px;
         background-color: var(--bg-tertiary);
         border-top: 1px solid var(--border-color);
-        gap: 6px;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .input-form {
+        display: flex;
+        flex: 1;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .target-pill {
+        font-weight: bold;
+        font-size: 13px;
+        padding: 6px 10px;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
       }
 
       .chat-input {
@@ -267,19 +324,31 @@
         background-color: var(--bg-primary);
         color: var(--text-main);
         border: 1px solid var(--border-color);
-        padding: 4px 8px;
+        border-radius: 4px;
+        padding: 8px 12px;
         font-family: var(--font-family);
-        font-size: 14px;
+        font-size: 16px !important;
+        line-height: 1.4;
         outline: none;
+        min-height: 42px;
+        resize: none;
       }
 
       .send-btn {
         background-color: var(--bg-secondary);
         color: var(--text-main);
         border: 1px solid var(--border-color);
-        padding: 4px 12px;
+        padding: 8px 18px;
+        border-radius: 4px;
         cursor: pointer;
         font-weight: bold;
+        font-size: 14px;
+        min-height: 42px;
+      }
+
+      .send-btn:hover {
+        background-color: #000080;
+        color: #ffffff;
       }
 
       .modal-overlay {
@@ -299,9 +368,9 @@
         background-color: var(--bg-secondary);
         color: var(--text-main);
         border: 1px solid var(--border-color);
-        border-radius: 4px;
+        border-radius: 6px;
         width: 90%;
-        max-width: 520px;
+        max-width: 540px;
         overflow: hidden;
         z-index: 10000;
       }
@@ -310,17 +379,17 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 14px;
+        padding: 12px 16px;
         background-color: var(--bg-tertiary);
         border-bottom: 1px solid var(--border-color);
       }
 
-      .modal-body { padding: 14px; }
-      .modal-footer { padding: 8px 14px; background-color: var(--bg-tertiary); display: flex; justify-content: flex-end; }
-      .close-btn { background: none; border: none; font-size: 18px; cursor: pointer; }
-      .secondary-btn { padding: 4px 12px; border: 1px solid var(--border-color); cursor: pointer; }
-      .add-ban-btn { background: #008000; color: #fff; border: none; padding: 4px 12px; cursor: pointer; }
-      .ban-input { width: 100%; padding: 6px; border: 1px solid var(--border-color); margin-bottom: 8px; }
+      .modal-body { padding: 16px; }
+      .modal-footer { padding: 10px 16px; background-color: var(--bg-tertiary); display: flex; justify-content: flex-end; }
+      .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; }
+      .secondary-btn { padding: 6px 14px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; }
+      .add-ban-btn { background: #008000; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; }
+      .ban-input { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 10px; font-size: 14px; }
     </style>
   </head>
   <body>

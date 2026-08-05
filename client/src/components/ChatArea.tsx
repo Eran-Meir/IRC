@@ -33,8 +33,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           <span
             key={i}
             className="channel-link"
-            title={`Double-click to join ${part}`}
-            onDoubleClick={(e) => {
+            title={`Click to join ${part}`}
+            onClick={(e) => {
               e.stopPropagation();
               if (onJoinChannel) {
                 onJoinChannel(part);
