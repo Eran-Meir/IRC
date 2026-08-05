@@ -18,8 +18,8 @@ interface ContextMenuState {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   nick,
-  channels,
-  activeTarget,
+  channels = [],
+  activeTarget = 'status',
   onSelectTarget,
   onPartChannel,
   onOpenBanList,
@@ -42,6 +42,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     });
   };
 
+  const safeChannels = Array.isArray(channels) ? channels : [];
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -56,16 +58,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="sidebar-tree">
         {/* Status / Console Item */}
         <div
-          className={`tree-item ${activeTarget === 'Status' ? 'active' : ''}`}
-          onClick={() => onSelectTarget('Status')}
+          className={`tree-item ${activeTarget.toLowerCase() === 'status' ? 'active' : ''}`}
+          onClick={() => onSelectTarget('status')}
         >
           <span className="icon">🖥️</span> Status Window
           <span className="shortcut-badge">Alt+0</span>
         </div>
 
-        <div className="category-title">CHANNELS ({channels.length})</div>
+        <div className="category-title">CHANNELS ({safeChannels.length})</div>
 
-        {channels.map((ch, idx) => (
+        {safeChannels.map((ch, idx) => (
           <div
             key={ch.name}
             className={`tree-item ${activeTarget.toLowerCase() === ch.name.toLowerCase() ? 'active' : ''}`}
@@ -91,32 +93,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ))}
       </div>
 
-      {/* Right-click Context Menu */}
+      {/* Dynamic Right-Click Context Menu for Channels */}
       {contextMenu && (
         <div
-          className="context-menu"
+          className="user-context-menu"
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="context-menu-header">{contextMenu.channelName}</div>
-          <button
-            className="context-menu-item"
+          <div className="context-header">{contextMenu.channelName}</div>
+          <div
+            className="context-item"
             onClick={() => {
               onOpenBanList(contextMenu.channelName);
               setContextMenu(null);
             }}
           >
-            🛡️ View Ban List
-          </button>
-          <button
-            className="context-menu-item danger"
+            🛡️ View Ban List (+b)
+          </div>
+          <div
+            className="context-item danger"
             onClick={() => {
               onPartChannel(contextMenu.channelName);
               setContextMenu(null);
             }}
           >
-            🚪 Leave Channel
-          </button>
+            ❌ Part Channel (/part)
+          </div>
         </div>
       )}
     </aside>
