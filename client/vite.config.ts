@@ -3,9 +3,12 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: './',
+  base: '/',
+  build: {
+    cssCodeSplit: false,
+  },
   server: {
     port: 3000,
-    host: true
-  }
+    host: true,
+  },
 });
