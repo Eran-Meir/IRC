@@ -58,8 +58,8 @@ export const App: React.FC = () => {
   ]);
 
   const [messages, setMessages] = useState<Record<string, Message[]>>({
-    Status: [
-      { id: '1', sender: 'System', target: 'Status', text: 'Welcome to Enterprise IRC Web Client', timestamp: new Date().toLocaleTimeString(), isSystem: true },
+    status: [
+      { id: '1', sender: 'System', target: 'status', text: 'Welcome to Enterprise IRC Web Client', timestamp: new Date().toLocaleTimeString(), isSystem: true },
     ],
     '#enterprise': [
       { id: '2', sender: 'System', target: '#enterprise', text: 'Now talking on #enterprise', timestamp: new Date().toLocaleTimeString(), isSystem: true },
@@ -79,6 +79,11 @@ export const App: React.FC = () => {
   useEffect(() => {
     activeTargetRef.current = activeTarget;
   }, [activeTarget]);
+
+  useEffect(() => {
+    connectWebSocket();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Apply dataset attributes to root for CSS theme/font toggling
