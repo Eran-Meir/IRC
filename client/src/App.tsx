@@ -1170,6 +1170,7 @@ export const App: React.FC = () => {
           <UserList
             users={currentChannel.users}
             activeChannel={activeTarget}
+            isOper={isOper}
             onQueryUser={handleQueryUser}
             onSendCommand={handleSendMessage}
           />

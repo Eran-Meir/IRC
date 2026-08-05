@@ -51,9 +51,36 @@ metadata:
   namespace: default
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: traefik
+  tls:
+  - hosts:
+    - irc.82-70-211-102.sslip.io
+    - 82-70-211-102.sslip.io
+    secretName: ircd-web-client-tls
   rules:
+  - host: irc.82-70-211-102.sslip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ircd-web-client
+            port:
+              number: 80
+  - host: 82-70-211-102.sslip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ircd-web-client
+            port:
+              number: 80
   - http:
       paths:
       - path: /test

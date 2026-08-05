@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 interface UserListProps {
   users: string[];
   activeChannel: string;
+  isOper?: boolean;
   onQueryUser?: (nick: string) => void;
   onSendCommand?: (cmd: string) => void;
 }
@@ -17,7 +18,7 @@ interface ContextMenuState {
 
 interface ReasonModalState {
   visible: boolean;
-  type: 'KICK' | 'KICKBAN';
+  type: 'KICK' | 'KICKBAN' | 'KILL' | 'KLINE';
   nick: string;
   reason: string;
 }
@@ -25,6 +26,7 @@ interface ReasonModalState {
 export const UserList: React.FC<UserListProps> = ({
   users,
   activeChannel,
+  isOper = false,
   onQueryUser,
   onSendCommand,
 }) => {
@@ -90,8 +92,8 @@ export const UserList: React.FC<UserListProps> = ({
 
   const handleContextMenu = (e: React.MouseEvent, nick: string, symbol: string) => {
     e.preventDefault();
-    const menuWidth = 190;
-    const menuHeight = 350;
+    const menuWidth = 220;
+    const menuHeight = 420;
     const x = e.clientX + menuWidth > window.innerWidth ? window.innerWidth - menuWidth - 10 : e.clientX;
     const y = e.clientY + menuHeight > window.innerHeight ? window.innerHeight - menuHeight - 10 : e.clientY;
     setContextMenu({
@@ -164,6 +166,22 @@ export const UserList: React.FC<UserListProps> = ({
           reason: 'Banned from channel',
         });
         break;
+      case 'KILL':
+        setReasonModal({
+          visible: true,
+          type: 'KILL',
+          nick,
+          reason: 'Violation of network rules',
+        });
+        break;
+      case 'KLINE':
+        setReasonModal({
+          visible: true,
+          type: 'KLINE',
+          nick,
+          reason: 'Network K-Line ban',
+        });
+        break;
       default:
         break;
     }
@@ -174,13 +192,23 @@ export const UserList: React.FC<UserListProps> = ({
     if (!onSendCommand) return;
 
     const { type, nick, reason } = reasonModal;
-    const finalReason = reason.trim() || (type === 'KICK' ? 'Kicked by operator' : 'Banned from channel');
+    const defaultReasons: Record<string, string> = {
+      KICK: 'Kicked by operator',
+      KICKBAN: 'Banned from channel',
+      KILL: 'Violation of network rules',
+      KLINE: 'Network K-Line ban',
+    };
+    const finalReason = reason.trim() || defaultReasons[type] || 'Operator Action';
 
     if (type === 'KICK') {
       onSendCommand(`/kick ${activeChannel} ${nick} ${finalReason}`);
     } else if (type === 'KICKBAN') {
       onSendCommand(`/mode ${activeChannel} +b ${nick}!*@*`);
       onSendCommand(`/kick ${activeChannel} ${nick} ${finalReason}`);
+    } else if (type === 'KILL') {
+      onSendCommand(`/kill ${nick} ${finalReason}`);
+    } else if (type === 'KLINE') {
+      onSendCommand(`/kline ${nick}!*@* ${finalReason}`);
     }
 
     setReasonModal((prev) => ({ ...prev, visible: false }));
@@ -272,21 +300,37 @@ export const UserList: React.FC<UserListProps> = ({
               </div>
             </>
           )}
+
+          {/* Extended Operator & Administrator Commands */}
+          {isOper && (
+            <>
+              <div className="context-divider" />
+              <div className="context-header" style={{ color: '#d9534f', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                👑 Operator Actions
+              </div>
+              <div className="context-item danger" onClick={() => executeAction('KILL')}>
+                ⚡ KILL User (Socket Drop)
+              </div>
+              <div className="context-item danger" onClick={() => executeAction('KLINE')}>
+                ⛔ K-LINE User (Ban Host/IP)
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* Kick / KickBan Reason Prompt Modal */}
+      {/* Kick / KickBan / Kill / K-Line Reason Prompt Modal */}
       {reasonModal.visible && (
         <div className="modal-overlay" onClick={() => setReasonModal((prev) => ({ ...prev, visible: false }))}>
           <div className="modal-content ban-list-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>⚡ {reasonModal.type === 'KICK' ? 'Kick' : 'KickBan'} User: {reasonModal.nick}</h3>
+              <h3>⚡ {reasonModal.type} User: {reasonModal.nick}</h3>
               <button className="close-btn" onClick={() => setReasonModal((prev) => ({ ...prev, visible: false }))}>×</button>
             </div>
             <form onSubmit={handleReasonSubmit}>
               <div className="modal-body">
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-color)', marginBottom: '8px', display: 'block' }}>
-                  Reason for {reasonModal.type === 'KICK' ? 'kick' : 'kickban'}:
+                  Reason for {reasonModal.type}:
                 </label>
                 <input
                   type="text"
@@ -302,7 +346,7 @@ export const UserList: React.FC<UserListProps> = ({
                   Cancel
                 </button>
                 <button type="submit" className="add-ban-btn" style={{ background: '#d9534f' }}>
-                  {reasonModal.type === 'KICK' ? 'Kick User' : 'KickBan User'}
+                  Execute {reasonModal.type}
                 </button>
               </div>
             </form>
