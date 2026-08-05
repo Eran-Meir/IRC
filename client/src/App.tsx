@@ -583,9 +583,32 @@ export const App: React.FC = () => {
       if (match) {
         const [, targetNick, operRoleText] = match;
         const msgText = `* ${targetNick} ${operRoleText}`;
-        addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: msgText, timestamp: time, isSystem: true });
+        addMessage(activeTarget.toLowerCase(), { id: Math.random().toString(), sender: 'System', target: activeTarget.toLowerCase(), text: msgText, timestamp: time, isWhois: true });
         if (activeTarget.toLowerCase() !== 'status') {
-          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: msgText, timestamp: time, isSystem: true });
+          addMessage('status', { id: Math.random().toString(), sender: 'System', target: 'status', text: msgText, timestamp: time, isWhois: true });
+        }
+      }
+    } else if (line.match(/ (311|312|318|319) /)) {
+      // RPL_WHOISUSER, RPL_WHOISSERVER, RPL_ENDOFWHOIS, RPL_WHOISCHANNELS
+      const cleanedLine = line.replace(/^:[^ ]+ \d{3} [^ ]+ :?/, '').replace(/^:[^ ]+ NOTICE [^ ]+ :?/, '');
+      if (cleanedLine.trim()) {
+        addMessage(activeTarget.toLowerCase(), {
+          id: Math.random().toString(),
+          sender: 'System',
+          target: activeTarget.toLowerCase(),
+          text: cleanedLine,
+          timestamp: time,
+          isWhois: true,
+        });
+        if (activeTarget.toLowerCase() !== 'status') {
+          addMessage('status', {
+            id: Math.random().toString(),
+            sender: 'System',
+            target: 'status',
+            text: cleanedLine,
+            timestamp: time,
+            isWhois: true,
+          });
         }
       }
     } else if (line.includes(' 367 ')) {
@@ -610,7 +633,7 @@ export const App: React.FC = () => {
       // RPL_ENDOFNAMES :server 366 nick #channel :End of /NAMES list.
       return;
     } else {
-      // Cleanly format system banners, WHOIS, LIST, and MOTD numerics
+      // Cleanly format system banners, LIST, and MOTD numerics
       const cleanedLine = line.replace(/^:[^ ]+ \d{3} [^ ]+ :?/, '').replace(/^:[^ ]+ NOTICE [^ ]+ :?/, '');
       if (cleanedLine.trim()) {
         addMessage(activeTarget.toLowerCase(), {
@@ -705,8 +728,15 @@ export const App: React.FC = () => {
     if (processedText.startsWith('/')) {
       // Handle slash commands
       const parts = processedText.slice(1).split(' ');
-      const cmd = parts[0].toUpperCase();
+      let cmd = parts[0].toUpperCase();
       const arg = parts.slice(1).join(' ');
+
+      if (cmd === 'MESSAGE') cmd = 'MSG';
+      else if (cmd === 'Q') cmd = 'QUERY';
+      else if (cmd === 'J') cmd = 'JOIN';
+      else if (cmd === 'P') cmd = 'PART';
+      else if (cmd === 'W') cmd = 'WHOIS';
+      else if (cmd === 'KB') cmd = 'KICKBAN';
 
       if ((cmd === 'JOIN' || cmd === 'J') && arg) {
         const trimmed = arg.trim();

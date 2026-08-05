@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 interface BanListModalProps {
   channel: string;
-  bans: string[];
+  bans?: string[];
   isOp: boolean;
   onClose: () => void;
   onAddBan: (channel: string, mask: string) => void;
@@ -12,7 +12,7 @@ interface BanListModalProps {
 
 export const BanListModal: React.FC<BanListModalProps> = ({
   channel,
-  bans,
+  bans = [],
   isOp,
   onClose,
   onAddBan,
@@ -20,6 +20,7 @@ export const BanListModal: React.FC<BanListModalProps> = ({
   onRemoveAllBans,
 }) => {
   const [newMask, setNewMask] = useState('');
+  const activeBans = Array.isArray(bans) ? bans : [];
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +58,7 @@ export const BanListModal: React.FC<BanListModalProps> = ({
                   + Add Ban
                 </button>
               </form>
-              {bans.length > 0 && onRemoveAllBans && (
+              {activeBans.length > 0 && onRemoveAllBans && (
                 <button
                   type="button"
                   className="remove-ban-btn"
@@ -72,11 +73,11 @@ export const BanListModal: React.FC<BanListModalProps> = ({
           )}
 
           <div className="ban-list-container">
-            {bans.length === 0 ? (
+            {activeBans.length === 0 ? (
               <div className="empty-bans">No active bans in {channel}.</div>
             ) : (
               <ul className="ban-items-list">
-                {bans.map((mask) => (
+                {activeBans.map((mask) => (
                   <li key={mask} className="ban-item">
                     <span className="ban-mask">{mask}</span>
                     {isOp && (

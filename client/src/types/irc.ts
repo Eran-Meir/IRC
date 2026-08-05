@@ -6,6 +6,7 @@ export interface Message {
   timestamp: string;
   isSystem?: boolean;
   isAction?: boolean;
+  isWhois?: boolean;
   isRtl?: boolean;
 }
 

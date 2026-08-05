@@ -49,6 +49,10 @@ func (c *Client) ProcessCommand(msg *parser.Message) {
 		c.handleOper(msg)
 	case "KLINE":
 		c.handleKline(msg)
+	case "KILL":
+		c.handleKill(msg)
+	case "WALLOPS", "LOCOPS":
+		c.handleWallops(msg)
 	case "REHASH":
 		c.handleRehash(msg)
 	case "LIST":
@@ -722,4 +726,63 @@ func (c *Client) handleRehash(msg *parser.Message) {
 	_ = auth.GetOperManager().Reload()
 	// 382 RPL_REHASHING
 	c.SendRaw([]byte(fmt.Sprintf(":%s 382 %s opers.json :Rehashing server configuration\r\n", ServerName, c.Nick)))
+}
+
+func (c *Client) handleKill(msg *parser.Message) {
+	if !c.IsOper() {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
+		return
+	}
+
+	if len(msg.Params) < 1 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s KILL :Not enough parameters\r\n", ServerName, c.Nick)))
+		return
+	}
+
+	targetNick := msg.Params[0]
+	reason := "Killed by operator"
+	if len(msg.Params) > 1 {
+		reason = msg.Params[1]
+	}
+
+	mgr := GetManager()
+	targetClient := mgr.GetClientByNick(targetNick)
+	if targetClient == nil {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 401 %s %s :No such nick/channel\r\n", ServerName, c.Nick, targetNick)))
+		return
+	}
+
+	killMsg := fmt.Sprintf("ERROR :Closing Link: %s (Killed by %s (%s))\r\n", targetClient.Prefix(), c.Nick, reason)
+	targetClient.SendRaw([]byte(killMsg))
+
+	quitLine := fmt.Sprintf(":%s QUIT :Killed (%s (%s))", targetClient.Prefix(), c.Nick, reason)
+	mgr.BroadcastToSharedChannels(targetClient, quitLine)
+
+	if targetClient.conn != nil {
+		targetClient.conn.Close()
+	}
+	mgr.RemoveClient(targetClient)
+}
+
+func (c *Client) handleWallops(msg *parser.Message) {
+	if !c.IsOper() {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
+		return
+	}
+
+	if len(msg.Params) < 1 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s %s :Not enough parameters\r\n", ServerName, c.Nick, msg.Command)))
+		return
+	}
+
+	wallMsg := msg.Params[0]
+	noticeLine := fmt.Sprintf(":%s NOTICE * :*** %s from %s: %s\r\n", ServerName, strings.ToUpper(msg.Command), c.Nick, wallMsg)
+
+	mgr := GetManager()
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+
+	for _, client := range mgr.clients {
+		client.SendRaw([]byte(noticeLine))
+	}
 }
