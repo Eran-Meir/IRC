@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"github.com/Eran-Meir/IRC/services/ircd/internal/config"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/logger"

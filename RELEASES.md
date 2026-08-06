@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.46-alpha (RFC Reply Constants Package, Rule 1 Magic Number Elimination & Concurrency Race Fix)
+* **Architecture & Code Quality (Go Daemon)**
+  * **RFC Reply Numerics Constant Registry**: Created [services/ircd/internal/replies/numerics.go](file:///c:/Users/Eran/IRC/services/ircd/internal/replies/numerics.go) defining named constants for all RFC 1459/2812 numerics (`RPL_WHOISUSER`, `RPL_NAMREPLY`, `ERR_NOPRIVILEGES`, `ERR_NOSUCHNICK`, etc.).
+  * **Rule 1 Refactoring & Kline Fix**: Refactored [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go) to replace all raw string numeric literals with `replies` constants. Fixed `handleKline` logic to target specific nicks/hostmasks rather than severing all server connections.
+  * **Concurrency Data Race Fix**: Acquired `mgr.mu.RLock()` in `isAnyChannelOp()` in [router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L625) to eliminate concurrent map read races on `mgr.channels`.
+  * **Compiler Import Fix**: Added missing `"strings"` package import to [services/ircd/cmd/ircd/main.go](file:///c:/Users/Eran/IRC/services/ircd/cmd/ircd/main.go#L5).
+
 ## v0.5.45-alpha ($me Macro Translation, Sender Click & Double-Click PM, Duplicate Message Elimination & Redesigned Ban Modal)
 * **Features & Bug Fixes (Go Daemon & React Client UI)**
   * **$me Macro Translation**: Implemented `$me` macro translation in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L836). Any occurrence of `$me` in user input or commands (e.g. `/whois $me`, `hello $me`) automatically translates to the current user's nickname.

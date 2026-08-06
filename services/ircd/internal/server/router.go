@@ -7,6 +7,7 @@ import (
 	"github.com/Eran-Meir/IRC/services/ircd/internal/auth"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/logger"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/parser"
+	"github.com/Eran-Meir/IRC/services/ircd/internal/replies"
 	"github.com/Eran-Meir/IRC/services/ircd/internal/state"
 )
 
@@ -595,7 +596,7 @@ func (c *Client) handleWhois(msg *parser.Message) {
 	}
 
 	// 311 RPL_WHOISUSER: <nick> <user> <host> * :<realname>
-	c.SendRaw([]byte(fmt.Sprintf(":%s 311 %s %s %s %s * :%s\r\n", ServerName, c.Nick, targetClient.Nick, targetClient.User, targetClient.Host(), targetClient.RealName)))
+	c.SendRaw([]byte(fmt.Sprintf(":%s %s %s %s %s %s * :%s\r\n", ServerName, replies.RPL_WHOISUSER, c.Nick, targetClient.Nick, targetClient.User, targetClient.Host(), targetClient.RealName)))
 
 	// 319 RPL_WHOISCHANNELS: <nick> :<channels>
 	targetClient.mu.RLock()
@@ -605,25 +606,28 @@ func (c *Client) handleWhois(msg *parser.Message) {
 	}
 	targetClient.mu.RUnlock()
 	if len(chList) > 0 {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 319 %s %s :%s\r\n", ServerName, c.Nick, targetClient.Nick, strings.Join(chList, " "))))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s %s :%s\r\n", ServerName, replies.RPL_WHOISCHANNELS, c.Nick, targetClient.Nick, strings.Join(chList, " "))))
 	}
 
 	// 312 RPL_WHOISSERVER: <nick> <server> :<server info>
-	c.SendRaw([]byte(fmt.Sprintf(":%s 312 %s %s %s :Enterprise Go-IRCd Server\r\n", ServerName, c.Nick, targetClient.Nick, ServerName)))
+	c.SendRaw([]byte(fmt.Sprintf(":%s %s %s %s %s :Enterprise Go-IRCd Server\r\n", ServerName, replies.RPL_WHOISSERVER, c.Nick, targetClient.Nick, ServerName)))
 
 	// 313 RPL_WHOISOPERATOR - Only sent if user authenticated via /oper
 	if targetClient.IsServerAdmin() {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 313 %s %s :is an IRC Operator - Server Administrator\r\n", ServerName, c.Nick, targetClient.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s %s :is an IRC Operator - Server Administrator\r\n", ServerName, replies.RPL_WHOISOPERATOR, c.Nick, targetClient.Nick)))
 	} else if targetClient.IsOper() {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 313 %s %s :is an IRC Operator\r\n", ServerName, c.Nick, targetClient.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s %s :is an IRC Operator\r\n", ServerName, replies.RPL_WHOISOPERATOR, c.Nick, targetClient.Nick)))
 	}
 
 	// 318 RPL_ENDOFWHOIS: <nick> :End of /WHOIS list.
-	c.SendRaw([]byte(fmt.Sprintf(":%s 318 %s %s :End of /WHOIS list.\r\n", ServerName, c.Nick, targetClient.Nick)))
+	c.SendRaw([]byte(fmt.Sprintf(":%s %s %s %s :End of /WHOIS list.\r\n", ServerName, replies.RPL_ENDOFWHOIS, c.Nick, targetClient.Nick)))
 }
 
 func isAnyChannelOp(client *Client) bool {
 	mgr := GetManager()
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+
 	client.mu.RLock()
 	defer client.mu.RUnlock()
 
@@ -671,7 +675,7 @@ func (c *Client) handleList(msg *parser.Message) {
 
 func (c *Client) handleOper(msg *parser.Message) {
 	if len(msg.Params) < 2 {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s OPER :Not enough parameters\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s OPER :Not enough parameters\r\n", ServerName, replies.ERR_NEEDMOREPARAMS, c.Nick)))
 		return
 	}
 	user := msg.Params[0]
@@ -687,7 +691,7 @@ func (c *Client) handleOper(msg *parser.Message) {
 		if role == "server_admin" {
 			roleName = "a Server Administrator"
 		}
-		c.SendRaw([]byte(fmt.Sprintf(":%s 381 %s :You are now %s\r\n", ServerName, c.Nick, roleName)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s :You are now %s\r\n", ServerName, replies.RPL_YOUREOPER, c.Nick, roleName)))
 
 		// Broadcast oper notice to all operators
 		noticeLine := fmt.Sprintf(":%s NOTICE * :*** Notice: %s is now %s\r\n", ServerName, c.Nick, roleName)
@@ -701,56 +705,59 @@ func (c *Client) handleOper(msg *parser.Message) {
 		mgr.mu.RUnlock()
 	} else {
 		// 464 ERR_PASSWDMISMATCH
-		c.SendRaw([]byte(fmt.Sprintf(":%s 464 %s :Password incorrect\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s :Password incorrect\r\n", ServerName, replies.ERR_PASSWDMISMATCH, c.Nick)))
 	}
 }
 
 func (c *Client) handleKline(msg *parser.Message) {
 	if !c.IsOper() {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s :Permission Denied- You're not an IRC operator\r\n", ServerName, replies.ERR_NOPRIVILEGES, c.Nick)))
 		return
 	}
 
-	reason := "K-lined"
-	if len(msg.Params) > 2 {
-		reason = msg.Params[2]
-	} else if len(msg.Params) > 1 {
+	if len(msg.Params) < 1 {
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s KLINE :Not enough parameters\r\n", ServerName, replies.ERR_NEEDMOREPARAMS, c.Nick)))
+		return
+	}
+
+	target := msg.Params[0]
+	reason := "K-lined by operator"
+	if len(msg.Params) > 1 {
 		reason = msg.Params[1]
 	}
 
 	mgr := GetManager()
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
-
-	for _, client := range mgr.clients {
-		if client != c {
-			client.SendRaw([]byte(fmt.Sprintf("ERROR :Closing Link: %s (K-lined: %s)\r\n", client.Prefix(), reason)))
-			if client.conn != nil {
-				client.conn.Close()
-			}
+	if targetClient := mgr.GetClientByNick(target); targetClient != nil {
+		targetClient.SendRaw([]byte(fmt.Sprintf("ERROR :Closing Link: %s (K-lined: %s)\r\n", targetClient.Prefix(), reason)))
+		targetClient.broadcastQuit(fmt.Sprintf(":%s QUIT :K-lined (%s)", targetClient.Prefix(), reason))
+		mgr.RemoveClient(targetClient)
+		if targetClient.conn != nil {
+			targetClient.conn.Close()
 		}
+	} else {
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s %s :No such nick/channel\r\n", ServerName, replies.ERR_NOSUCHNICK, c.Nick, target)))
 	}
 }
 
 func (c *Client) handleRehash(msg *parser.Message) {
 	if !c.IsOper() {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s :Permission Denied- You're not an IRC operator\r\n", ServerName, replies.ERR_NOPRIVILEGES, c.Nick)))
 		return
 	}
 
 	_ = auth.GetOperManager().Reload()
 	// 382 RPL_REHASHING
-	c.SendRaw([]byte(fmt.Sprintf(":%s 382 %s opers.json :Rehashing server configuration\r\n", ServerName, c.Nick)))
+	c.SendRaw([]byte(fmt.Sprintf(":%s %s %s opers.json :Rehashing server configuration\r\n", ServerName, replies.RPL_REHASHING, c.Nick)))
 }
 
 func (c *Client) handleKill(msg *parser.Message) {
 	if !c.IsOper() {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s :Permission Denied- You're not an IRC operator\r\n", ServerName, replies.ERR_NOPRIVILEGES, c.Nick)))
 		return
 	}
 
 	if len(msg.Params) < 1 {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s KILL :Not enough parameters\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s KILL :Not enough parameters\r\n", ServerName, replies.ERR_NEEDMOREPARAMS, c.Nick)))
 		return
 	}
 
@@ -763,7 +770,7 @@ func (c *Client) handleKill(msg *parser.Message) {
 	mgr := GetManager()
 	targetClient := mgr.GetClientByNick(targetNick)
 	if targetClient == nil {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 401 %s %s :No such nick/channel\r\n", ServerName, c.Nick, targetNick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s %s :No such nick/channel\r\n", ServerName, replies.ERR_NOSUCHNICK, c.Nick, targetNick)))
 		return
 	}
 
@@ -773,6 +780,7 @@ func (c *Client) handleKill(msg *parser.Message) {
 	quitLine := fmt.Sprintf(":%s QUIT :Killed (%s (%s))", targetClient.Prefix(), c.Nick, reason)
 	targetClient.broadcastQuit(quitLine)
 
+	mgr.RemoveClient(targetClient)
 	if targetClient.conn != nil {
 		targetClient.conn.Close()
 	}
@@ -780,12 +788,12 @@ func (c *Client) handleKill(msg *parser.Message) {
 
 func (c *Client) handleWallops(msg *parser.Message) {
 	if !c.IsOper() {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s :Permission Denied- You're not an IRC operator\r\n", ServerName, replies.ERR_NOPRIVILEGES, c.Nick)))
 		return
 	}
 
 	if len(msg.Params) < 1 {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s %s :Not enough parameters\r\n", ServerName, c.Nick, msg.Command)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s %s :Not enough parameters\r\n", ServerName, replies.ERR_NEEDMOREPARAMS, c.Nick, msg.Command)))
 		return
 	}
 
@@ -803,12 +811,12 @@ func (c *Client) handleWallops(msg *parser.Message) {
 
 func (c *Client) handleChatOps(msg *parser.Message) {
 	if !c.IsOper() {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You're not an IRC operator\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s :Permission Denied- You're not an IRC operator\r\n", ServerName, replies.ERR_NOPRIVILEGES, c.Nick)))
 		return
 	}
 
 	if len(msg.Params) < 1 {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s CHATOPS :Not enough parameters\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s CHATOPS :Not enough parameters\r\n", ServerName, replies.ERR_NEEDMOREPARAMS, c.Nick)))
 		return
 	}
 
@@ -828,12 +836,12 @@ func (c *Client) handleChatOps(msg *parser.Message) {
 
 func (c *Client) handleChatAdmin(msg *parser.Message) {
 	if !c.IsServerAdmin() {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 481 %s :Permission Denied- You are not a Server Administrator\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s :Permission Denied- You are not a Server Administrator\r\n", ServerName, replies.ERR_NOPRIVILEGES, c.Nick)))
 		return
 	}
 
 	if len(msg.Params) < 1 {
-		c.SendRaw([]byte(fmt.Sprintf(":%s 461 %s CHATADMIN :Not enough parameters\r\n", ServerName, c.Nick)))
+		c.SendRaw([]byte(fmt.Sprintf(":%s %s %s CHATADMIN :Not enough parameters\r\n", ServerName, replies.ERR_NEEDMOREPARAMS, c.Nick)))
 		return
 	}
 
