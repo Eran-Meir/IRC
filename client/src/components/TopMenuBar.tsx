@@ -55,48 +55,6 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
           {preferences.theme === 'classic-light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
         </button>
 
-        {/* Quick Font Size Dropdown Button */}
-        <div className="menu-item">
-          <button className="menu-btn font-size-btn" onClick={() => toggleDropdown('fontsize')}>
-            Font: {preferences.fontSize || '16px'} ▾
-          </button>
-          {activeDropdown === 'fontsize' && (
-            <div className="dropdown-menu">
-              <div className="dropdown-section-title">Select Font Size</div>
-              <button
-                className={preferences.fontSize === '12px' || preferences.fontSize === 'small' ? 'active' : ''}
-                onClick={() => { onUpdatePreferences({ fontSize: '12px' }); closeDropdowns(); }}
-              >
-                12px (Small)
-              </button>
-              <button
-                className={preferences.fontSize === '14px' || preferences.fontSize === 'medium' ? 'active' : ''}
-                onClick={() => { onUpdatePreferences({ fontSize: '14px' }); closeDropdowns(); }}
-              >
-                14px (Medium)
-              </button>
-              <button
-                className={preferences.fontSize === '16px' || preferences.fontSize === 'large' ? 'active' : ''}
-                onClick={() => { onUpdatePreferences({ fontSize: '16px' }); closeDropdowns(); }}
-              >
-                16px (Default)
-              </button>
-              <button
-                className={preferences.fontSize === '18px' ? 'active' : ''}
-                onClick={() => { onUpdatePreferences({ fontSize: '18px' }); closeDropdowns(); }}
-              >
-                18px (Large)
-              </button>
-              <button
-                className={preferences.fontSize === '20px' ? 'active' : ''}
-                onClick={() => { onUpdatePreferences({ fontSize: '20px' }); closeDropdowns(); }}
-              >
-                20px (Extra Large)
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* File Menu */}
         <div className="menu-item">
           <button className="menu-btn" onClick={() => toggleDropdown('file')}>
@@ -123,22 +81,34 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
             <div className="dropdown-menu">
               <div className="dropdown-section-title">Font Size</div>
               <button
-                className={preferences.fontSize === 'small' ? 'active' : ''}
-                onClick={() => { onUpdatePreferences({ fontSize: 'small' }); closeDropdowns(); }}
+                className={preferences.fontSize === '12px' ? 'active' : ''}
+                onClick={() => { onUpdatePreferences({ fontSize: '12px' }); closeDropdowns(); }}
               >
-                Small (12px)
+                12px (Small)
               </button>
               <button
-                className={preferences.fontSize === 'medium' ? 'active' : ''}
-                onClick={() => { onUpdatePreferences({ fontSize: 'medium' }); closeDropdowns(); }}
+                className={preferences.fontSize === '14px' ? 'active' : ''}
+                onClick={() => { onUpdatePreferences({ fontSize: '14px' }); closeDropdowns(); }}
               >
-                Medium (14px - Default)
+                14px (Medium)
               </button>
               <button
-                className={preferences.fontSize === 'large' ? 'active' : ''}
-                onClick={() => { onUpdatePreferences({ fontSize: 'large' }); closeDropdowns(); }}
+                className={preferences.fontSize === '16px' || !preferences.fontSize ? 'active' : ''}
+                onClick={() => { onUpdatePreferences({ fontSize: '16px' }); closeDropdowns(); }}
               >
-                Large (16px)
+                16px (Default)
+              </button>
+              <button
+                className={preferences.fontSize === '18px' ? 'active' : ''}
+                onClick={() => { onUpdatePreferences({ fontSize: '18px' }); closeDropdowns(); }}
+              >
+                18px (Large)
+              </button>
+              <button
+                className={preferences.fontSize === '20px' ? 'active' : ''}
+                onClick={() => { onUpdatePreferences({ fontSize: '20px' }); closeDropdowns(); }}
+              >
+                20px (Extra Large)
               </button>
 
               <div className="dropdown-divider" />
@@ -175,7 +145,7 @@ export const TopMenuBar: React.FC<TopMenuBarProps> = ({
                 🟢 Dark Mode
               </button>
               <button onClick={() => { onUpdatePreferences({ theme: 'classic-light' }); closeDropdowns(); }}>
-                ☀️ Classic Light Mode (Gray Panels)
+                ☀️ Classic Light Mode
               </button>
               <button onClick={() => { onUpdatePreferences({ theme: 'matrix-emerald' }); closeDropdowns(); }}>
                 📟 Matrix Emerald

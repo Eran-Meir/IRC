@@ -82,7 +82,8 @@ body {
   direction: var(--dir);
   height: 100vh;
   overflow: hidden;
-  user-select: none;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 #root {

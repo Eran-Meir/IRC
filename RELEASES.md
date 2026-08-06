@@ -1,5 +1,12 @@
 # Release History
 
+## v0.5.44-alpha (Native Text Selection, Sender Spacing, Restructured Top Menu Bar & Robust 353 RPL_NAMREPLY Sync)
+* **UI Polish & Protocol Sync (React Client UI & IRC Parser)**
+  * **Native Text Selection & Copy-Paste**: Updated `body { user-select: text; }` in [client/src/index.css](file:///c:/Users/Eran/IRC/client/src/index.css#L85) and removed custom `onMouseUp` selection interceptor in [ChatArea.tsx](file:///c:/Users/Eran/IRC/client/src/components/ChatArea.tsx#L92). Users can now natively highlight and copy/paste chat messages and timestamps across the entire application.
+  * **Nickname & Message Spacing**: Added explicit JSX whitespace `{' '}` between `<span className="sender">` and `<span className="text">` in [ChatArea.tsx](file:///c:/Users/Eran/IRC/client/src/components/ChatArea.tsx#L142). Chat lines now cleanly format `<Nickname> Message` instead of `<Nickname>Message`.
+  * **Restructured Top Menu Bar & Popovers**: Removed redundant inline font size button row from [TopMenuBar.tsx](file:///c:/Users/Eran/IRC/client/src/components/TopMenuBar.tsx) and updated `.dropdown-menu` CSS in [App.css](file:///c:/Users/Eran/IRC/client/src/App.css#L74) (`top: calc(100% + 4px);`, `display: flex !important; flex-direction: column !important; z-index: 9999;`). Dropdown popovers now open cleanly vertically below parent menu buttons without overlapping header elements.
+  * **Robust 353 RPL_NAMREPLY Parser & Channel Sync**: Refactored `353 RPL_NAMREPLY` in [App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L375) using string partition parsing to reliably extract channel names and member lists. Resets `joinedChannelsRef` on socket disconnect to guarantee channel user lists sync accurately (`USERS (1)`).
+
 ## v0.5.43-alpha (Root Cause Fix: Explicit Disconnect Guard, 300s Ping Timeout & Mock User List Elimination)
 * **Bug Fix & Stability (Go Daemon & React Web Client)**
   * **300s Read Deadline Headroom & Frame Deadline Refresh**: Increased `ClientReadTimeout` to `300 * time.Second` (5 minutes) in [services/ircd/internal/server/client.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/client.go) and added deadline refreshes in [websocket.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/websocket.go#L32). Prevents premature socket drops for backgrounded browser tabs while maintaining dead socket cleanup.

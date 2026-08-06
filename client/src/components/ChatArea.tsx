@@ -49,18 +49,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     });
   };
 
-  const handleMouseUp = () => {
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) return;
-
-    const selectedText = selection.toString();
-    if (selectedText && selectedText.trim().length > 0) {
-      navigator.clipboard.writeText(selectedText).catch((err) => {
-        console.warn('[Clipboard] Failed to auto-copy selected text:', err);
-      });
-    }
-  };
-
   return (
     <main className="chat-area">
       {/* Channel Header Bar */}
@@ -93,10 +81,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       </div>
 
       {/* Message Stream Container */}
-      <div
-        className={`message-stream ${isRtlLanguage ? 'rtl-dir' : 'ltr-dir'}`}
-        onMouseUp={handleMouseUp}
-      >
+      <div className={`message-stream ${isRtlLanguage ? 'rtl-dir' : 'ltr-dir'}`}>
         {(Array.isArray(messages) ? messages : []).map((msg) => {
           if (msg.isChatOps) {
             return (
@@ -141,7 +126,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           return (
             <div key={msg.id} className="msg-line">
               <span className="timestamp">[{msg.timestamp}]</span>
-              <span className="sender">&lt;{msg.sender}&gt;</span>
+              <span className="sender">&lt;{msg.sender}&gt;</span>{' '}
               <span className="text" dir="auto">
                 {renderFormattedText(msg.text)}
               </span>

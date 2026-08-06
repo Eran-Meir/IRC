@@ -73,17 +73,18 @@
 
 .dropdown-menu {
   position: absolute;
-  top: 28px;
+  top: calc(100% + 4px);
   left: 0;
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
   border-radius: 4px;
-  min-width: 180px;
-  display: flex;
-  flex-direction: column;
+  min-width: 190px;
+  display: flex !important;
+  flex-direction: column !important;
   padding: 4px 0;
-  z-index: 200;
+  z-index: 9999;
+  white-space: nowrap;
 }
 
 .dropdown-menu button {

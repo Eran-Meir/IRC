@@ -374,18 +374,26 @@ export const App: React.FC = () => {
       }
     } else if (line.includes(' 353 ')) {
       // RPL_NAMREPLY :server 353 nick = #channel :nick1 nick2
-      const match = line.match(/ 353 [^ ]+ [=@*] ([#][^ ]+) :(.*)$/);
-      if (match) {
-        const [, rawChannel, userListStr] = match;
-        const channel = rawChannel.toLowerCase();
-        const nicks = userListStr.trim().split(/\s+/).filter(Boolean);
-
-        setChannels((prev) => {
-          if (!prev.some((ch) => ch.name.toLowerCase() === channel)) {
-            return [...prev, { name: channel, topic: 'Joined channel', unreadCount: 0, users: nicks }];
+      const parts = line.split(' 353 ');
+      if (parts.length > 1) {
+        const payload = parts[1];
+        const colonIdx = payload.indexOf(' :');
+        if (colonIdx > -1) {
+          const header = payload.slice(0, colonIdx).trim();
+          const userListStr = payload.slice(colonIdx + 2);
+          const headerTokens = header.split(/\s+/);
+          const rawChannel = headerTokens.find((t) => t.startsWith('#'));
+          if (rawChannel) {
+            const channel = rawChannel.toLowerCase();
+            const nicks = userListStr.trim().split(/\s+/).filter(Boolean);
+            setChannels((prev) => {
+              if (!prev.some((ch) => ch.name.toLowerCase() === channel)) {
+                return [...prev, { name: channel, topic: 'Joined channel', unreadCount: 0, users: nicks }];
+              }
+              return prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, users: nicks } : ch));
+            });
           }
-          return prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, users: nicks } : ch));
-        });
+        }
       }
     } else if (line.includes(' NOTICE ')) {
       const match = line.match(/^:([^!]+)![^ ]+ NOTICE ([^ ]+) :(.*)$/) || line.match(/^:([^ ]+) NOTICE ([^ ]+) :(.*)$/);
@@ -791,6 +799,7 @@ export const App: React.FC = () => {
   };
 
   const disconnectWebSocket = () => {
+    joinedChannelsRef.current.clear();
     if (wsRef.current) {
       wsRef.current.send(`QUIT :Web client closed`);
       wsRef.current.disconnect();
