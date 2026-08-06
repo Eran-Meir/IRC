@@ -1,5 +1,13 @@
 # Release History
 
+## v0.5.45-alpha ($me Macro Translation, Sender Click & Double-Click PM, Duplicate Message Elimination & Redesigned Ban Modal)
+* **Features & Bug Fixes (Go Daemon & React Client UI)**
+  * **$me Macro Translation**: Implemented `$me` macro translation in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L836). Any occurrence of `$me` in user input or commands (e.g. `/whois $me`, `hello $me`) automatically translates to the current user's nickname.
+  * **Interactive Sender Nickname (Single & Double Click)**: Made chat message sender tags clickable in [ChatArea.tsx](file:///c:/Users/Eran/IRC/client/src/components/ChatArea.tsx#L133). 1 click selects and highlights the user in [UserList.tsx](file:///c:/Users/Eran/IRC/client/src/components/UserList.tsx#L240) sidebar; 2 clicks (double-click) opens a direct private message query tab.
+  * **Duplicate Message Fix (Server & Client)**: Resolved duplicate message rendering at root cause. Prefixed `senderNick` in Valkey pub/sub payloads in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L272) and added `BroadcastExcludingNick` in [services/ircd/cmd/ircd/main.go](file:///c:/Users/Eran/IRC/services/ircd/cmd/ircd/main.go#L35) to prevent WebSocket echoes back to the sender. Added client-side echo suppression in [App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L160).
+  * **Redesigned Ban List Modal**: Redesigned [BanListModal.tsx](file:///c:/Users/Eran/IRC/client/src/components/BanListModal.tsx) and [App.css](file:///c:/Users/Eran/IRC/client/src/App.css#L547) with metallic card layouts, active count badges, streamlined `+ Add Ban` and `🧹 Clear All` controls, and red trash item remove buttons (`🗑️ Remove`).
+  * **Oper Server Notice Target Routing**: Verified oper notices are scoped exclusively to Opers (`client.IsOper()`), and updated `NOTICE *` target routing in [App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L407) to route server notices cleanly to the `Status` tab.
+
 ## v0.5.44-alpha (Native Text Selection, Sender Spacing, Restructured Top Menu Bar & Robust 353 RPL_NAMREPLY Sync)
 * **UI Polish & Protocol Sync (React Client UI & IRC Parser)**
   * **Native Text Selection & Copy-Paste**: Updated `body { user-select: text; }` in [client/src/index.css](file:///c:/Users/Eran/IRC/client/src/index.css#L85) and removed custom `onMouseUp` selection interceptor in [ChatArea.tsx](file:///c:/Users/Eran/IRC/client/src/components/ChatArea.tsx#L92). Users can now natively highlight and copy/paste chat messages and timestamps across the entire application.

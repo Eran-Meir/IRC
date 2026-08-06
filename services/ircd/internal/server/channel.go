@@ -80,6 +80,21 @@ func (ch *Channel) Broadcast(sender *Client, line string) {
 	}
 }
 
+// BroadcastExcludingNick sends an IRC line to all clients in the channel except the specified nickname
+func (ch *Channel) BroadcastExcludingNick(excludeNick string, line string) {
+	ch.mu.RLock()
+	defer ch.mu.RUnlock()
+
+	msg := []byte(line + "\r\n")
+	cleanExclude := strings.ToLower(strings.TrimSpace(excludeNick))
+	for client := range ch.clients {
+		if cleanExclude != "" && strings.ToLower(client.Nick) == cleanExclude {
+			continue
+		}
+		client.SendRaw(msg)
+	}
+}
+
 // IsProtected checks if client has Protected (*) status (+q)
 func (ch *Channel) IsProtected(c *Client) bool {
 	ch.mu.RLock()

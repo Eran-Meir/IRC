@@ -286,6 +286,16 @@
   margin-right: 8px;
 }
 
+.msg-line .sender.sender-clickable {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.msg-line .sender.sender-clickable:hover {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+}
+
 .msg-line.system-line {
   color: var(--accent-green);
   font-weight: 500;
@@ -310,11 +320,12 @@
   font-size: 11px;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-color);
+  font-weight: bold;
 }
 
 .user-items {
   flex: 1;
-  padding: 8px;
+  padding: 6px;
   overflow-y: auto;
 }
 
@@ -322,12 +333,20 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 6px;
+  padding: 4px 8px;
   border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .user-item:hover {
   background-color: var(--bg-tertiary);
+}
+
+.user-item.selected {
+  background-color: rgba(0, 229, 255, 0.15) !important;
+  border-left: 3px solid var(--accent-cyan);
+  padding-left: 5px;
 }
 
 .user-badge.protected, .user-nick.protected {
@@ -529,11 +548,11 @@
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  width: 480px;
-  max-width: 90vw;
+  width: 520px;
+  max-width: 92vw;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 
@@ -541,34 +560,55 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 14px 18px;
   background-color: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-color);
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 15px;
+  font-weight: 700;
   color: var(--accent-gold);
 }
 
+.ban-count-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background-color: rgba(255, 204, 0, 0.15);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
 .close-btn {
-  background: none;
+  background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 20px;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 4px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
 .modal-body {
-  padding: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .op-warning-banner {
@@ -576,11 +616,18 @@
   color: var(--accent-gold);
   background-color: rgba(255, 204, 0, 0.1);
   border: 1px solid var(--accent-gold);
-  padding: 8px 12px;
-  border-radius: 4px;
+  padding: 10px 14px;
+  border-radius: 6px;
+}
+
+.ban-actions-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .add-ban-form {
+  flex: 1;
   display: flex;
   gap: 8px;
 }
@@ -590,74 +637,135 @@
   background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
   font-size: 13px;
+  transition: border-color 0.2s ease;
+}
+
+.ban-input:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
 }
 
 .add-ban-btn {
   background-color: var(--accent-green);
-  color: var(--bg-primary);
+  color: #000000;
   border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-weight: bold;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
   cursor: pointer;
+  transition: transform 0.1s ease, filter 0.2s ease;
+  white-space: nowrap;
+}
+
+.add-ban-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.clear-all-bans-btn {
+  background-color: rgba(255, 77, 77, 0.15);
+  color: #ff4d4d;
+  border: 1px solid #ff4d4d;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.clear-all-bans-btn:hover {
+  background-color: #ff4d4d;
+  color: #ffffff;
 }
 
 .ban-list-container {
-  max-height: 220px;
+  max-height: 240px;
   overflow-y: auto;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: var(--bg-primary);
+  padding: 6px;
 }
 
 .empty-bans {
-  padding: 16px;
+  padding: 24px 16px;
   text-align: center;
   color: var(--text-muted);
   font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-bans .empty-icon {
+  font-size: 28px;
+  opacity: 0.6;
 }
 
 .ban-items-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.ban-item {
+.ban-item-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.ban-item:last-child {
-  border-bottom: none;
+.ban-item-card:hover {
+  border-color: var(--accent-cyan);
+  background-color: var(--bg-tertiary);
+}
+
+.ban-mask-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ban-icon {
+  font-size: 14px;
 }
 
 .ban-mask {
   font-family: monospace;
   font-size: 13px;
+  font-weight: 600;
   color: var(--accent-green);
+  word-break: break-all;
 }
 
-.remove-ban-btn {
-  background-color: rgba(255, 0, 80, 0.15);
+.remove-ban-item-btn {
+  background-color: rgba(255, 77, 77, 0.12);
   color: #ff4d4d;
-  border: 1px solid #ff4d4d;
-  padding: 2px 8px;
-  border-radius: 3px;
+  border: 1px solid rgba(255, 77, 77, 0.4);
+  padding: 4px 10px;
+  border-radius: 4px;
   font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
-  font-weight: bold;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.remove-ban-btn:hover {
+.remove-ban-item-btn:hover {
   background-color: #ff4d4d;
   color: #ffffff;
+  border-color: #ff4d4d;
 }
 
 .modal-footer {

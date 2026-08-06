@@ -8,6 +8,8 @@ interface ChatAreaProps {
   isRtlLanguage: boolean;
   onOpenBanList?: (channelName: string) => void;
   onJoinChannel?: (channelName: string) => void;
+  onSelectUser?: (nick: string) => void;
+  onQueryUser?: (nick: string) => void;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -17,6 +19,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   isRtlLanguage,
   onOpenBanList,
   onJoinChannel,
+  onSelectUser,
+  onQueryUser,
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -126,7 +130,20 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           return (
             <div key={msg.id} className="msg-line">
               <span className="timestamp">[{msg.timestamp}]</span>
-              <span className="sender">&lt;{msg.sender}&gt;</span>{' '}
+              <span
+                className="sender sender-clickable"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onSelectUser) onSelectUser(msg.sender);
+                }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  if (onQueryUser) onQueryUser(msg.sender);
+                }}
+                title="Click to select in user list, double-click to message"
+              >
+                &lt;{msg.sender}&gt;
+              </span>{' '}
               <span className="text" dir="auto">
                 {renderFormattedText(msg.text)}
               </span>

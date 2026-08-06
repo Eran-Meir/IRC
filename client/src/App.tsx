@@ -68,6 +68,8 @@ export const App: React.FC = () => {
     ],
   });
 
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+
   const wsRef = useRef<WebSocketService | null>(null);
   const nickRef = useRef(nick);
   const activeTargetRef = useRef(activeTarget);
@@ -158,6 +160,11 @@ export const App: React.FC = () => {
         }
 
         const msgTarget = target.toLowerCase();
+        // Suppress incoming channel message echo if sender is self (since client pre-appends sent messages)
+        if (sender.toLowerCase() === nickRef.current.toLowerCase()) {
+          return;
+        }
+
         // Check if message is a CTCP ACTION (/me)
         const actionMatch = text.match(/^\x01ACTION (.*)\x01$/);
         if (actionMatch) {
@@ -399,7 +406,11 @@ export const App: React.FC = () => {
       const match = line.match(/^:([^!]+)![^ ]+ NOTICE ([^ ]+) :(.*)$/) || line.match(/^:([^ ]+) NOTICE ([^ ]+) :(.*)$/);
       if (match) {
         const [, sender, target, text] = match;
-        const msgTarget = target.startsWith('#') ? target.toLowerCase() : activeTarget.toLowerCase();
+        const msgTarget = (target === '*' || target === 'status')
+          ? 'status'
+          : target.startsWith('#')
+          ? target.toLowerCase()
+          : activeTarget.toLowerCase();
         addMessage(msgTarget, {
           id: Math.random().toString(),
           sender: `-${sender}-`,
@@ -825,6 +836,10 @@ export const App: React.FC = () => {
     const time = new Date().toLocaleTimeString();
 
     let processedText = text;
+    // Translate $me macro to current user nickname (case-insensitive word boundary)
+    const currentNick = nickRef.current || nick;
+    processedText = processedText.replace(/\$me\b/gi, currentNick);
+
     if (processedText.startsWith('/') && activeTarget.startsWith('#')) {
       const parts = processedText.slice(1).split(' ');
       const expandedParts = parts.map((part, idx) => (idx > 0 && part === '#' ? activeTarget : part));
@@ -1207,6 +1222,8 @@ export const App: React.FC = () => {
           isRtlLanguage={preferences.language === 'he'}
           onOpenBanList={handleOpenBanList}
           onJoinChannel={handleSelectTarget}
+          onSelectUser={(user) => setSelectedUser(user)}
+          onQueryUser={handleQueryUser}
         />
 
         {preferences.showUserList && currentChannel && (
@@ -1214,6 +1231,8 @@ export const App: React.FC = () => {
             users={currentChannel.users}
             activeChannel={activeTarget}
             isOper={isOper}
+            selectedUser={selectedUser}
+            onSelectUser={(user) => setSelectedUser(user)}
             onQueryUser={handleQueryUser}
             onSendCommand={handleSendMessage}
           />

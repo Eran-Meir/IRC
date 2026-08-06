@@ -4,6 +4,8 @@ interface UserListProps {
   users: string[];
   activeChannel: string;
   isOper?: boolean;
+  selectedUser?: string | null;
+  onSelectUser?: (nick: string) => void;
   onQueryUser?: (nick: string) => void;
   onSendCommand?: (cmd: string) => void;
 }
@@ -27,6 +29,8 @@ export const UserList: React.FC<UserListProps> = ({
   users,
   activeChannel,
   isOper = false,
+  selectedUser,
+  onSelectUser,
   onQueryUser,
   onSendCommand,
 }) => {
@@ -233,13 +237,15 @@ export const UserList: React.FC<UserListProps> = ({
               ? 'voice'
               : 'normal';
 
+          const isSelected = selectedUser && selectedUser.toLowerCase() === nick.toLowerCase();
           return (
             <div
               key={idx}
-              className={`user-item ${badgeClass}`}
+              className={`user-item ${badgeClass} ${isSelected ? 'selected' : ''}`}
+              onClick={() => onSelectUser && onSelectUser(nick)}
               onContextMenu={(e) => handleContextMenu(e, nick, symbol)}
               onDoubleClick={() => handleDoubleClick(nick)}
-              title="Double-click to Query, Right-click for options"
+              title="Click to select, Double-click to Query, Right-click for options"
             >
               <span className={`user-badge ${badgeClass}`}>{symbol || ' '}</span>
               <span className={`user-nick ${badgeClass}`}>{nick}</span>

@@ -33,8 +33,11 @@ export const BanListModal: React.FC<BanListModalProps> = ({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content ban-list-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>🛡️ Ban List for {channel}</h3>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <div className="header-title-group">
+            <h3>🛡️ Ban List for {channel}</h3>
+            <span className="ban-count-badge">{activeBans.length} Active</span>
+          </div>
+          <button className="close-btn" onClick={onClose} title="Close Modal">✕</button>
         </div>
 
         <div className="modal-body">
@@ -45,8 +48,8 @@ export const BanListModal: React.FC<BanListModalProps> = ({
           )}
 
           {isOp && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
-              <form className="add-ban-form" onSubmit={handleAdd} style={{ flex: 1, display: 'flex', gap: '8px', margin: 0 }}>
+            <div className="ban-actions-row">
+              <form className="add-ban-form" onSubmit={handleAdd}>
                 <input
                   type="text"
                   placeholder="Enter nick or hostmask (e.g., BadUser!*@* or *@192.168.1.1)"
@@ -61,12 +64,11 @@ export const BanListModal: React.FC<BanListModalProps> = ({
               {activeBans.length > 0 && onRemoveAllBans && (
                 <button
                   type="button"
-                  className="remove-ban-btn"
-                  style={{ background: '#d9534f', color: '#fff', padding: '6px 12px', borderRadius: '4px', whiteSpace: 'nowrap' }}
+                  className="clear-all-bans-btn"
                   title="Remove all active bans in this channel"
                   onClick={() => onRemoveAllBans(channel)}
                 >
-                  🧹 Remove All Bans
+                  🧹 Clear All
                 </button>
               )}
             </div>
@@ -74,24 +76,30 @@ export const BanListModal: React.FC<BanListModalProps> = ({
 
           <div className="ban-list-container">
             {activeBans.length === 0 ? (
-              <div className="empty-bans">No active bans in {channel}.</div>
+              <div className="empty-bans">
+                <div className="empty-icon">🛡️</div>
+                <div>No active bans in {channel}.</div>
+              </div>
             ) : (
-              <ul className="ban-items-list">
+              <div className="ban-items-list">
                 {activeBans.map((mask) => (
-                  <li key={mask} className="ban-item">
-                    <span className="ban-mask">{mask}</span>
+                  <div key={mask} className="ban-item-card">
+                    <div className="ban-mask-info">
+                      <span className="ban-icon">🚫</span>
+                      <span className="ban-mask">{mask}</span>
+                    </div>
                     {isOp && (
                       <button
-                        className="remove-ban-btn"
-                        title="Remove Ban"
+                        className="remove-ban-item-btn"
+                        title={`Remove ban ${mask}`}
                         onClick={() => onRemoveBan(channel, mask)}
                       >
-                        Remove
+                        🗑️ Remove
                       </button>
                     )}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         </div>

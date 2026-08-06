@@ -269,7 +269,7 @@ func (c *Client) handlePrivmsg(msg *parser.Message) {
 		}
 		line := fmt.Sprintf(":%s PRIVMSG %s :%s", c.Prefix(), target, text)
 		ch.Broadcast(c, line)
-		state.PublishChannelMessage(target, line)
+		state.PublishChannelMessage(target, fmt.Sprintf("%s|%s", c.Nick, line))
 	} else {
 		line := fmt.Sprintf(":%s PRIVMSG %s :%s", c.Prefix(), target, text)
 		if targetClient := mgr.GetClientByNick(target); targetClient != nil {
