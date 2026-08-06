@@ -143,6 +143,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		logger.Error("Hijack failed: %v", err)
 		return
 	}
+	_ = bufrw
 	if tcpConn, ok := conn.(*net.TCPConn); ok {
 		_ = tcpConn.SetKeepAlive(true)
 		_ = tcpConn.SetKeepAlivePeriod(15 * time.Second)
