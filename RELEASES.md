@@ -1,5 +1,18 @@
 # Release History
 
+## v0.5.43-alpha (Root Cause Fix: Explicit Disconnect Guard, 300s Ping Timeout & Mock User List Elimination)
+* **Bug Fix & Stability (Go Daemon & React Web Client)**
+  * **300s Read Deadline Headroom & Frame Deadline Refresh**: Increased `ClientReadTimeout` to `300 * time.Second` (5 minutes) in [services/ircd/internal/server/client.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/client.go) and added deadline refreshes in [websocket.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/websocket.go#L32). Prevents premature socket drops for backgrounded browser tabs while maintaining dead socket cleanup.
+  * **Explicit Disconnect Guard**: Added `isExplicitDisconnect` flag to [client/src/services/websocket.ts](file:///c:/Users/Eran/IRC/client/src/services/websocket.ts#L10) to stop `scheduleReconnect()` from spawning infinite 3-second zombie reconnect loops on component unmount or user-initiated disconnects.
+  * **Mock User List Elimination**: Removed hardcoded `users: ['Operator']` initial state from [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L58). Initial channel member state starts empty (`[]`) and is strictly driven by server `353 RPL_NAMREPLY` responses.
+
+## v0.5.42-alpha (Socket Read Deadlines, TCP Keepalives, Channel Broadcast Fix & Sanitized JOIN/RPL_NAMREPLY State)
+* **Bug Fix & Stability (Go Daemon, Network Sockets & React Client UI)**
+  * **Socket Read Deadline & Keepalives**: Enforced package-level `ClientReadTimeout` (60s) in [services/ircd/internal/server/client.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/client.go) and enabled TCP KeepAlive (15s) in [websocket.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/websocket.go) and [server.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/server.go). Prevents orphaned hijacked socket connections from accumulating and leaking resources (fixing the 27 active connections issue).
+  * **Local Channel Message Broadcast**: Added `ch.Broadcast(c, line)` to `handlePrivmsg` in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L270), ensuring channel messages are immediately delivered to all connected clients on the local node.
+  * **Sanitized Protocol Parsing & Join Notices**: Stripped leading colons from raw channel parameters in `JOIN` and `PART` handlers in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L185), preventing channel state corruption (`#:#enterprise`). Fixed premature channel ref seeding in `connectWebSocket` so `* X has joined #channel` notices render correctly.
+  * **User List State Sync & Sent Message Appending**: Updated `353 RPL_NAMREPLY` in [client/src/App.tsx](file:///c:/Users/Eran/IRC/client/src/App.tsx#L380) to dynamically create and populate channel member lists, and updated `sendSingleMessage` to append sent PRIVMSGs locally for instant feedback.
+
 ## v0.5.41-alpha (100% E2E QA Test Compliance: KICK Membership Revocation, Wildcard BAN Matching, OPER/KLINE/REHASH Commands)
 * **Bug Fix & Feature (Go Daemon & QA Automation)**
   * **KICK Membership Revocation**: Updated `handleKick` in [services/ircd/internal/server/router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L277) to delete `chName` from `targetClient.channels`. Kicked users now lose messaging ability and receive `404 ERR_CANNOTSENDTOCHAN`.

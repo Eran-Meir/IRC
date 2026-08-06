@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/Eran-Meir/IRC/services/ircd/internal/logger"
 )
@@ -33,6 +34,10 @@ func (s *Server) Start() error {
 		if err != nil {
 			logger.Error("Error accepting connection: %v", err)
 			continue
+		}
+		if tcpConn, ok := conn.(*net.TCPConn); ok {
+			_ = tcpConn.SetKeepAlive(true)
+			_ = tcpConn.SetKeepAlivePeriod(15 * time.Second)
 		}
 
 		// Spawn a lightweight goroutine for every new connection

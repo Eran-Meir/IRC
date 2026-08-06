@@ -13,6 +13,8 @@ import (
 	"github.com/Eran-Meir/IRC/services/ircd/internal/parser"
 )
 
+const ClientReadTimeout = 300 * time.Second
+
 // Client represents a single connected TCP or WebSocket user
 type Client struct {
 	conn       net.Conn
@@ -138,9 +140,12 @@ func (c *Client) Handle() {
 	}()
 
 	for {
+		if c.conn != nil {
+			_ = c.conn.SetReadDeadline(time.Now().Add(ClientReadTimeout))
+		}
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			logger.Info("Connection closed by %s", c.conn.RemoteAddr().String())
+			logger.Info("Connection closed by %s: %v", c.conn.RemoteAddr().String(), err)
 			return
 		}
 

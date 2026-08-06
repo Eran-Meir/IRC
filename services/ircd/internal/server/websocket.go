@@ -29,6 +29,7 @@ func (w *WSConn) Read(b []byte) (n int, err error) {
 		}
 
 		// Read WebSocket frame header (minimal RFC 6455 frame reader)
+		_ = w.conn.SetReadDeadline(time.Now().Add(ClientReadTimeout))
 		header := make([]byte, 2)
 		if _, err := io.ReadFull(w.conn, header); err != nil {
 			return 0, err
@@ -142,7 +143,10 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		logger.Error("Hijack failed: %v", err)
 		return
 	}
-	_ = bufrw
+	if tcpConn, ok := conn.(*net.TCPConn); ok {
+		_ = tcpConn.SetKeepAlive(true)
+		_ = tcpConn.SetKeepAlivePeriod(15 * time.Second)
+	}
 
 	resp := fmt.Sprintf("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n\r\n", acceptKey)
 	conn.Write([]byte(resp))

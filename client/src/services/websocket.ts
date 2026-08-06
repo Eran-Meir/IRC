@@ -7,6 +7,7 @@ export class WebSocketService {
   private onMessageCallback: MessageHandler;
   private onStatusCallback: StatusHandler;
   private reconnectTimer: number | null = null;
+  private isExplicitDisconnect: boolean = false;
 
   constructor(url: string, onMessage: MessageHandler, onStatus: StatusHandler) {
     this.url = url;
@@ -15,6 +16,7 @@ export class WebSocketService {
   }
 
   public connect() {
+    this.isExplicitDisconnect = false;
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
@@ -43,7 +45,9 @@ export class WebSocketService {
       this.ws.onclose = () => {
         console.log('[WebSocket] Disconnected from IRC Gateway');
         this.onStatusCallback(false);
-        this.scheduleReconnect();
+        if (!this.isExplicitDisconnect) {
+          this.scheduleReconnect();
+        }
       };
 
       this.ws.onerror = (err) => {
@@ -60,7 +64,9 @@ export class WebSocketService {
     } catch (e) {
       console.error('[WebSocket] Setup exception:', e);
       this.onStatusCallback(false);
-      this.scheduleReconnect();
+      if (!this.isExplicitDisconnect) {
+        this.scheduleReconnect();
+      }
     }
   }
 
@@ -73,6 +79,7 @@ export class WebSocketService {
   }
 
   public disconnect() {
+    this.isExplicitDisconnect = true;
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -84,14 +91,17 @@ export class WebSocketService {
   }
 
   private scheduleReconnect() {
+    if (this.isExplicitDisconnect) return;
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
     this.reconnectTimer = window.setTimeout(() => {
       this.reconnectTimer = null;
-      console.log('[WebSocket] Attempting auto-reconnect...');
-      this.connect();
+      if (!this.isExplicitDisconnect) {
+        console.log('[WebSocket] Attempting auto-reconnect...');
+        this.connect();
+      }
     }, 3000);
   }
 }

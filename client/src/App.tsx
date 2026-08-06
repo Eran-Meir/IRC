@@ -55,8 +55,8 @@ export const App: React.FC = () => {
   });
 
   const [channels, setChannels] = useState<Channel[]>([
-    { name: '#enterprise', topic: 'Modern Enterprise IRC Network - Production Channel', unreadCount: 0, users: ['Operator'] },
-    { name: '#devops', topic: 'Oracle Cloud & K3s GitOps Deployments', unreadCount: 0, users: ['SeniorDevOps'] },
+    { name: '#enterprise', topic: 'Modern Enterprise IRC Network - Production Channel', unreadCount: 0, users: [] },
+    { name: '#devops', topic: 'Oracle Cloud & K3s GitOps Deployments', unreadCount: 0, users: [] },
   ]);
 
   const [messages, setMessages] = useState<Record<string, Message[]>>({
@@ -183,7 +183,8 @@ export const App: React.FC = () => {
       const match = line.match(/^:([^!]+)![^ ]+ JOIN :?([^ ]+)$/);
       if (match) {
         const [, sender, rawChannel] = match;
-        const channel = rawChannel.startsWith('#') ? rawChannel.toLowerCase() : '#' + rawChannel.toLowerCase();
+        const cleanChan = rawChannel.replace(/^:/, '').trim();
+        const channel = cleanChan.startsWith('#') ? cleanChan.toLowerCase() : '#' + cleanChan.toLowerCase();
         
         // Add channel to sidebar if not present
         setChannels((prev) => {
@@ -227,7 +228,8 @@ export const App: React.FC = () => {
       const match = line.match(/^:([^!]+)![^ ]+ PART ([^ ]+)(?: :(.*))?$/);
       if (match) {
         const [, sender, rawChannel, reason] = match;
-        const channel = rawChannel.startsWith('#') ? rawChannel.toLowerCase() : '#' + rawChannel.toLowerCase();
+        const cleanChan = rawChannel.replace(/^:/, '').trim();
+        const channel = cleanChan.startsWith('#') ? cleanChan.toLowerCase() : '#' + cleanChan.toLowerCase();
         const cleanSender = sender.replace(/^[*@%+]*/, '');
         addMessage(channel, {
           id: Math.random().toString(),
@@ -378,14 +380,12 @@ export const App: React.FC = () => {
         const channel = rawChannel.toLowerCase();
         const nicks = userListStr.trim().split(/\s+/).filter(Boolean);
 
-        setChannels((prev) =>
-          prev.map((ch) => {
-            if (ch.name.toLowerCase() === channel) {
-              return { ...ch, users: nicks };
-            }
-            return ch;
-          })
-        );
+        setChannels((prev) => {
+          if (!prev.some((ch) => ch.name.toLowerCase() === channel)) {
+            return [...prev, { name: channel, topic: 'Joined channel', unreadCount: 0, users: nicks }];
+          }
+          return prev.map((ch) => (ch.name.toLowerCase() === channel ? { ...ch, users: nicks } : ch));
+        });
       }
     } else if (line.includes(' NOTICE ')) {
       const match = line.match(/^:([^!]+)![^ ]+ NOTICE ([^ ]+) :(.*)$/) || line.match(/^:([^ ]+) NOTICE ([^ ]+) :(.*)$/);
@@ -775,9 +775,6 @@ export const App: React.FC = () => {
           wsRef.current.send(`USER ${nickRef.current} 0 * :Web Client User`);
           wsRef.current.send(`JOIN #enterprise`);
           wsRef.current.send(`JOIN #devops`);
-          // Seed joinedChannelsRef so message sending is not blocked
-          joinedChannelsRef.current.add('#enterprise');
-          joinedChannelsRef.current.add('#devops');
         } else if (!status && isHttps) {
           addMessage('status', {
             id: Math.random().toString(),
@@ -1075,6 +1072,13 @@ export const App: React.FC = () => {
       }
       joinedChannelsRef.current.add(normTarget);
       if (wsRef.current) wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);
+      addMessage(normTarget, {
+        id: Math.random().toString(),
+        sender: nick,
+        target: normTarget,
+        text,
+        timestamp: time,
+      });
     } else if (normTarget !== 'status' && wsRef.current) {
       wsRef.current.send(`PRIVMSG ${normTarget} :${text}`);
       addMessage(normTarget, {
