@@ -1,5 +1,9 @@
 # Release History
 
+## v0.5.47-alpha (Fix ServerManager RemoveClient Method in manager.go)
+* **Bug Fix (Go Daemon)**
+  * **ServerManager RemoveClient Method**: Added `RemoveClient(c *Client)` method to [services/ircd/internal/server/manager.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/manager.go#L83), resolving undefined method compiler errors in `handleKline` and `handleKill` in [router.go](file:///c:/Users/Eran/IRC/services/ircd/internal/server/router.go#L733).
+
 ## v0.5.46-alpha (RFC Reply Constants Package, Rule 1 Magic Number Elimination & Concurrency Race Fix)
 * **Architecture & Code Quality (Go Daemon)**
   * **RFC Reply Numerics Constant Registry**: Created [services/ircd/internal/replies/numerics.go](file:///c:/Users/Eran/IRC/services/ircd/internal/replies/numerics.go) defining named constants for all RFC 1459/2812 numerics (`RPL_WHOISUSER`, `RPL_NAMREPLY`, `ERR_NOPRIVILEGES`, `ERR_NOSUCHNICK`, etc.).

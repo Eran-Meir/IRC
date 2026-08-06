@@ -80,6 +80,13 @@ func (m *ServerManager) UnregisterNick(nick string) {
 	delete(m.clients, lower)
 }
 
+// RemoveClient unregisters a client from global registry
+func (m *ServerManager) RemoveClient(c *Client) {
+	if c != nil && c.Nick != "" {
+		m.UnregisterNick(c.Nick)
+	}
+}
+
 // GetClientByNick finds a client by nickname
 func (m *ServerManager) GetClientByNick(nick string) *Client {
 	m.mu.RLock()
